@@ -65,5 +65,5 @@ Esta subcarpeta es **100% estática y autónoma** (no depende de ningún servido
 ## 📲 Enlace de la APK Configurado
 
 El botón principal de descarga está enlazado a la APK en Google Drive:
-- **URL configurada:** [Google Drive APK Standard Work](https://drive.google.com/file/d/1zIY39f3uyAj0JqoXORcfb-Qsac4T4226/view?usp=drive_link)
+- **URL configurada:** [Google Drive APK Standard Work](https://drive.google.com/file/d/1UpShl1PM4BEjNxLTYKXEELd1HL-XYhmB/view?usp=drive_link)
 - Se abre en pestaña segura (`target="_blank" rel="noopener noreferrer"`) asegurando compatibilidad con la interfaz de descarga de Google Drive en Android.

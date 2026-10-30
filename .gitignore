@@ -1,0 +1,35 @@
+# Build and ephemeral files
+build/
+**/build/
+.dart_tool/
+**/.dart_tool/
+.pub-cache/
+**/.pub-cache/
+.pub/
+**/.pub/
+
+# Gradle & Android builds
+.gradle/
+**/.gradle/
+local.properties
+**/local.properties
+captures/
+**/captures/
+*.apk
+!descargar-app/**/*.png
+
+# IDEs & System files
+.idea/
+**/.idea/
+*.iml
+**/*.iml
+.vscode/
+**/.vscode/
+.DS_Store
+Thumbs.db
+*.log
+
+# Scratch & extraction files
+*.txt
+excel_dump.json
+prueba_backup_original.html

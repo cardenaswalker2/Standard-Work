@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>Standard Work · Darnel Group</title>
+    <title>Standard Work · Darnel Group (Simulador Web Oficial)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --azul: #002F6C;
@@ -17,15 +20,17 @@
             --rojoBg: #FEF2F2;
             --gris: #64748B;
             --borde: #E2E8F0;
-            --txt: #4A4A49
+            --txt: #1E293B;
+            --txtSec: #475569;
+            --barraVerde: #4ADE80;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: "Helvetica Neue", "Helvetica Neue Std", Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent
+            font-family: 'Plus Jakarta Sans', "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -35,14 +40,14 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px 0;
+            padding: 16px 0;
         }
 
         .back-to-download-bar {
-            margin-bottom: 16px;
-            background: #002F6C;
+            margin-bottom: 12px;
+            background: var(--azul);
             color: #ffffff;
-            padding: 8px 16px;
+            padding: 8px 18px;
             border-radius: 9999px;
             font-size: 13px;
             font-weight: 600;
@@ -51,7 +56,7 @@
             align-items: center;
             gap: 8px;
             box-shadow: 0 4px 12px rgba(0, 47, 108, 0.25);
-            transition: transform 0.2s;
+            transition: transform 0.2s, background 0.2s;
         }
 
         .back-to-download-bar:hover {
@@ -60,8 +65,8 @@
         }
 
         .phone {
-            width: 390px;
-            height: 820px;
+            width: 395px;
+            height: 840px;
             background: var(--bg);
             border-radius: 40px;
             border: 10px solid #0F172A;
@@ -69,12 +74,17 @@
             position: relative;
             box-shadow: 0 25px 60px rgba(15, 23, 42, .35);
             display: flex;
-            flex-direction: column
+            flex-direction: column;
         }
 
-        @media (max-width:500px) {
+        @media (max-width: 500px) {
             body {
-                background: var(--bg)
+                background: var(--bg);
+                padding: 0;
+            }
+
+            .back-to-download-bar {
+                display: none;
             }
 
             .phone {
@@ -82,785 +92,1412 @@
                 height: 100vh;
                 border: none;
                 border-radius: 0;
-                box-shadow: none
+                box-shadow: none;
             }
         }
 
         .screen {
             display: none;
             flex-direction: column;
-            height: 100%
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
         }
 
         .screen.on {
-            display: flex
+            display: flex;
         }
 
-        .login {
+        /* APPBAR CORPORATIVO ESTABLE */
+        .appbar {
+            background: var(--azul);
+            color: #fff;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 47, 108, 0.2);
+            z-index: 5;
+        }
+
+        .appbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .appbar-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 50%;
+        }
+
+        .appbar-title {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .appbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-today-pill {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-today-pill:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* PANTALLA LOGIN */
+        .login-wrap {
             background: linear-gradient(160deg, var(--azul) 0%, var(--morado) 100%);
             color: #fff;
-            padding: 60px 28px 30px;
+            padding: 40px 24px 20px;
             flex: 1;
             display: flex;
-            flex-direction: column
+            flex-direction: column;
+            overflow-y: auto;
         }
 
-        .logo {
+        .logo-box {
             background: #fff;
             border-radius: 12px;
             padding: 8px 12px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: max-content
+            width: max-content;
         }
 
-        .logo img {
-            height: 34px;
-            display: block
+        .logo-box img {
+            height: 32px;
+            display: block;
         }
 
-        .logo .lt {
+        .logo-box .lt {
             display: none;
             color: #006DB2;
             font-weight: 800;
             font-size: 15px;
             letter-spacing: 1px;
-            line-height: 1
+            line-height: 1;
         }
 
-        .logo .lt small {
+        .logo-box .lt small {
             display: block;
             font-size: 9px;
             letter-spacing: 3px;
             font-weight: 600;
-            color: #002F6C
+            color: #002F6C;
         }
 
-        .login h1 {
-            letter-spacing: -.5px;
-            font-size: 30px;
-            margin-top: 22px;
-            font-weight: 700
+        .login-wrap h1 {
+            font-size: 26px;
+            margin-top: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
 
-        .login p {
-            opacity: .85;
-            margin-top: 6px;
-            font-size: 14px
+        .login-wrap p {
+            opacity: .88;
+            margin-top: 4px;
+            font-size: 13px;
+            line-height: 1.4;
         }
 
-        .ulist {
-            margin-top: 34px;
+        .profiles-list {
+            margin-top: 24px;
             display: flex;
             flex-direction: column;
-            gap: 12px
+            gap: 10px;
         }
 
-        .ubtn {
+        .profile-btn {
             background: rgba(255, 255, 255, .12);
             border: 1px solid rgba(255, 255, 255, .25);
-            border-radius: 16px;
-            padding: 14px;
+            border-radius: 14px;
+            padding: 12px;
             display: flex;
             gap: 12px;
             align-items: center;
             color: #fff;
             cursor: pointer;
-            transition: .2s
+            transition: .2s;
         }
 
-        .ubtn:hover {
-            background: rgba(255, 255, 255, .22)
+        .profile-btn:hover {
+            background: rgba(255, 255, 255, .24);
+            transform: translateY(-1px);
         }
 
-        .av {
-            width: 42px;
-            height: 42px;
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: #fff;
-            color: var(--morado);
-            font-weight: 700;
+            color: var(--azul);
+            font-weight: 800;
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0
+            flex-shrink: 0;
         }
 
-        .ubtn b {
+        .profile-info b {
             display: block;
-            font-size: 15px
+            font-size: 14px;
         }
 
-        .ubtn small {
-            opacity: .8;
-            font-size: 12px
-        }
-
-        .foot {
-            margin-top: auto;
+        .profile-info small {
+            opacity: .85;
             font-size: 11px;
-            opacity: .7;
-            text-align: center
         }
 
-        header {
+        /* PANTALLA DASHBOARD */
+        .dash-header {
             background: linear-gradient(135deg, var(--azul), var(--morado));
             color: #fff;
-            padding: 18px 18px 16px
+            padding: 16px;
+            flex-shrink: 0;
         }
 
-        .hrow {
+        .dash-hrow {
             display: flex;
             align-items: center;
-            gap: 10px
+            justify-content: space-between;
         }
 
-        .hrow .logo {
-            padding: 5px 8px;
-            border-radius: 9px
+        .dash-htitle b {
+            font-size: 15px;
+            display: block;
         }
 
-        .hrow .logo img {
-            height: 24px
+        .dash-htitle small {
+            font-size: 11px;
+            opacity: .85;
         }
 
-        .htitle {
-            flex: 1
-        }
-
-        .htitle b {
-            font-size: 16px;
-            display: block
-        }
-
-        .htitle small {
-            font-size: 12px;
-            opacity: .85
-        }
-
-        .hav {
+        .dash-avatar {
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, .2);
+            background: rgba(255, 255, 255, .25);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
+            font-size: 13px;
             cursor: pointer;
-            font-size: 13px
         }
 
-        .hoy {
+        .dash-metrics {
             margin-top: 14px;
             display: flex;
+            align-items: flex-end;
             justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, .12);
-            border-radius: 14px;
-            padding: 10px 12px
         }
 
-        .hoy b {
-            font-size: 14px
+        .dash-prog-num {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
 
-        .hoy small {
-            display: block;
-            font-size: 11px;
-            opacity: .8
-        }
-
-        .prog {
-            font-size: 20px;
-            font-weight: 700
-        }
-
-        .bar {
-            height: 6px;
+        .dash-bar {
             background: rgba(255, 255, 255, .25);
-            border-radius: 6px;
-            margin-top: 8px;
-            overflow: hidden
-        }
-
-        .bar i {
-            display: block;
-            height: 100%;
-            background: #4ADE80;
-            border-radius: 6px;
-            transition: .4s
-        }
-
-        .days {
-            display: flex;
-            gap: 6px;
-            padding: 12px 14px 4px
-        }
-
-        .day {
-            flex: 1;
-            background: #fff;
-            border: 1px solid var(--borde);
-            border-radius: 12px;
-            padding: 7px 0;
-            text-align: center;
-            cursor: pointer;
-            position: relative
-        }
-
-        .day b {
-            display: block;
-            font-size: 13px;
-            color: var(--txt)
-        }
-
-        .day small {
-            font-size: 10px;
-            color: var(--gris)
-        }
-
-        .day.sel {
-            background: var(--azul);
-            border-color: var(--azul)
-        }
-
-        .day.sel b,
-        .day.sel small {
-            color: #fff
-        }
-
-        .day.today:not(.sel) {
-            border: 2px solid var(--azul2)
-        }
-
-        .dot {
-            position: absolute;
-            top: 4px;
-            right: 6px;
-            width: 7px;
             height: 7px;
-            border-radius: 50%
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
         }
 
-        .list {
+        .dash-bar-fill {
+            background: var(--barraVerde);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* NAVEGACIÓN DÍAS L-V */
+        .week-bar {
+            background: #fff;
+            border-bottom: 1px solid var(--borde);
+            display: flex;
+            padding: 8px 10px;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .day-chip {
             flex: 1;
-            overflow-y: auto;
-            padding: 10px 14px 90px;
+            padding: 6px 0;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: .15s;
+            border: 1px solid transparent;
             display: flex;
             flex-direction: column;
-            gap: 12px
+            align-items: center;
+            gap: 2px;
         }
 
-        .lbl {
+        .day-chip b {
             font-size: 12px;
+            color: var(--txt);
+        }
+
+        .day-chip small {
+            font-size: 9px;
             color: var(--gris);
             font-weight: 600;
+        }
+
+        .day-chip.sel {
+            background: var(--azul);
+        }
+
+        .day-chip.sel b,
+        .day-chip.sel small {
+            color: #fff;
+        }
+
+        .day-chip.today:not(.sel) {
+            background: #EFF6FF;
+            border-color: rgba(0, 47, 108, 0.2);
+        }
+
+        .dot-badge {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #CBD5E1;
+            margin-bottom: 2px;
+        }
+
+        /* LISTADO DE ACTIVIDADES */
+        .content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 14px 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            color: var(--gris);
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .5px;
-            margin-top: 4px
+            margin-top: 4px;
         }
 
-        .card {
+        .act-card {
             background: #fff;
-            border: 2.5px solid var(--rojo);
-            border-radius: 16px;
+            border: 1.5px solid var(--borde);
+            border-radius: 14px;
             padding: 12px 14px;
             cursor: pointer;
-            transition: .25s;
-            user-select: none
+            transition: .2s;
+            user-select: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         }
 
-        .card.ok {
+        .act-card.ok {
             border-color: var(--verde);
-            background: var(--verdeBg)
+            background: var(--verdeBg);
         }
 
-        .card.no {
-            background: var(--rojoBg)
+        .act-card.no {
+            border-color: var(--rojo);
+            background: var(--rojoBg);
         }
 
-        .card.fut {
-            border-color: var(--borde);
-            background: #fff;
-            cursor: default
+        .act-card:active {
+            transform: scale(0.985);
         }
 
-        .card:active:not(.fut) {
-            transform: scale(.98)
-        }
-
-        .ind {
-            font-size: 11px;
-            font-weight: 600;
+        .act-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 6px
+            font-size: 11px;
+            font-weight: 600;
         }
 
-        .card.ok .ind {
-            color: var(--verde)
-        }
-
-        .card.no .ind {
-            color: var(--rojo)
-        }
-
-        .card.fut .ind {
-            color: var(--gris)
-        }
-
-        .cname {
-            font-size: 18px;
+        .act-title {
+            font-size: 14px;
             font-weight: 700;
             color: var(--txt);
-            text-align: center;
-            margin: 6px 0 2px
+            margin: 6px 0 2px;
         }
 
-        .cdesc {
-            font-size: 12px;
+        .act-desc {
+            font-size: 11px;
+            color: var(--txtSec);
+            line-height: 1.35;
+        }
+
+        .act-meta {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10.5px;
             color: var(--gris);
-            text-align: center;
-            margin-bottom: 6px
         }
 
-        .state {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 20px;
-            color: #fff;
-            white-space: nowrap
-        }
-
-        .card.ok .state {
-            background: var(--verde)
-        }
-
-        .card.no .state {
-            background: var(--rojo)
-        }
-
-        .card.fut .state {
-            background: var(--gris)
-        }
-
-        .mv {
-            border: none;
-            background: #EEF2FF;
-            color: var(--azul);
-            font-weight: 700;
-            font-size: 11px;
-            padding: 5px 10px;
-            border-radius: 20px;
-            cursor: pointer;
-            white-space: nowrap
-        }
-
-        .tag {
+        .pill-status {
             font-size: 10px;
-            color: var(--azul2);
-            background: #E0F2FE;
+            font-weight: 700;
             padding: 2px 7px;
-            border-radius: 10px;
-            font-weight: 600;
-            white-space: nowrap
+            border-radius: 12px;
+            color: #fff;
         }
 
-        .fija {
-            font-size: 10px;
-            color: var(--azul);
+        .pill-status.ok {
+            background: var(--verde);
+        }
+
+        .pill-status.no {
+            background: var(--rojo);
+        }
+
+        .pill-status.fut {
+            background: var(--gris);
+        }
+
+        .tag-fixed {
             background: #DBEAFE;
-            padding: 3px 8px;
-            border-radius: 10px;
+            color: var(--azul);
+            font-size: 9.5px;
             font-weight: 700;
-            white-space: nowrap
+            padding: 2px 6px;
+            border-radius: 6px;
         }
 
-        .empty {
-            text-align: center;
-            color: var(--gris);
-            font-size: 13px;
-            padding: 40px 10px
-        }
-
-        .fab {
+        /* BOTÓN FLOTANTE */
+        .fab-btn {
             position: absolute;
-            right: 20px;
-            bottom: 24px;
-            width: 56px;
-            height: 56px;
+            right: 18px;
+            bottom: 22px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             border: none;
-            background: linear-gradient(135deg, var(--azul2), var(--morado));
+            background: linear-gradient(135deg, var(--azul), var(--morado));
             color: #fff;
-            font-size: 28px;
+            font-size: 26px;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0, 109, 178, .4)
+            box-shadow: 0 6px 16px rgba(0, 47, 108, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 8;
         }
 
-        .ov {
+        /* MODALES Y SHEETS */
+        .overlay {
             position: absolute;
             inset: 0;
-            background: rgba(15, 23, 42, .45);
+            background: rgba(15, 23, 42, .5);
             display: none;
             align-items: flex-end;
-            z-index: 10
+            z-index: 20;
         }
 
-        .ov.on {
-            display: flex
+        .overlay.on {
+            display: flex;
         }
 
-        .sheet {
+        .sheet-body {
             background: #fff;
             width: 100%;
             border-radius: 24px 24px 0 0;
-            padding: 20px 20px 28px;
-            animation: up .25s ease;
+            padding: 20px 20px 24px;
             max-height: 85%;
-            overflow-y: auto
+            overflow-y: auto;
+            animation: slideUp 0.22s ease-out;
         }
 
-        @keyframes up {
-            from {
-                transform: translateY(100%)
-            }
-
-            to {
-                transform: none
-            }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: none; }
         }
 
-        .sheet h3 {
-            font-size: 17px;
-            color: var(--txt)
-        }
-
-        .sheet p {
-            font-size: 13px;
-            color: var(--gris);
-            margin: 4px 0 14px
-        }
-
-        .opts {
-            display: flex;
-            flex-direction: column;
-            gap: 8px
-        }
-
-        .opt {
-            border: 1.5px solid var(--borde);
+        /* PANTALLA CALENDARIO CON TOGGLE CORREGIDO */
+        .cal-header-bar {
             background: #fff;
-            border-radius: 12px;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--azul);
-            cursor: pointer;
-            text-align: left
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--borde);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
 
-        .opt:hover {
-            border-color: var(--azul2);
-            background: #EFF6FF
-        }
-
-        .cancel {
-            margin-top: 12px;
-            width: 100%;
-            border: none;
+        .cal-toggle-wrap {
             background: #F1F5F9;
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: 600;
+            border-radius: 10px;
+            padding: 3px;
+            display: flex;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .cal-toggle-btn {
+            border: none;
+            background: none;
+            padding: 5px 12px;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 700;
             color: var(--gris);
-            cursor: pointer
+            cursor: pointer;
+            transition: .15s;
         }
 
-        .sheet input,
-        .sheet select {
-            width: 100%;
-            border: 1.5px solid var(--borde);
-            border-radius: 12px;
-            padding: 11px;
-            font-size: 14px;
-            margin-bottom: 10px
+        .cal-toggle-btn.sel {
+            background: var(--azul);
+            color: #fff;
         }
 
-        .chk {
+        /* PANTALLA CENTRO DE INDICADORES */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .kpi-card {
+            background: #fff;
+            border: 1px solid var(--borde);
+            border-radius: 14px;
+            padding: 12px;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--azul);
+        }
+
+        .kpi-val {
+            font-size: 22px;
+            font-weight: 800;
+            margin-top: 4px;
+        }
+
+        .kpi-lbl {
+            font-size: 11px;
+            color: var(--gris);
+            font-weight: 600;
+        }
+
+        /* PANTALLA 4 SEMANAS (EXCEL) */
+        .excel-pill-bar {
             display: flex;
             gap: 6px;
-            margin-bottom: 10px
+            padding: 10px 14px;
+            background: #fff;
+            border-bottom: 1px solid var(--borde);
+            overflow-x: auto;
         }
 
-        .chk label {
-            flex: 1;
-            text-align: center;
+        .week-pill {
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: #F1F5F9;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--txtSec);
+            cursor: pointer;
+            white-space: nowrap;
+            border: none;
+        }
+
+        .week-pill.sel {
+            background: var(--azul);
+            color: #fff;
+        }
+
+        /* FORMULARIOS */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--txt);
+            margin-bottom: 4px;
+        }
+
+        .form-control {
+            width: 100%;
             border: 1.5px solid var(--borde);
             border-radius: 10px;
-            padding: 8px 0;
+            padding: 9px 12px;
             font-size: 13px;
-            font-weight: 600;
-            cursor: pointer
+            outline: none;
         }
 
-        .chk input {
-            display: none
+        .form-control:focus {
+            border-color: var(--azul);
         }
 
-        .chk label:has(input:checked) {
-            background: var(--azul);
-            color: #fff;
-            border-color: var(--azul)
-        }
-
-        .prim {
+        .btn-primary {
             width: 100%;
-            border: none;
             background: var(--azul);
             color: #fff;
-            padding: 13px;
+            border: none;
+            padding: 12px;
             border-radius: 12px;
             font-weight: 700;
-            cursor: pointer
+            font-size: 13px;
+            cursor: pointer;
         }
 
+        .btn-cancel {
+            width: 100%;
+            background: #F1F5F9;
+            color: var(--gris);
+            border: none;
+            padding: 11px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        /* TOAST FLOTANTE */
         .toast {
             position: absolute;
             left: 50%;
-            bottom: 95px;
+            bottom: 85px;
             transform: translateX(-50%);
             background: #0F172A;
             color: #fff;
-            font-size: 13px;
-            padding: 10px 16px;
+            font-size: 12px;
+            padding: 9px 16px;
             border-radius: 20px;
             opacity: 0;
-            transition: .3s;
+            transition: .25s;
             pointer-events: none;
             white-space: nowrap;
-            z-index: 20
+            z-index: 30;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
         }
 
         .toast.on {
-            opacity: 1
-        }
-
-        .menu a {
-            display: block;
-            padding: 12px;
-            border-radius: 12px;
-            color: var(--txt);
-            font-size: 14px;
-            cursor: pointer
-        }
-
-        .menu a:hover {
-            background: #F1F5F9
+            opacity: 1;
         }
     </style>
 </head>
 
 <body>
     <a href="index.html" class="back-to-download-bar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
         <span>Volver a la página de descarga de la APK</span>
     </a>
+
     <div class="phone">
+        <!-- 1. PANTALLA LOGIN -->
         <div class="screen on" id="scrLogin">
-            <div class="login">
-                <div class="logo"><img src="https://lmsdarnel.ajover.com/assets/images/logo-darnel.png?v=1"
-                        alt="Darnel Group"
-                        onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span
-                        class="lt">DARNEL<small>GROUP</small></span></div>
+            <div class="login-wrap">
+                <div class="logo-box">
+                    <img src="https://lmsdarnel.ajover.com/assets/images/logo-darnel.png?v=1" alt="Darnel Group"
+                        onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                    <span class="lt">DARNEL<small>GROUP</small></span>
+                </div>
                 <h1>Standard Work</h1>
-                <p>Darnel Group · Trabajo estándar de lunes a viernes</p>
-                <div class="ulist" id="ulist"></div>
-                <div class="foot">Darnel Group · Mockup con datos ficticios · Los registros se guardan en este navegador
+                <p>Darnel Group · Gestión operativa de trabajo estándar de lunes a viernes</p>
+
+                <div class="profiles-list" id="profilesList"></div>
+
+                <div style="margin-top:auto; font-size:11px; opacity:0.75; text-align:center; padding-top:20px;">
+                    Simulador Web Oficial · Incluye programación de 270 actividades del Excel
                 </div>
             </div>
         </div>
-        <div class="screen" id="scrHome">
-            <header>
-                <div class="hrow">
-                    <div class="logo"><img src="https://lmsdarnel.ajover.com/assets/images/logo-darnel.png?v=1"
-                            alt="Darnel Group"
-                            onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span
-                            class="lt">DARNEL<small>GROUP</small></span></div>
-                    <div class="htitle"><b>Standard Work</b><small id="hUser"></small></div>
-                    <div class="hav" id="hAv" onclick="openMenu()"></div>
+
+        <!-- 2. PANTALLA DASHBOARD PRINCIPAL -->
+        <div class="screen" id="scrDashboard">
+            <header class="dash-header">
+                <div class="dash-hrow">
+                    <div class="logo-box" style="padding:4px 8px; border-radius:8px;">
+                        <img src="https://lmsdarnel.ajover.com/assets/images/logo-darnel.png?v=1" alt="Darnel" style="height:22px;"
+                            onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                        <span class="lt" style="font-size:12px;">DARNEL<small style="font-size:7px;">GROUP</small></span>
+                    </div>
+                    <div class="dash-htitle" style="flex:1; margin-left:10px;">
+                        <b>Standard Work</b>
+                        <small id="dashUserTxt">Usuario X · Carlos Méndez</small>
+                    </div>
+                    <div class="dash-avatar" id="dashAvatarBtn" onclick="openMenuModal()">CM</div>
                 </div>
-                <div class="hoy">
-                    <div><b id="hDia"></b><small id="hFecha"></small></div>
-                    <div style="text-align:right">
-                        <div class="prog" id="hProg"></div><small style="font-size:11px;opacity:.8">completadas</small>
+
+                <div class="dash-metrics">
+                    <div>
+                        <b id="dashDayTxt" style="font-size:14px;">Hoy · Jueves</b>
+                        <small id="dashDateTxt" style="display:block; opacity:.85; font-size:11px;">29 de octubre de 2026</small>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="dash-prog-num" id="dashProgTxt">2/4</div>
+                        <small style="font-size:10px; opacity:.85;">completadas</small>
                     </div>
                 </div>
-                <div class="bar"><i id="hBar"></i></div>
+                <div class="dash-bar"><div class="dash-bar-fill" id="dashBarFill"></div></div>
             </header>
-            <div class="days" id="days"></div>
-            <div class="list" id="list"></div>
-            <button class="fab" onclick="openAdd()">+</button>
+
+            <!-- Barra de Días L-V -->
+            <div class="week-bar" id="dashWeekChips"></div>
+
+            <!-- Listado de Actividades -->
+            <div class="content-scroll" id="dashActsList"></div>
+
+            <!-- Botón flotante Nueva Actividad -->
+            <button class="fab-btn" onclick="openAddModal()">+</button>
         </div>
-        <div class="ov" id="ov" onclick="if(event.target.id==='ov')closeSheet()">
-            <div class="sheet" id="sheet"></div>
+
+        <!-- 3. PANTALLA CALENDARIO LABORAL (Con AppBar Azul y Selector Semana/Mes corregido) -->
+        <div class="screen" id="scrCalendar">
+            <div class="appbar">
+                <div class="appbar-left">
+                    <button class="appbar-btn" onclick="navTo('scrDashboard')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <span class="appbar-title">Calendario Laboral</span>
+                </div>
+                <div class="appbar-actions">
+                    <button class="btn-today-pill" onclick="calGoToday()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        Hoy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Header con selector de Semana/Mes adaptativo -->
+            <div class="cal-header-bar">
+                <div style="flex:1; overflow:hidden;">
+                    <div id="calWeekTxt" style="font-weight:700; font-size:13px; color:var(--txt); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">Semana 2026-W44 · L-V</div>
+                    <div id="calProfileTxt" style="font-size:11px; color:var(--gris); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">Producción</div>
+                </div>
+                <div class="cal-toggle-wrap">
+                    <button class="cal-toggle-btn sel" id="btnToggleSem" onclick="setCalView('SEMANA')">Semana</button>
+                    <button class="cal-toggle-btn" id="btnToggleMes" onclick="setCalView('MES')">Mes</button>
+                </div>
+            </div>
+
+            <!-- Barra de Días del Calendario -->
+            <div class="week-bar" id="calWeekChips"></div>
+
+            <div class="content-scroll" id="calActsList"></div>
         </div>
-        <div class="toast" id="toast"></div>
+
+        <!-- 4. PANTALLA CENTRO DE INDICADORES (Interactivos con desglose real) -->
+        <div class="screen" id="scrIndicators">
+            <div class="appbar">
+                <div class="appbar-left">
+                    <button class="appbar-btn" onclick="navTo('scrDashboard')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <span class="appbar-title">Centro de Indicadores</span>
+                </div>
+            </div>
+
+            <div class="content-scroll">
+                <div style="background:linear-gradient(135deg, var(--azul), var(--morado)); border-radius:16px; padding:16px; color:#fff;">
+                    <div style="font-size:15px; font-weight:800;" id="kpiUserTxt">Yonny López</div>
+                    <div style="font-size:11px; opacity:.85;" id="kpiAreaTxt">Planta Extrusa · Operaciones</div>
+                    <div style="display:flex; justify-content:space-between; margin-top:14px; text-align:center;">
+                        <div><div style="font-size:22px; font-weight:800; color:var(--barraVerde);" id="kpiCumplimiento">75%</div><div style="font-size:10px; opacity:.85;">Cumplimiento</div></div>
+                        <div><div style="font-size:22px; font-weight:800;" id="kpiRealizadas">18</div><div style="font-size:10px; opacity:.85;">Realizadas</div></div>
+                        <div><div style="font-size:22px; font-weight:800; color:#FCA5A5;" id="kpiPendientes">6</div><div style="font-size:10px; opacity:.85;">Pendientes</div></div>
+                        <div><div style="font-size:22px; font-weight:800; color:#BAE6FD;" id="kpiEvaluables">24</div><div style="font-size:10px; opacity:.85;">Evaluables</div></div>
+                    </div>
+                </div>
+
+                <div class="section-label" style="margin-top:14px;">Métricas Operativas (Toca para auditar)</div>
+                <div class="kpi-grid">
+                    <div class="kpi-card" onclick="openKpiModal('Cumplimiento', 'evaluables')">
+                        <div class="kpi-lbl">Cumplimiento</div>
+                        <div class="kpi-val" style="color:var(--verde);" id="cardKpiCumplimiento">75%</div>
+                        <div style="font-size:10px; color:var(--gris);">De actividades evaluables</div>
+                    </div>
+                    <div class="kpi-card" onclick="openKpiModal('Realizadas', 'done')">
+                        <div class="kpi-lbl">Ejecutadas</div>
+                        <div class="kpi-val" style="color:var(--azul);" id="cardKpiRealizadas">18</div>
+                        <div style="font-size:10px; color:var(--gris);">Concluidas con éxito</div>
+                    </div>
+                    <div class="kpi-card" onclick="openKpiModal('Pendientes', 'pending')">
+                        <div class="kpi-lbl">Pendientes</div>
+                        <div class="kpi-val" style="color:var(--rojo);" id="cardKpiPendientes">6</div>
+                        <div style="font-size:10px; color:var(--gris);">Jornada actual y previas</div>
+                    </div>
+                    <div class="kpi-card" onclick="openKpiModal('Actividades Fijas', 'fixed')">
+                        <div class="kpi-lbl">Actividades Fijas</div>
+                        <div class="kpi-val" style="color:#6366F1;" id="cardKpiFijas">10</div>
+                        <div style="font-size:10px; color:var(--gris);">Obligatorias diarias</div>
+                    </div>
+                </div>
+
+                <div class="section-label" style="margin-top:16px;">Distribución Oficial de Tiempos (Excel ST-WR)</div>
+                <div id="kpiCategoryList" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <!-- 5. PANTALLA HISTORIAL DE EJECUCIONES (Con AppBar azul) -->
+        <div class="screen" id="scrHistory">
+            <div class="appbar">
+                <div class="appbar-left">
+                    <button class="appbar-btn" onclick="navTo('scrDashboard')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <span class="appbar-title">Historial de Ejecuciones</span>
+                </div>
+            </div>
+
+            <!-- Filtros Historial -->
+            <div style="background:#fff; padding:10px 14px; border-bottom:1px solid var(--borde);">
+                <input type="text" id="histSearchInput" placeholder="Buscar actividad..." class="form-control" oninput="renderHistory()" style="margin-bottom:8px;">
+                <div style="display:flex; gap:6px;">
+                    <button class="week-pill sel" id="btnHistAll" onclick="setHistFilter('ALL')">Todas</button>
+                    <button class="week-pill" id="btnHistDone" onclick="setHistFilter('DONE')">Realizadas</button>
+                    <button class="week-pill" id="btnHistPending" onclick="setHistFilter('PENDING')">Pendientes</button>
+                </div>
+            </div>
+
+            <div style="background:#EFF6FF; padding:8px 14px; font-size:11px; color:var(--azul); font-weight:600; display:flex; align-items:center; gap:6px;">
+                <span>ℹ️</span> Mantén presionada una actividad para ver su trazabilidad completa.
+            </div>
+
+            <div class="content-scroll" id="histList"></div>
+        </div>
+
+        <!-- 6. PANTALLA 4 SEMANAS (270 ACTIVIDADES DEL EXCEL) -->
+        <div class="screen" id="scrExcelWeeks">
+            <div class="appbar">
+                <div class="appbar-left">
+                    <button class="appbar-btn" onclick="navTo('scrDashboard')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <span class="appbar-title">Planificación 4 Semanas</span>
+                </div>
+                <div style="font-size:11px; opacity:0.85; font-weight:600;">270 Tareas</div>
+            </div>
+
+            <div class="excel-pill-bar">
+                <button class="week-pill sel" id="pillW1" onclick="setExcelWeek(1)">Semana 1 (70)</button>
+                <button class="week-pill" id="pillW2" onclick="setExcelWeek(2)">Semana 2 (68)</button>
+                <button class="week-pill" id="pillW3" onclick="setExcelWeek(3)">Semana 3 (67)</button>
+                <button class="week-pill" id="pillW4" onclick="setExcelWeek(4)">Semana 4 (65)</button>
+            </div>
+
+            <div class="content-scroll" id="excelActsList"></div>
+        </div>
+
+        <!-- MODAL BOTTOM SHEET -->
+        <div class="overlay" id="overlaySheet" onclick="if(event.target.id==='overlaySheet')closeSheet()">
+            <div class="sheet-body" id="sheetContent"></div>
+        </div>
+
+        <!-- TOAST NOTIFICACIONES -->
+        <div class="toast" id="toastBox"></div>
     </div>
 
+    <!-- DATOS EXCEL INCRUSTADOS -->
     <script>
-        /* ================== DATOS FICTICIOS (10 actividades por usuario) ================== */
-        const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"], COR = ["L", "M", "X", "J", "V"];
+    const EXCEL_ACTIVITIES = [{"w": 1, "d": 1, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "C4"}, {"w": 1, "d": 1, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "C6"}, {"w": 1, "d": 1, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "C7"}, {"w": 1, "d": 1, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "C8"}, {"w": 1, "d": 1, "s": "10:00", "e": "10:30", "n": "Revision Calidad Alertas y Reclamos", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "C10"}, {"w": 1, "d": 1, "s": "11:00", "e": "11:30", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "C12"}, {"w": 1, "d": 1, "s": "12:00", "e": "12:30", "n": "Semanal General  Gerencia JD", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "C14"}, {"w": 1, "d": 1, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "C15"}, {"w": 1, "d": 1, "s": "13:30", "e": "14:00", "n": "Preparacion de KPI para semanal de extrusa JD", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "C17"}, {"w": 1, "d": 1, "s": "14:30", "e": "15:00", "n": "Revision Semanal Extrusa Gerencia JD", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "C19"}, {"w": 1, "d": 1, "s": "15:00", "e": "15:30", "n": "Semanal Alertas y Reclamos", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "C20"}, {"w": 1, "d": 1, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "C21"}, {"w": 1, "d": 1, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "C22"}, {"w": 1, "d": 2, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "D4"}, {"w": 1, "d": 2, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "D6"}, {"w": 1, "d": 2, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "D7"}, {"w": 1, "d": 2, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "D8"}, {"w": 1, "d": 2, "s": "10:00", "e": "10:30", "n": "Capacidad y productividad de máquinas", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "D10"}, {"w": 1, "d": 2, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "D11"}, {"w": 1, "d": 2, "s": "11:30", "e": "12:00", "n": "1:1 Geisson", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "D13"}, {"w": 1, "d": 2, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "D15"}, {"w": 1, "d": 2, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "D17"}, {"w": 1, "d": 2, "s": "14:00", "e": "14:30", "n": "Semanal Utilidades", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "D18"}, {"w": 1, "d": 2, "s": "14:30", "e": "15:00", "n": "Revisar avances Dashboard del One Pager", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "D19"}, {"w": 1, "d": 2, "s": "15:00", "e": "15:30", "n": "Revision JSA Operaciones", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "D20"}, {"w": 1, "d": 2, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "D21"}, {"w": 1, "d": 2, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "D22"}, {"w": 1, "d": 3, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "E4"}, {"w": 1, "d": 3, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "E6"}, {"w": 1, "d": 3, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "E7"}, {"w": 1, "d": 3, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "E8"}, {"w": 1, "d": 3, "s": "09:30", "e": "10:00", "n": "Pre - Revision de Mejoras Proy", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "E9"}, {"w": 1, "d": 3, "s": "10:00", "e": "10:30", "n": "Revision de Desarrollos de Productos POF", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "E10"}, {"w": 1, "d": 3, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "E11"}, {"w": 1, "d": 3, "s": "11:30", "e": "12:00", "n": "1:1 Naren", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "E13"}, {"w": 1, "d": 3, "s": "12:00", "e": "12:30", "n": "Revisar Planes de Accion Seguridad", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "E14"}, {"w": 1, "d": 3, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "E15"}, {"w": 1, "d": 3, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "E17"}, {"w": 1, "d": 3, "s": "14:00", "e": "14:30", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "E18"}, {"w": 1, "d": 3, "s": "14:30", "e": "15:00", "n": "Avance Plan de Mantto EXTRUSA", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "E19"}, {"w": 1, "d": 3, "s": "15:30", "e": "15:45", "n": "Semanal Seg. Extrusa", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "E21"}, {"w": 1, "d": 4, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "F4"}, {"w": 1, "d": 4, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "F6"}, {"w": 1, "d": 4, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "F7"}, {"w": 1, "d": 4, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "F8"}, {"w": 1, "d": 4, "s": "09:30", "e": "10:00", "n": "Semanal Poliolefina", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "F9"}, {"w": 1, "d": 4, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "F11"}, {"w": 1, "d": 4, "s": "11:30", "e": "12:00", "n": "1:1 Emily", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "F13"}, {"w": 1, "d": 4, "s": "12:00", "e": "12:30", "n": "Proyectos Menores/Capex/Mejoras", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "F14"}, {"w": 1, "d": 4, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "F15"}, {"w": 1, "d": 4, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "F17"}, {"w": 1, "d": 4, "s": "14:00", "e": "14:30", "n": "1:1 Edwin", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "F18"}, {"w": 1, "d": 4, "s": "14:30", "e": "15:00", "n": "Semanal Inocuidad", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "F19"}, {"w": 1, "d": 4, "s": "15:00", "e": "15:30", "n": "Semanal Inocuidad", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "F20"}, {"w": 1, "d": 4, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "F21"}, {"w": 1, "d": 4, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "F22"}, {"w": 1, "d": 5, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "G4"}, {"w": 1, "d": 5, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "G6"}, {"w": 1, "d": 5, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "G7"}, {"w": 1, "d": 5, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "G8"}, {"w": 1, "d": 5, "s": "09:30", "e": "10:00", "n": "Revisión RMNC y concesiones", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "G9"}, {"w": 1, "d": 5, "s": "10:00", "e": "10:30", "n": "1:1 Alberto", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "G10"}, {"w": 1, "d": 5, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "G11"}, {"w": 1, "d": 5, "s": "11:30", "e": "12:00", "n": "Dexs", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "G13"}, {"w": 1, "d": 5, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "G15"}, {"w": 1, "d": 5, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "G17"}, {"w": 1, "d": 5, "s": "14:00", "e": "14:30", "n": "JJ -  YL 1:1", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "G18"}, {"w": 1, "d": 5, "s": "14:30", "e": "15:00", "n": "Confiabilidad de Equipos Críticos", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "G19"}, {"w": 1, "d": 5, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "G21"}, {"w": 1, "d": 5, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "G22"}, {"w": 2, "d": 1, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "I4"}, {"w": 2, "d": 1, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "I6"}, {"w": 2, "d": 1, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "I7"}, {"w": 2, "d": 1, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "I8"}, {"w": 2, "d": 1, "s": "10:00", "e": "10:30", "n": "Revision Calidad Alertas y Reclamos", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "I10"}, {"w": 2, "d": 1, "s": "11:00", "e": "11:30", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "I12"}, {"w": 2, "d": 1, "s": "12:00", "e": "12:30", "n": "Semanal General  Gerencia JD", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "I14"}, {"w": 2, "d": 1, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "I15"}, {"w": 2, "d": 1, "s": "13:30", "e": "14:00", "n": "Preparacion de KPI para semanal de extrusa JD", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "I17"}, {"w": 2, "d": 1, "s": "14:30", "e": "15:00", "n": "Revision Semanal Extrusa Gerencia JD", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "I19"}, {"w": 2, "d": 1, "s": "15:00", "e": "15:30", "n": "Semanal Alertas y Reclamos", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "I20"}, {"w": 2, "d": 1, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "I21"}, {"w": 2, "d": 1, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "I22"}, {"w": 2, "d": 2, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "J4"}, {"w": 2, "d": 2, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "J6"}, {"w": 2, "d": 2, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "J7"}, {"w": 2, "d": 2, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "J8"}, {"w": 2, "d": 2, "s": "10:00", "e": "10:30", "n": "Capacidad y productividad de máquinas", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "J10"}, {"w": 2, "d": 2, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "J11"}, {"w": 2, "d": 2, "s": "11:30", "e": "12:00", "n": "1:1 Geisson", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "J13"}, {"w": 2, "d": 2, "s": "12:00", "e": "12:30", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "J14"}, {"w": 2, "d": 2, "s": "13:00", "e": "13:30", "n": "Global Safety Meeting", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "J16"}, {"w": 2, "d": 2, "s": "14:00", "e": "14:30", "n": "Semanal Utilidades", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "J18"}, {"w": 2, "d": 2, "s": "14:30", "e": "15:00", "n": "Revisar avances Dashboard del One Pager", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "J19"}, {"w": 2, "d": 2, "s": "15:00", "e": "15:30", "n": "Revision JSA Operaciones", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "J20"}, {"w": 2, "d": 2, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "J21"}, {"w": 2, "d": 2, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "J22"}, {"w": 2, "d": 3, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "K4"}, {"w": 2, "d": 3, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "K6"}, {"w": 2, "d": 3, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "K7"}, {"w": 2, "d": 3, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "K8"}, {"w": 2, "d": 3, "s": "09:30", "e": "10:00", "n": "Pre - Revision de Mejoras Proy", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "K9"}, {"w": 2, "d": 3, "s": "10:00", "e": "10:30", "n": "Revision de Desarrollos de Productos POF", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "K10"}, {"w": 2, "d": 3, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "K11"}, {"w": 2, "d": 3, "s": "11:30", "e": "12:00", "n": "1:1 Naren", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "K13"}, {"w": 2, "d": 3, "s": "12:00", "e": "12:30", "n": "Revisar Planes de Accion Seguridad", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "K14"}, {"w": 2, "d": 3, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "K15"}, {"w": 2, "d": 3, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "K17"}, {"w": 2, "d": 3, "s": "14:00", "e": "14:30", "n": "Correos y aprobaciones", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "K18"}, {"w": 2, "d": 3, "s": "14:30", "e": "15:00", "n": "Avance Plan de Mantenimiento", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "K19"}, {"w": 2, "d": 3, "s": "15:30", "e": "15:45", "n": "Semanal Seg. Extrusa", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "K21"}, {"w": 2, "d": 4, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "L4"}, {"w": 2, "d": 4, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "L6"}, {"w": 2, "d": 4, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "L7"}, {"w": 2, "d": 4, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "L8"}, {"w": 2, "d": 4, "s": "09:30", "e": "10:00", "n": "Semanal Poliolefina", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "L9"}, {"w": 2, "d": 4, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "L11"}, {"w": 2, "d": 4, "s": "11:30", "e": "12:00", "n": "1:1 Emily", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "L13"}, {"w": 2, "d": 4, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "L15"}, {"w": 2, "d": 4, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "L17"}, {"w": 2, "d": 4, "s": "14:00", "e": "14:30", "n": "1:1 Edwin", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "L18"}, {"w": 2, "d": 4, "s": "14:30", "e": "15:00", "n": "Semanal Inocuidad", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "L19"}, {"w": 2, "d": 4, "s": "15:00", "e": "15:30", "n": "Semanal Inocuidad", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "L20"}, {"w": 2, "d": 4, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "L21"}, {"w": 2, "d": 4, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "L22"}, {"w": 2, "d": 5, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "M4"}, {"w": 2, "d": 5, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "M6"}, {"w": 2, "d": 5, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "M7"}, {"w": 2, "d": 5, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "M8"}, {"w": 2, "d": 5, "s": "10:00", "e": "10:30", "n": "1:1 Alberto", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "M10"}, {"w": 2, "d": 5, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "M11"}, {"w": 2, "d": 5, "s": "11:30", "e": "12:00", "n": "Dexs", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "M13"}, {"w": 2, "d": 5, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "M15"}, {"w": 2, "d": 5, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "M17"}, {"w": 2, "d": 5, "s": "14:00", "e": "14:30", "n": "JJ -  YL 1:1", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "M18"}, {"w": 2, "d": 5, "s": "14:30", "e": "15:00", "n": "Confiabilidad de Equipos Críticos", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "M19"}, {"w": 2, "d": 5, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "M21"}, {"w": 2, "d": 5, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "M22"}, {"w": 3, "d": 1, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "O4"}, {"w": 3, "d": 1, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "O6"}, {"w": 3, "d": 1, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "O7"}, {"w": 3, "d": 1, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "O8"}, {"w": 3, "d": 1, "s": "10:00", "e": "10:30", "n": "Revision Calidad Alertas y Reclamos", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "O10"}, {"w": 3, "d": 1, "s": "11:00", "e": "11:30", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "O12"}, {"w": 3, "d": 1, "s": "12:00", "e": "12:30", "n": "Semanal General  Gerencia JD", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "O14"}, {"w": 3, "d": 1, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "O15"}, {"w": 3, "d": 1, "s": "13:30", "e": "14:00", "n": "Preparacion de KPI para semanal de extrusa JD", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "O17"}, {"w": 3, "d": 1, "s": "14:30", "e": "15:00", "n": "Revision Semanal Extrusa Gerencia JD", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "O19"}, {"w": 3, "d": 1, "s": "15:00", "e": "15:30", "n": "Semanal Alertas y Reclamos", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "O20"}, {"w": 3, "d": 1, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "O21"}, {"w": 3, "d": 1, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "O22"}, {"w": 3, "d": 2, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "P4"}, {"w": 3, "d": 2, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "P6"}, {"w": 3, "d": 2, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "P7"}, {"w": 3, "d": 2, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "P8"}, {"w": 3, "d": 2, "s": "10:00", "e": "10:30", "n": "Capacidad y productividad de máquinas", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "P10"}, {"w": 3, "d": 2, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "P11"}, {"w": 3, "d": 2, "s": "11:30", "e": "12:00", "n": "1:1 Geisson", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "P13"}, {"w": 3, "d": 2, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "P15"}, {"w": 3, "d": 2, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "P17"}, {"w": 3, "d": 2, "s": "14:00", "e": "14:30", "n": "Semanal Utilidades", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "P18"}, {"w": 3, "d": 2, "s": "14:30", "e": "15:00", "n": "Revisar avances Dashboard del One Pager", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "P19"}, {"w": 3, "d": 2, "s": "15:00", "e": "15:30", "n": "Revision JSA Operaciones", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "P20"}, {"w": 3, "d": 2, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "P21"}, {"w": 3, "d": 2, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "P22"}, {"w": 3, "d": 3, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "Q4"}, {"w": 3, "d": 3, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Q6"}, {"w": 3, "d": 3, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Q7"}, {"w": 3, "d": 3, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "Q8"}, {"w": 3, "d": 3, "s": "09:30", "e": "10:00", "n": "Pre - Revision de Mejoras Proy", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "Q9"}, {"w": 3, "d": 3, "s": "10:00", "e": "10:30", "n": "Revision de Desarrollos de Productos POF", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "Q10"}, {"w": 3, "d": 3, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "Q11"}, {"w": 3, "d": 3, "s": "11:30", "e": "12:00", "n": "1:1 Naren", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "Q13"}, {"w": 3, "d": 3, "s": "12:00", "e": "12:30", "n": "Revisar Planes de Accion Seguridad", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "Q14"}, {"w": 3, "d": 3, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Q15"}, {"w": 3, "d": 3, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "Q17"}, {"w": 3, "d": 3, "s": "14:30", "e": "15:00", "n": "Avance Plan de Mantenimiento", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "Q19"}, {"w": 3, "d": 3, "s": "15:30", "e": "15:45", "n": "Semanal Seg. Extrusa", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "Q21"}, {"w": 3, "d": 4, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "R4"}, {"w": 3, "d": 4, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "R6"}, {"w": 3, "d": 4, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "R7"}, {"w": 3, "d": 4, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "R8"}, {"w": 3, "d": 4, "s": "09:30", "e": "10:00", "n": "Semanal Poliolefina", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "R9"}, {"w": 3, "d": 4, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "R11"}, {"w": 3, "d": 4, "s": "11:30", "e": "12:00", "n": "1:1 Emily", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "R13"}, {"w": 3, "d": 4, "s": "12:00", "e": "12:30", "n": "Proyectos Menores/Capex/Mejoras", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "R14"}, {"w": 3, "d": 4, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "R15"}, {"w": 3, "d": 4, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "R17"}, {"w": 3, "d": 4, "s": "14:00", "e": "14:30", "n": "1:1 Edwin", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "R18"}, {"w": 3, "d": 4, "s": "15:00", "e": "15:30", "n": "Semanal Inocuidad", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "R20"}, {"w": 3, "d": 4, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "R21"}, {"w": 3, "d": 4, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "R22"}, {"w": 3, "d": 5, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "S4"}, {"w": 3, "d": 5, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "S6"}, {"w": 3, "d": 5, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "S7"}, {"w": 3, "d": 5, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "S8"}, {"w": 3, "d": 5, "s": "10:00", "e": "10:30", "n": "Revisión RMNC y concesiones", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "S10"}, {"w": 3, "d": 5, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "S11"}, {"w": 3, "d": 5, "s": "11:30", "e": "12:00", "n": "Dexs", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "S13"}, {"w": 3, "d": 5, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "S15"}, {"w": 3, "d": 5, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "S17"}, {"w": 3, "d": 5, "s": "14:00", "e": "14:30", "n": "JJ -  YL 1:1", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "S18"}, {"w": 3, "d": 5, "s": "14:30", "e": "15:00", "n": "Confiabilidad de Equipos Críticos", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "S19"}, {"w": 3, "d": 5, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "S21"}, {"w": 3, "d": 5, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "S22"}, {"w": 4, "d": 1, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "U4"}, {"w": 4, "d": 1, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "U6"}, {"w": 4, "d": 1, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "U7"}, {"w": 4, "d": 1, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "U8"}, {"w": 4, "d": 1, "s": "10:00", "e": "10:30", "n": "Revision Calidad Alertas y Reclamos", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "U10"}, {"w": 4, "d": 1, "s": "11:00", "e": "11:30", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "U12"}, {"w": 4, "d": 1, "s": "12:00", "e": "12:30", "n": "Semanal General  Gerencia JD", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "U14"}, {"w": 4, "d": 1, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "U15"}, {"w": 4, "d": 1, "s": "13:30", "e": "14:00", "n": "Preparacion de KPI para semanal de extrusa JD", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "U17"}, {"w": 4, "d": 1, "s": "14:30", "e": "15:00", "n": "Revision Semanal Extrusa Gerencia JD", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "U19"}, {"w": 4, "d": 1, "s": "15:00", "e": "15:30", "n": "Semanal Alertas y Reclamos", "c": "Calidad e Inocuidad", "f": 0, "sh": "Weekly Review", "cell": "U20"}, {"w": 4, "d": 1, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "U21"}, {"w": 4, "d": 1, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "U22"}, {"w": 4, "d": 2, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "V4"}, {"w": 4, "d": 2, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "V6"}, {"w": 4, "d": 2, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "V7"}, {"w": 4, "d": 2, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "V8"}, {"w": 4, "d": 2, "s": "10:00", "e": "10:30", "n": "Capacidad y productividad de máquinas", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "V10"}, {"w": 4, "d": 2, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "V11"}, {"w": 4, "d": 2, "s": "11:30", "e": "12:00", "n": "1:1 Geisson", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "V13"}, {"w": 4, "d": 2, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "V15"}, {"w": 4, "d": 2, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "V17"}, {"w": 4, "d": 2, "s": "14:00", "e": "14:30", "n": "Semanal Utilidades", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "V18"}, {"w": 4, "d": 2, "s": "14:30", "e": "15:00", "n": "Revisar avances Dashboard del One Pager", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "V19"}, {"w": 4, "d": 2, "s": "15:00", "e": "15:30", "n": "Revision JSA Operaciones", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "V20"}, {"w": 4, "d": 2, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "V21"}, {"w": 4, "d": 2, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "V22"}, {"w": 4, "d": 3, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "W4"}, {"w": 4, "d": 3, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "W6"}, {"w": 4, "d": 3, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "W7"}, {"w": 4, "d": 3, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "W8"}, {"w": 4, "d": 3, "s": "09:30", "e": "10:00", "n": "Pre - Revision de Mejoras Proy", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "W9"}, {"w": 4, "d": 3, "s": "10:00", "e": "10:30", "n": "Revision de Desarrollos de Productos POF", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "W10"}, {"w": 4, "d": 3, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "W11"}, {"w": 4, "d": 3, "s": "11:30", "e": "12:00", "n": "1:1 Naren", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "W13"}, {"w": 4, "d": 3, "s": "12:00", "e": "12:30", "n": "Revisar Planes de Accion Seguridad", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "W14"}, {"w": 4, "d": 3, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "W15"}, {"w": 4, "d": 3, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "W17"}, {"w": 4, "d": 3, "s": "14:30", "e": "15:00", "n": "Avance Plan de Mantenimiento", "c": "Proyectos y Mejora Continua", "f": 0, "sh": "Weekly Review", "cell": "W19"}, {"w": 4, "d": 3, "s": "15:30", "e": "15:45", "n": "Semanal Seg. Extrusa", "c": "Seguridad", "f": 0, "sh": "Weekly Review", "cell": "W21"}, {"w": 4, "d": 4, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "X4"}, {"w": 4, "d": 4, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "X6"}, {"w": 4, "d": 4, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "X7"}, {"w": 4, "d": 4, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "X8"}, {"w": 4, "d": 4, "s": "09:30", "e": "10:00", "n": "Semanal Poliolefina", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "X9"}, {"w": 4, "d": 4, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "X11"}, {"w": 4, "d": 4, "s": "11:30", "e": "12:00", "n": "1:1 Emily", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "X13"}, {"w": 4, "d": 4, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "X15"}, {"w": 4, "d": 4, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "X17"}, {"w": 4, "d": 4, "s": "14:00", "e": "14:30", "n": "1:1 Edwin", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "X18"}, {"w": 4, "d": 4, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "X21"}, {"w": 4, "d": 4, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "X22"}, {"w": 4, "d": 5, "s": "07:00", "e": "07:30", "n": "Gemba Walk", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "Y4"}, {"w": 4, "d": 5, "s": "08:00", "e": "08:30", "n": "Revision de Bi's/Cubos", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Y6"}, {"w": 4, "d": 5, "s": "08:30", "e": "09:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Y7"}, {"w": 4, "d": 5, "s": "09:00", "e": "09:30", "n": "Reunion de Piso", "c": "Operación y Ejecución", "f": 1, "sh": "Weekly Review", "cell": "Y8"}, {"w": 4, "d": 5, "s": "10:00", "e": "10:30", "n": "1:1 Alberto", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "Y10"}, {"w": 4, "d": 5, "s": "10:30", "e": "11:00", "n": "Desarrollo de Competencias Operacionales", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "Y11"}, {"w": 4, "d": 5, "s": "11:30", "e": "12:00", "n": "Dexs", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Y13"}, {"w": 4, "d": 5, "s": "12:30", "e": "13:00", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Y15"}, {"w": 4, "d": 5, "s": "13:30", "e": "14:00", "n": "Adherencia al plan de producción", "c": "Operación y Ejecución", "f": 0, "sh": "Weekly Review", "cell": "Y17"}, {"w": 4, "d": 5, "s": "14:00", "e": "14:30", "n": "JJ -  YL 1:1", "c": "Liderazgo y Desarrollo de Personas", "f": 0, "sh": "Weekly Review", "cell": "Y18"}, {"w": 4, "d": 5, "s": "14:30", "e": "15:00", "n": "Confiabilidad de Equipos Críticos", "c": "Resultados y Productividad", "f": 0, "sh": "Weekly Review", "cell": "Y19"}, {"w": 4, "d": 5, "s": "15:30", "e": "15:45", "n": "Tareas Pend - Aprob. - Solicitudes - Correos -", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Y21"}, {"w": 4, "d": 5, "s": "15:45", "e": "16:00", "n": "Revision Agenda próximo día.", "c": "Administración", "f": 0, "sh": "Weekly Review", "cell": "Y22"}];
+const CATEGORY_DISTRIBUTION = [{"categoria": "Operación y Ejecución", "porcentaje": 28, "colorHex": "#006DB2"}, {"categoria": "Resultados y Productividad", "porcentaje": 18, "colorHex": "#2E7D32"}, {"categoria": "Liderazgo y Desarrollo de Personas", "porcentaje": 15, "colorHex": "#E65100"}, {"categoria": "Proyectos y Mejora Continua", "porcentaje": 11, "colorHex": "#0288D1"}, {"categoria": "Calidad e Inocuidad", "porcentaje": 9, "colorHex": "#7B1FA2"}, {"categoria": "Seguridad", "porcentaje": 5, "colorHex": "#D32F2F"}, {"categoria": "Administración", "porcentaje": 12, "colorHex": "#546E7A"}, {"categoria": "Sin asignación (espacios libres)", "porcentaje": 2, "colorHex": "#9E9E9E"}];
+
+    </script>
+
+    <!-- LÓGICA DE NEGOCIO WEB COMPLETA -->
+    <script>
+        const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+        const COR = ["L", "M", "X", "J", "V"];
         const LV = [1, 2, 3, 4, 5];
-        const BASE = [ // Obligatorias de lunes a viernes para TODOS
-            { n: "Reunión Diaria (Visual Room)", d: "Revisión de KPIs, seguridad y prioridades del día", dias: LV, fija: true },
-            { n: "Gemba Walk", d: "Recorrido en piso", dias: LV, fija: true }
+
+        const BASE = [
+            { n: "Reunión Diaria (Visual Room)", d: "Revisión de KPIs, seguridad y prioridades del día", dias: LV, fija: true, area: "Producción", cat: "Operación y Ejecución", s: "08:00", e: "08:30" },
+            { n: "Gemba Walk", d: "Recorrido en piso", dias: LV, fija: true, area: "Producción", cat: "Operación y Ejecución", s: "08:30", e: "09:00" }
         ];
+
         const USERS = {
             X: {
-                nombre: "Usuario X · Carlos Méndez", cargo: "Supervisor de Producción", ini: "CM", acts: [...BASE,
-                { n: "Revisión OEE", d: "Análisis de paradas y desempeño de línea", dias: [1, 3, 5] },
-                { n: "Seguimiento de Scrap", d: "Pareto de desperdicio y acciones", dias: [2, 4] },
-                { n: "Auditoría 5S", d: "Orden y limpieza del área", dias: [3] },
-                { n: "Verificación de setup", d: "Cambios de referencia y arranques", dias: [1, 4] },
-                { n: "Seguimiento planes de acción", d: "Estado de acciones abiertas", dias: [2, 5] },
-                { n: "Charla de seguridad", d: "Tema de seguridad con el turno", dias: [1] },
-                { n: "Revisión de mantenimiento", d: "Órdenes de trabajo y paros programados", dias: [3] },
-                { n: "Cierre semanal de indicadores", d: "Consolidado de producción", dias: [5] }]
+                id: "X", nombre: "Usuario X · Carlos Méndez", cargo: "Supervisor de Producción", area: "Producción", ini: "CM",
+                acts: [...BASE,
+                    { n: "Revisión OEE", d: "Análisis de paradas y desempeño de línea", dias: [1, 3, 5], area: "Producción", cat: "Resultados y Productividad", s: "09:00", e: "09:30" },
+                    { n: "Seguimiento de Scrap", d: "Pareto de desperdicio y acciones", dias: [2, 4], area: "Producción", cat: "Resultados y Productividad", s: "09:30", e: "10:00" },
+                    { n: "Auditoría 5S", d: "Orden y limpieza del área", dias: [3], area: "Producción", cat: "Calidad e Inocuidad", s: "10:00", e: "10:30" },
+                    { n: "Verificación de setup", d: "Cambios de referencia y arranques", dias: [1, 4], area: "Producción", cat: "Operación y Ejecución", s: "11:00", e: "11:30" },
+                    { n: "Charla de seguridad", d: "Tema de seguridad con el turno", dias: [1], area: "Producción", cat: "Seguridad", s: "14:00", e: "14:30" },
+                    { n: "Cierre semanal de indicadores", d: "Consolidado de producción", dias: [5], area: "Producción", cat: "Resultados y Productividad", s: "15:00", e: "16:00" }
+                ]
             },
             Y: {
-                nombre: "Usuario Y · Laura Pérez", cargo: "Coordinadora de Calidad", ini: "LP", acts: [...BASE,
-                { n: "Liberación de lotes", d: "Verificación de producto terminado", dias: [1, 2, 4] },
-                { n: "Revisión de reclamos", d: "Seguimiento RNC con clientes", dias: [1, 4] },
-                { n: "Calibración de equipos", d: "Laboratorio de calidad", dias: [2] },
-                { n: "Auditoría de proceso", d: "Parámetros críticos de línea", dias: [3, 5] },
-                { n: "Control de no conformes", d: "Producto retenido y disposición", dias: [2, 4] },
-                { n: "Revisión de PPM", d: "Defectos por millón", dias: [3] },
-                { n: "Verificación de inocuidad", d: "Buenas prácticas de manufactura", dias: [1, 5] },
-                { n: "Reporte semanal de calidad", d: "Consolidado para gerencia", dias: [5] }]
+                id: "Y", nombre: "Usuario Y · Laura Pérez", cargo: "Coordinadora de Calidad", area: "Calidad", ini: "LP",
+                acts: [...BASE,
+                    { n: "Liberación de lotes", d: "Verificación de producto terminado", dias: [1, 2, 4], area: "Calidad", cat: "Calidad e Inocuidad", s: "09:00", e: "10:00" },
+                    { n: "Revisión de reclamos", d: "Seguimiento RNC con clientes", dias: [1, 4], area: "Calidad", cat: "Resultados y Productividad", s: "10:00", e: "10:30" },
+                    { n: "Calibración de equipos", d: "Laboratorio de calidad", dias: [2], area: "Calidad", cat: "Operación y Ejecución", s: "11:00", e: "12:00" },
+                    { n: "Auditoría de proceso", d: "Parámetros críticos de línea", dias: [3, 5], area: "Calidad", cat: "Calidad e Inocuidad", s: "14:00", e: "15:00" }
+                ]
             },
             Z: {
-                nombre: "Usuario Z · Andrés Ruiz", cargo: "Líder de Logística", ini: "AR", acts: [...BASE,
-                { n: "Plan de cargue", d: "Programación de despachos", dias: [1, 3, 5] },
-                { n: "Checklist montacargas", d: "Inspección preoperacional", dias: [1, 3] },
-                { n: "Inventario cíclico", d: "Conteo de bodega PT", dias: [2, 4] },
-                { n: "Revisión de OTIF", d: "Entregas a tiempo y completas", dias: [1, 4] },
-                { n: "Control de exportaciones", d: "Documentación y contenedores", dias: [2, 5] },
-                { n: "Auditoría 5S bodega", d: "Orden y señalización", dias: [3] },
-                { n: "Revisión con transportadores", d: "Novedades y programación", dias: [4] },
-                { n: "Cierre semanal logístico", d: "Indicadores y pendientes", dias: [5] }]
+                id: "Z", nombre: "Usuario Z · Andrés Ruiz", cargo: "Líder de Logística", area: "Logística", ini: "AR",
+                acts: [...BASE,
+                    { n: "Plan de cargue", d: "Programación de despachos", dias: [1, 3, 5], area: "Logística", cat: "Operación y Ejecución", s: "09:00", e: "09:30" },
+                    { n: "Checklist montacargas", d: "Inspección preoperacional", dias: [1, 3], area: "Logística", cat: "Seguridad", s: "07:30", e: "08:00" },
+                    { n: "Inventario cíclico", d: "Conteo de bodega PT", dias: [2, 4], area: "Logística", cat: "Administración", s: "10:00", e: "11:00" }
+                ]
+            },
+            YL: {
+                id: "YL", nombre: "Yonny López", cargo: "Jefe de Planta / Operaciones Extrusa", area: "Planta Extrusa", ini: "YL",
+                acts: [
+                    { n: "Gemba Walk", d: "Recorrido y control en piso de planta extrusión", dias: LV, fija: true, area: "Planta Extrusa", cat: "Operación y Ejecución", s: "07:00", e: "07:30" },
+                    { n: "Reunión Diaria (Visual Room)", d: "Seguimiento operativo y KPIs", dias: LV, fija: true, area: "Planta Extrusa", cat: "Operación y Ejecución", s: "08:00", e: "08:30" },
+                    { n: "Control de Variables de Extrusión", d: "Temperaturas, presiones y perfiles", dias: [1, 3, 5], area: "Planta Extrusa", cat: "Calidad e Inocuidad", s: "09:30", e: "10:30" },
+                    { n: "Seguimiento a Desperdicio y Scrap", d: "Pareto y acciones correctivas", dias: [2, 4], area: "Planta Extrusa", cat: "Resultados y Productividad", s: "11:00", e: "11:45" },
+                    { n: "Revisión de Paradas con Mantenimiento", d: "Análisis de fallas mayores", dias: [3], area: "Planta Extrusa", cat: "Proyectos y Mejora Continua", s: "14:00", e: "15:00" },
+                    { n: "Cierre Semanal de Planta", d: "Consolidado de toneladas y OEE", dias: [5], area: "Planta Extrusa", cat: "Resultados y Productividad", s: "15:00", e: "16:30" }
+                ]
             }
         };
 
-        /* ================== ESTADO ================== */
-        let U = null, S = null, selDay = 1, HOY = 1;
-        const rd = new Date().getDay(); HOY = (rd >= 1 && rd <= 5) ? rd : 1; selDay = HOY;
-        function weekKey() { const d = new Date(); const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return t.getUTCFullYear() + "-W" + Math.ceil(((t - y) / 864e5 + 1) / 7); }
-        const KEY = u => "SW10_" + u + "_" + weekKey();
-        function seed(u) {
-            let id = 1, inst = [], hist = {};
-            USERS[u].acts.forEach(a => {
-                const mT = 8 + Math.floor(Math.random() * 10), yT = 60 + Math.floor(Math.random() * 120), r = 0.55 + Math.random() * 0.4;
-                hist[a.n] = { mD: Math.round(mT * r), mT, yD: Math.round(yT * Math.min(1, r + 0.03)), yT };
-                a.dias.forEach(dd => inst.push({ id: id++, n: a.n, d: a.d, day: dd, orig: dd, fija: !!a.fija, done: dd < HOY ? Math.random() > 0.35 : false }));
+        let currentUserId = "X";
+        let stateData = null;
+        let selectedDay = 4;
+        let simulatedHoy = 4;
+        let calendarView = "SEMANA";
+        let historyFilter = "ALL";
+        let excelSelectedWeek = 1;
+
+        function getWeekKey() {
+            const d = new Date();
+            const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const n = t.getUTCDay() || 7;
+            t.setUTCDate(t.getUTCDate() + 4 - n);
+            const y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+            return t.getUTCFullYear() + "-W" + Math.ceil(((t - y) / 864e5 + 1) / 7);
+        }
+
+        function getStorageKey(uid) {
+            return "DARNEL_SW_V8_" + uid + "_" + getWeekKey();
+        }
+
+        function initUserData(uid) {
+            const u = USERS[uid];
+            let id = 1;
+            const inst = [];
+            u.acts.forEach(a => {
+                a.dias.forEach(d => {
+                    inst.push({
+                        id: id++,
+                        n: a.n,
+                        d: a.d,
+                        day: d,
+                        orig: d,
+                        fija: !!a.fija,
+                        area: a.area || u.area,
+                        cat: a.cat || "Operación y Ejecución",
+                        s: a.s || "08:00",
+                        e: a.e || "08:30",
+                        done: d < simulatedHoy ? true : (d === simulatedHoy ? (id % 2 === 0) : false),
+                        obs: "",
+                        motivo: "",
+                        completedAt: d <= simulatedHoy ? "2026-10-29 08:30:00" : null
+                    });
+                });
             });
-            return { inst, hist, cfgHoy: HOY };
+            return { inst, cfgHoy: simulatedHoy };
         }
-        function load(u) { const s = localStorage.getItem(KEY(u)); return s ? JSON.parse(s) : seed(u); }
-        function save() { localStorage.setItem(KEY(U), JSON.stringify(S)); }
 
-        /* ================== LOGIN ================== */
+        function loadState(uid) {
+            const raw = localStorage.getItem(getStorageKey(uid));
+            if (raw) {
+                try { return JSON.parse(raw); } catch(e) {}
+            }
+            return initUserData(uid);
+        }
+
+        function saveState() {
+            localStorage.setItem(getStorageKey(currentUserId), JSON.stringify(stateData));
+        }
+
+        /* NAVEGACIÓN ENTRE PANTALLAS */
+        function navTo(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+            document.getElementById(screenId).classList.add('on');
+            if (screenId === 'scrDashboard') renderDashboard();
+            if (screenId === 'scrCalendar') renderCalendar();
+            if (screenId === 'scrIndicators') renderIndicators();
+            if (screenId === 'scrHistory') renderHistory();
+            if (screenId === 'scrExcelWeeks') renderExcelWeeks();
+        }
+
+        /* INICIALIZACIÓN LOGIN */
         function renderLogin() {
-            document.getElementById("ulist").innerHTML = Object.keys(USERS).map(k => `
-    <div class="ubtn" onclick="login('${k}')"><div class="av">${USERS[k].ini}</div>
-    <div><b>${USERS[k].nombre}</b><small>${USERS[k].cargo} · ${USERS[k].acts.length} actividades</small></div></div>`).join("");
-        }
-        function login(k) {
-            U = k; S = load(k); HOY = S.cfgHoy || HOY; selDay = HOY; save();
-            document.getElementById("scrLogin").classList.remove("on"); document.getElementById("scrHome").classList.add("on");
-            document.getElementById("hUser").textContent = USERS[k].nombre; document.getElementById("hAv").textContent = USERS[k].ini; render();
-        }
-        function logout() { closeSheet(); U = null; document.getElementById("scrHome").classList.remove("on"); document.getElementById("scrLogin").classList.add("on"); }
-
-        /* ================== INDICADORES ================== */
-        function ind(name) {
-            const h = S.hist[name] || { mD: 0, mT: 0, yD: 0, yT: 0 };
-            const wk = S.inst.filter(x => x.n === name && x.day <= HOY), wd = wk.filter(x => x.done).length, t1 = h.mT + wk.length, t2 = h.yT + wk.length;
-            return { m: t1 ? Math.round((h.mD + wd) / t1 * 100) : 0, y: t2 ? Math.round((h.yD + wd) / t2 * 100) : 0 };
-        }
-
-        /* ================== RENDER ================== */
-        function render() {
-            const f = new Date(), mes = f.toLocaleDateString("es-CO", { month: "long" });
-            const hl = S.inst.filter(x => x.day === HOY), he = hl.filter(x => x.done).length;
-            hDia.textContent = "Hoy · " + DIAS[HOY - 1];
-            hFecha.textContent = f.toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
-            hProg.textContent = he + "/" + hl.length; hBar.style.width = (hl.length ? he / hl.length * 100 : 0) + "%";
-            days.innerHTML = DIAS.map((d, i) => {
-                const n = i + 1, its = S.inst.filter(x => x.day === n); let c = "#CBD5E1";
-                if (n <= HOY && its.length) c = its.every(x => x.done) ? "var(--verde)" : "var(--rojo)";
-                return `<div class="day ${n === selDay ? 'sel' : ''} ${n === HOY ? 'today' : ''}" onclick="selDay=${n};render()"><span class="dot" style="background:${c}"></span><b>${COR[i]}</b><small>${n === HOY ? 'Hoy' : d.slice(0, 3)} · ${its.length}</small></div>`;
+            const list = document.getElementById("profilesList");
+            list.innerHTML = Object.keys(USERS).map(k => {
+                const u = USERS[k];
+                return `<div class="profile-btn" onclick="login('${k}')">
+                    <div class="profile-avatar">${u.ini}</div>
+                    <div class="profile-info">
+                        <b>${u.nombre}</b>
+                        <small>${u.cargo} · ${u.area}</small>
+                    </div>
+                </div>`;
             }).join("");
-            const items = S.inst.filter(x => x.day === selDay).sort((a, b) => b.fija - a.fija);
-            if (!items.length) { list.innerHTML = `<div class="lbl">${DIAS[selDay - 1]}</div><div class="empty">Sin actividades para este día</div>`; return; }
-            list.innerHTML = `<div class="lbl">${selDay === HOY ? 'Actividades de hoy' : 'Actividades del ' + DIAS[selDay - 1]}${selDay > HOY ? ' · programadas' : ''} (${items.length})</div>` +
+        }
+
+        function login(uid) {
+            currentUserId = uid;
+            stateData = loadState(uid);
+            simulatedHoy = stateData.cfgHoy || 4;
+            selectedDay = simulatedHoy;
+            navTo("scrDashboard");
+            showToast("Sesión iniciada como " + USERS[uid].nombre);
+        }
+
+        function logout() {
+            closeSheet();
+            navTo("scrLogin");
+        }
+
+        /* DASHBOARD PRINCIPAL */
+        function renderDashboard() {
+            const u = USERS[currentUserId];
+            document.getElementById("dashUserTxt").textContent = u.nombre + " · " + u.area;
+            document.getElementById("dashAvatarBtn").textContent = u.ini;
+            document.getElementById("dashDayTxt").textContent = "Hoy · " + DIAS[simulatedHoy - 1];
+            
+            const dayActs = stateData.inst.filter(x => x.day === simulatedHoy);
+            const doneActs = dayActs.filter(x => x.done).length;
+            document.getElementById("dashProgTxt").textContent = doneActs + "/" + dayActs.length;
+            document.getElementById("dashBarFill").style.width = (dayActs.length ? (doneActs / dayActs.length * 100) : 0) + "%";
+
+            // Chips L-V
+            document.getElementById("dashWeekChips").innerHTML = DIAS.map((d, i) => {
+                const n = i + 1;
+                const acts = stateData.inst.filter(x => x.day === n);
+                const allDone = acts.length > 0 && acts.every(x => x.done);
+                const dotColor = acts.length === 0 ? "#CBD5E1" : (allDone ? "var(--verde)" : "var(--rojo)");
+                return `<div class="day-chip ${n === selectedDay ? 'sel' : ''} ${n === simulatedHoy ? 'today' : ''}" onclick="selectedDay=${n};renderDashboard();">
+                    <span class="dot-badge" style="background:${dotColor};"></span>
+                    <b>${COR[i]}</b>
+                    <small>Día ${n}</small>
+                </div>`;
+            }).join("");
+
+            // Listado del día seleccionado
+            const items = stateData.inst.filter(x => x.day === selectedDay).sort((a,b) => b.fija - a.fija);
+            const listEl = document.getElementById("dashActsList");
+            if (!items.length) {
+                listEl.innerHTML = `<div class="section-label">${DIAS[selectedDay - 1]}</div><div style="text-align:center; padding:40px; color:var(--gris); font-size:13px;">No hay actividades para este día</div>`;
+                return;
+            }
+
+            listEl.innerHTML = `<div class="section-label">Actividades del ${DIAS[selectedDay - 1]} (${items.length})</div>` +
                 items.map(x => {
-                    const k = ind(x.n), fut = selDay > HOY, cls = fut ? 'fut' : (x.done ? 'ok' : 'no'), st = fut ? 'Programada' : (x.done ? '✔ Realizada' : '✖ Pendiente');
-                    const canMove = !x.fija && x.day < 5 && !x.done;
-                    const accion = x.fija ? `<span class="fija">📌 Diaria L-V</span>` : (canMove ? `<button class="mv" onclick="event.stopPropagation();openMove(${x.id})">⇄ Mover</button>` : '');
-                    return `<div class="card ${cls}" onclick="toggle(${x.id})">
-      <div class="ind"><span>Indicador del mes (${mes}): ${k.m}%</span><span class="state">${st}</span></div>
-      <div class="cname">${x.n}</div><div class="cdesc">${x.d}</div>
-      <div class="ind"><span>Indicador del año ${f.getFullYear()}: ${k.y}%</span>
-      <span style="display:flex;gap:6px;align-items:center">${x.orig !== x.day ? `<span class="tag">Desde ${DIAS[x.orig - 1]}</span>` : ''}${accion}</span></div></div>`;
+                    const isFut = selectedDay > simulatedHoy;
+                    const cardCls = isFut ? '' : (x.done ? 'ok' : 'no');
+                    const pillCls = isFut ? 'fut' : (x.done ? 'ok' : 'no');
+                    const pillTxt = isFut ? 'Programada' : (x.done ? '✔ Realizada' : '✖ Pendiente');
+                    return `<div class="act-card ${cardCls}" onclick="toggleAct(${x.id})">
+                        <div class="act-top">
+                            <span class="pill-status ${pillCls}">${pillTxt}</span>
+                            <span>${x.s} - ${x.e}</span>
+                        </div>
+                        <div class="act-title">${x.n}</div>
+                        <div class="act-desc">${x.d}</div>
+                        <div class="act-meta">
+                            <span>🏢 ${x.area}</span>
+                            <span>${x.fija ? '<span class="tag-fixed">📌 Fija Diaria</span>' : x.cat}</span>
+                        </div>
+                    </div>`;
                 }).join("");
         }
 
-        /* ================== ACCIONES ================== */
-        function toggle(id) {
-            const x = S.inst.find(i => i.id === id);
-            if (x.day > HOY) { toast("Aún no es el día de esta actividad"); return; }
-            x.done = !x.done; save(); render(); toast(x.done ? "✔ Actividad registrada como realizada" : "Actividad marcada como pendiente");
+        function toggleAct(id) {
+            const x = stateData.inst.find(i => i.id === id);
+            if (x.day > simulatedHoy) {
+                showToast("Aún no es el día de esta actividad");
+                return;
+            }
+            x.done = !x.done;
+            x.completedAt = x.done ? new Date().toISOString() : null;
+            saveState();
+            renderDashboard();
+            showToast(x.done ? "✔ Actividad marcada como Realizada" : "Actividad marcada como Pendiente");
         }
-        function openMove(id) {
-            const x = S.inst.find(i => i.id === id), ops = []; for (let d = x.day + 1; d <= 5; d++)ops.push(d);
-            sheet(`<h3>Mover "${x.n}"</h3><p>Está en <b>${DIAS[x.day - 1]}</b>. Solo puedes moverla a un día posterior (lunes a viernes).</p>
-  <div class="opts">${ops.map(d => `<button class="opt" onclick="doMove(${id},${d})">→ ${DIAS[d - 1]}</button>`).join("")}</div>
-  <button class="cancel" onclick="closeSheet()">Cancelar</button>`);
+
+        /* CALENDARIO LABORAL */
+        function renderCalendar() {
+            const u = USERS[currentUserId];
+            document.getElementById("calProfileTxt").textContent = u.nombre + " · " + u.area;
+            document.getElementById("calWeekTxt").textContent = "Semana " + getWeekKey() + " · Lunes a Viernes";
+
+            // Barra días calendario
+            document.getElementById("calWeekChips").innerHTML = DIAS.map((d, i) => {
+                const n = i + 1;
+                const acts = stateData.inst.filter(x => x.day === n);
+                const doneCount = acts.filter(x => x.done).length;
+                return `<div class="day-chip ${n === selectedDay ? 'sel' : ''} ${n === simulatedHoy ? 'today' : ''}" onclick="selectedDay=${n};renderCalendar();">
+                    <b>${COR[i]}</b>
+                    <small>${doneCount}/${acts.length}</small>
+                </div>`;
+            }).join("");
+
+            const items = stateData.inst.filter(x => x.day === selectedDay);
+            const listEl = document.getElementById("calActsList");
+            listEl.innerHTML = `<div class="section-label">Agenda de ${DIAS[selectedDay - 1]} (${items.length} tareas)</div>` +
+                items.map(x => `
+                <div class="act-card ${x.done ? 'ok' : 'no'}" onclick="openActDetailModal(${x.id})">
+                    <div class="act-top">
+                        <span class="pill-status ${x.done ? 'ok' : 'no'}">${x.done ? '✔ Realizada' : '✖ Pendiente'}</span>
+                        <span>⏰ ${x.s} - ${x.e}</span>
+                    </div>
+                    <div class="act-title">${x.n}</div>
+                    <div class="act-desc">${x.d}</div>
+                    <div class="act-meta">
+                        <span>🏷️ ${x.cat}</span>
+                        <span>${x.fija ? '<span class="tag-fixed">Fija</span>' : 'Flexible'}</span>
+                    </div>
+                </div>`).join("");
         }
-        function doMove(id, d) { const x = S.inst.find(i => i.id === id); x.day = d; x.done = false; save(); closeSheet(); render(); toast("Actividad movida a " + DIAS[d - 1]); }
-        function openAdd() {
-            sheet(`<h3>Nueva actividad</h3><p>Selecciona los días (lunes a viernes) en que se realiza.</p>
-  <input id="aN" placeholder="Nombre de la actividad"><input id="aD" placeholder="Descripción (opcional)">
-  <div class="chk">${COR.map((c, i) => `<label><input type="checkbox" value="${i + 1}" ${i + 1 === selDay ? 'checked' : ''}>${c}</label>`).join("")}</div>
-  <button class="prim" onclick="doAdd()">Guardar</button><button class="cancel" onclick="closeSheet()">Cancelar</button>`);
+
+        function setCalView(mode) {
+            calendarView = mode;
+            document.getElementById("btnToggleSem").classList.toggle("sel", mode === "SEMANA");
+            document.getElementById("btnToggleMes").classList.toggle("sel", mode === "MES");
+            showToast("Vista cambiada a: " + mode);
         }
-        function doAdd() {
-            const n = aN.value.trim(); if (!n) { toast("Escribe el nombre"); return; }
-            const ds = [...document.querySelectorAll('.chk input:checked')].map(i => +i.value); if (!ds.length) { toast("Selecciona al menos un día"); return; }
-            let id = Math.max(0, ...S.inst.map(i => i.id)); const fija = ds.length === 5;
-            ds.forEach(d => S.inst.push({ id: ++id, n, d: aD.value.trim() || "Actividad registrada por el usuario", day: d, orig: d, fija, done: false }));
-            if (!S.hist[n]) S.hist[n] = { mD: 0, mT: 0, yD: 0, yT: 0 }; save(); closeSheet(); selDay = ds[0]; render(); toast("Actividad registrada");
+
+        function calGoToday() {
+            selectedDay = simulatedHoy;
+            renderCalendar();
+            showToast("Ubicado en Hoy (" + DIAS[simulatedHoy - 1] + ")");
         }
-        function openMenu() {
-            sheet(`<h3>${USERS[U].nombre}</h3><p>${USERS[U].cargo}</p><div class="menu">
-  <div style="font-size:12px;color:var(--gris);margin:4px 0 6px">🧪 Simular día de hoy (demo)</div>
-  <select onchange="setHoy(+this.value)">${DIAS.map((d, i) => `<option value="${i + 1}" ${i + 1 === HOY ? 'selected' : ''}>${d}</option>`).join("")}</select>
-  <a onclick="resetData()">↺ Reiniciar datos ficticios</a><a onclick="logout()">⎋ Cambiar de usuario</a></div>
-  <button class="cancel" onclick="closeSheet()">Cerrar</button>`);
+
+        /* CENTRO DE INDICADORES */
+        function renderIndicators() {
+            const u = USERS[currentUserId];
+            document.getElementById("kpiUserTxt").textContent = u.nombre;
+            document.getElementById("kpiAreaTxt").textContent = u.area + " · " + u.cargo;
+
+            const evaluables = stateData.inst.filter(x => x.day <= simulatedHoy);
+            const done = evaluables.filter(x => x.done).length;
+            const pending = evaluables.length - done;
+            const pct = evaluables.length > 0 ? Math.round((done / evaluables.length) * 100) : 0;
+            const fijas = stateData.inst.filter(x => x.fija).length;
+
+            document.getElementById("kpiCumplimiento").textContent = pct + "%";
+            document.getElementById("kpiRealizadas").textContent = done;
+            document.getElementById("kpiPendientes").textContent = pending;
+            document.getElementById("kpiEvaluables").textContent = evaluables.length;
+
+            document.getElementById("cardKpiCumplimiento").textContent = pct + "%";
+            document.getElementById("cardKpiRealizadas").textContent = done;
+            document.getElementById("cardKpiPendientes").textContent = pending;
+            document.getElementById("cardKpiFijas").textContent = fijas;
+
+            // Distribución oficial de categorías
+            const catList = document.getElementById("kpiCategoryList");
+            if (typeof CATEGORY_DISTRIBUTION !== 'undefined') {
+                catList.innerHTML = CATEGORY_DISTRIBUTION.map(c => `
+                    <div style="background:#fff; border:1px solid var(--borde); border-radius:10px; padding:10px; cursor:pointer;" onclick="filterKpiCategory('${c.categoria}')">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+                            <span>${c.categoria}</span>
+                            <span style="color:${c.colorHex};">${c.porcentaje}%</span>
+                        </div>
+                        <div style="background:#F1F5F9; height:6px; border-radius:3px; margin-top:6px; overflow:hidden;">
+                            <div style="background:${c.colorHex}; width:${c.porcentaje}%; height:100%;"></div>
+                        </div>
+                    </div>`).join("");
+            }
         }
-        function setHoy(d) { HOY = d; S.cfgHoy = d; selDay = d; save(); render(); toast("Día simulado: " + DIAS[d - 1]); }
-        function resetData() { localStorage.removeItem(KEY(U)); S = seed(U); save(); closeSheet(); render(); toast("Datos reiniciados"); }
-        function sheet(h) { document.getElementById("sheet").innerHTML = h; ov.classList.add("on"); }
-        function closeSheet() { ov.classList.remove("on"); }
-        let tt; function toast(m) { const t = document.getElementById("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("on"), 1800); }
+
+        function openKpiModal(title, type) {
+            let acts = [];
+            if (type === 'evaluables') acts = stateData.inst.filter(x => x.day <= simulatedHoy);
+            else if (type === 'done') acts = stateData.inst.filter(x => x.day <= simulatedHoy && x.done);
+            else if (type === 'pending') acts = stateData.inst.filter(x => x.day <= simulatedHoy && !x.done);
+            else if (type === 'fixed') acts = stateData.inst.filter(x => x.fija);
+
+            sheet(`<h3>${title} (${acts.length})</h3>
+                <p style="font-size:12px; color:var(--gris); margin:4px 0 12px;">Auditoría de registros directos</p>
+                <div style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                    ${acts.map(a => `
+                        <div style="background:#F8FAFC; border:1px solid var(--borde); border-radius:8px; padding:8px; font-size:12px;">
+                            <b>${a.n}</b>
+                            <div style="color:var(--gris); font-size:11px;">Día ${a.day} (${DIAS[a.day-1]}) · ${a.s} - ${a.e}</div>
+                        </div>`).join("")}
+                </div>
+                <button class="btn-cancel" onclick="closeSheet()">Cerrar</button>`);
+        }
+
+        function filterKpiCategory(catName) {
+            const acts = stateData.inst.filter(x => x.cat === catName);
+            sheet(`<h3>Categoría: ${catName} (${acts.length})</h3>
+                <div style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                    ${acts.length ? acts.map(a => `
+                        <div style="background:#F8FAFC; border:1px solid var(--borde); border-radius:8px; padding:8px; font-size:12px;">
+                            <b>${a.n}</b>
+                            <div style="color:var(--gris); font-size:11px;">${DIAS[a.day-1]} · ${a.s} - ${a.e}</div>
+                        </div>`).join("") : '<div style="color:var(--gris); font-size:12px;">No hay actividades en esta categoría para este perfil.</div>'}
+                </div>
+                <button class="btn-cancel" onclick="closeSheet()">Cerrar</button>`);
+        }
+
+        /* HISTORIAL DE EJECUCIONES */
+        function setHistFilter(f) {
+            historyFilter = f;
+            document.getElementById("btnHistAll").classList.toggle("sel", f === "ALL");
+            document.getElementById("btnHistDone").classList.toggle("sel", f === "DONE");
+            document.getElementById("btnHistPending").classList.toggle("sel", f === "PENDING");
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const q = (document.getElementById("histSearchInput").value || "").toLowerCase().trim();
+            let items = stateData.inst.filter(x => {
+                if (historyFilter === 'DONE' && !x.done) return false;
+                if (historyFilter === 'PENDING' && x.done) return false;
+                if (q && !x.n.toLowerCase().includes(q) && !x.d.toLowerCase().includes(q)) return false;
+                return true;
+            });
+
+            const listEl = document.getElementById("histList");
+            listEl.innerHTML = items.map(x => `
+                <div class="act-card ${x.done ? 'ok' : 'no'}" oncontextmenu="event.preventDefault();openActDetailModal(${x.id});" onclick="openActDetailModal(${x.id})">
+                    <div class="act-top">
+                        <span class="pill-status ${x.done ? 'ok' : 'no'}">${x.done ? '✔ Realizada' : '✖ Pendiente'}</span>
+                        <span>Semana ${getWeekKey()} · ${DIAS[x.day - 1]}</span>
+                    </div>
+                    <div class="act-title">${x.n}</div>
+                    <div class="act-desc">${x.d}</div>
+                    <div class="act-meta">
+                        <span>🏢 ${x.area}</span>
+                        <span>⏰ ${x.s} - ${x.e}</span>
+                    </div>
+                </div>`).join("");
+        }
+
+        /* 4 SEMANAS (EXCEL) */
+        function setExcelWeek(w) {
+            excelSelectedWeek = w;
+            for(let i=1; i<=4; i++) {
+                document.getElementById("pillW" + i).classList.toggle("sel", i === w);
+            }
+            renderExcelWeeks();
+        }
+
+        function renderExcelWeeks() {
+            if (typeof EXCEL_ACTIVITIES === 'undefined') return;
+            const items = EXCEL_ACTIVITIES.filter(x => x.w === excelSelectedWeek);
+            const listEl = document.getElementById("excelActsList");
+            listEl.innerHTML = `<div class="section-label">Semana ${excelSelectedWeek} · ST - WR YONNY LOPEZ (${items.length} actividades)</div>` +
+                items.map(x => `
+                <div class="act-card" style="border-left:4px solid var(--azul);">
+                    <div class="act-top">
+                        <span style="font-weight:700; color:var(--azul);">${DIAS[x.d - 1]} · ${x.s} - ${x.e}</span>
+                        <span style="font-size:10px; color:var(--gris);">${x.cell} (${x.sh})</span>
+                    </div>
+                    <div class="act-title">${x.n}</div>
+                    <div class="act-meta">
+                        <span>🏷️ ${x.c}</span>
+                        <span>${x.f ? '<span class="tag-fixed">Fija</span>' : 'Estándar'}</span>
+                    </div>
+                </div>`).join("");
+        }
+
+        /* MODAL NUEVA ACTIVIDAD CON ÁREA Y HORARIO REAL */
+        function openAddModal() {
+            sheet(`<h3>Nueva Actividad Estándar</h3>
+                <p style="font-size:12px; color:var(--gris); margin:4px 0 12px;">Registrar tarea operativa en el sistema</p>
+                
+                <div class="form-group">
+                    <label>Nombre de la actividad *</label>
+                    <input id="newActName" class="form-control" placeholder="Ej: Control de variables extrusión">
+                </div>
+
+                <div class="form-group">
+                    <label>Área Responsable *</label>
+                    <select id="newActArea" class="form-control">
+                        <option value="Planta Extrusa">Planta Extrusa</option>
+                        <option value="Producción">Producción</option>
+                        <option value="Calidad">Calidad</option>
+                        <option value="Logística">Logística</option>
+                        <option value="Mantenimiento">Mantenimiento</option>
+                        <option value="Administración">Administración</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Categoría *</label>
+                    <select id="newActCat" class="form-control">
+                        <option value="Operación y Ejecución">Operación y Ejecución</option>
+                        <option value="Resultados y Productividad">Resultados y Productividad</option>
+                        <option value="Calidad e Inocuidad">Calidad e Inocuidad</option>
+                        <option value="Liderazgo y Desarrollo de Personas">Liderazgo y Desarrollo de Personas</option>
+                        <option value="Proyectos y Mejora Continua">Proyectos y Mejora Continua</option>
+                        <option value="Seguridad">Seguridad</option>
+                        <option value="Administración">Administración</option>
+                    </select>
+                </div>
+
+                <div style="display:flex; gap:10px;" class="form-group">
+                    <div style="flex:1;">
+                        <label>Hora Inicio</label>
+                        <input id="newActStart" type="time" value="08:00" class="form-control">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Hora Fin</label>
+                        <input id="newActEnd" type="time" value="08:30" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Días de ejecución (L-V)</label>
+                    <div style="display:flex; gap:6px;">
+                        ${COR.map((c, i) => `
+                            <label style="flex:1; text-align:center; border:1px solid var(--borde); border-radius:8px; padding:6px 0; font-size:12px; font-weight:700; cursor:pointer;" class="day-check-lbl">
+                                <input type="checkbox" value="${i + 1}" ${i + 1 === selectedDay ? 'checked' : ''} style="display:none;" onchange="this.parentElement.style.background=this.checked?'var(--azul)':'';this.parentElement.style.color=this.checked?'#fff':'';">
+                                ${c}
+                            </label>`).join("")}
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="saveNewAct()">Guardar Actividad</button>
+                <button class="btn-cancel" onclick="closeSheet()">Cancelar</button>`);
+        }
+
+        function saveNewAct() {
+            const n = document.getElementById("newActName").value.trim();
+            if (!n) { showToast("Escribe el nombre de la actividad"); return; }
+            const area = document.getElementById("newActArea").value;
+            const cat = document.getElementById("newActCat").value;
+            const s = document.getElementById("newActStart").value || "08:00";
+            const e = document.getElementById("newActEnd").value || "08:30";
+
+            const days = [...document.querySelectorAll('.day-check-lbl input:checked')].map(i => +i.value);
+            if (!days.length) { showToast("Selecciona al menos un día"); return; }
+
+            let maxId = Math.max(0, ...stateData.inst.map(i => i.id));
+            days.forEach(d => {
+                stateData.inst.push({
+                    id: ++maxId,
+                    n: n,
+                    d: "Registrada por el usuario",
+                    day: d,
+                    orig: d,
+                    fija: days.length === 5,
+                    area: area,
+                    cat: cat,
+                    s: s,
+                    e: e,
+                    done: false,
+                    obs: "",
+                    motivo: ""
+                });
+            });
+
+            saveState();
+            closeSheet();
+            selectedDay = days[0];
+            renderDashboard();
+            showToast("✔ Actividad guardada en SQLite local");
+        }
+
+        /* MODAL DETALLE DE ACTIVIDAD / HISTORIAL */
+        function openActDetailModal(id) {
+            const a = stateData.inst.find(i => i.id === id);
+            if (!a) return;
+            const u = USERS[currentUserId];
+            sheet(`<h3>Ficha de Actividad</h3>
+                <div style="font-size:12px; color:var(--gris); margin-bottom:12px;">Auditoría y Trazabilidad</div>
+                <div style="display:flex; flex-direction:column; gap:8px; font-size:12px;">
+                    <div><b>Actividad:</b> ${a.n}</div>
+                    <div><b>Descripción:</b> ${a.d}</div>
+                    <div><b>Día y Semana:</b> ${DIAS[a.day - 1]} (Semana ${getWeekKey()})</div>
+                    <div><b>Horario:</b> ${a.s} - ${a.e}</div>
+                    <div><b>Área Responsable:</b> ${a.area || u.area}</div>
+                    <div><b>Categoría:</b> ${a.cat}</div>
+                    <div><b>Tipo:</b> ${a.fija ? '📌 Fija Obligatoria diaria' : 'Flexible / Ordinaria'}</div>
+                    <div><b>Estado:</b> <span class="pill-status ${a.done ? 'ok' : 'no'}">${a.done ? 'Realizada' : 'Pendiente'}</span></div>
+                    ${a.completedAt ? `<div><b>Completada:</b> ${a.completedAt}</div>` : ''}
+                </div>
+                <button class="btn-cancel" style="margin-top:16px;" onclick="closeSheet()">Cerrar</button>`);
+        }
+
+        /* MENU PRINCIPAL */
+        function openMenuModal() {
+            const u = USERS[currentUserId];
+            sheet(`<h3>${u.nombre}</h3>
+                <p style="font-size:12px; color:var(--gris); margin:2px 0 12px;">${u.cargo} · ${u.area}</p>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="btn-cancel" style="background:#EFF6FF; color:var(--azul); text-align:left; font-weight:700;" onclick="closeSheet();navTo('scrExcelWeeks');">📊 Planificación 4 Semanas (270 Tareas Excel)</button>
+                    <button class="btn-cancel" style="background:#EFF6FF; color:var(--azul); text-align:left; font-weight:700;" onclick="closeSheet();navTo('scrIndicators');">📈 Centro de Indicadores y Gráficos</button>
+                    <button class="btn-cancel" style="background:#EFF6FF; color:var(--azul); text-align:left; font-weight:700;" onclick="closeSheet();navTo('scrCalendar');">📅 Calendario Laboral</button>
+                    <button class="btn-cancel" style="background:#EFF6FF; color:var(--azul); text-align:left; font-weight:700;" onclick="closeSheet();navTo('scrHistory');">📋 Historial de Ejecuciones</button>
+                    <button class="btn-cancel" style="background:#FEF2F2; color:var(--rojo); text-align:left; font-weight:700;" onclick="logout()">⎋ Cambiar de Usuario</button>
+                </div>
+                <button class="btn-cancel" onclick="closeSheet()" style="margin-top:12px;">Cerrar Menú</button>`);
+        }
+
+        function sheet(html) {
+            document.getElementById("sheetContent").innerHTML = html;
+            document.getElementById("overlaySheet").classList.add("on");
+        }
+
+        function closeSheet() {
+            document.getElementById("overlaySheet").classList.remove("on");
+        }
+
+        let toastTimer;
+        function showToast(msg) {
+            const el = document.getElementById("toastBox");
+            el.textContent = msg;
+            el.classList.add("on");
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove("on"), 2200);
+        }
+
         renderLogin();
     </script>
 </body>
