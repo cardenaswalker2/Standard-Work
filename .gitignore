@@ -33,3 +33,9 @@ Thumbs.db
 *.txt
 excel_dump.json
 prueba_backup_original.html
+Mira.html
+
+# Exclude Flutter code and private source files (web-only public portal)
+standard_work_app/
+*.xlsb
+*.xlsx
