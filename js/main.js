@@ -89,4 +89,79 @@ document.addEventListener('DOMContentLoaded', () => {
             toast.style.transform = 'translateY(20px)';
         }, 4000);
     }
+
+    // 4. Inicialización del Reproductor de Video Adaptativo (PC / Celular)
+    initAdaptiveVideoPlayer();
 });
+
+/**
+ * Control del reproductor y conmutación entre formatos (Horizontal 16:9, Vertical 9:16, Showcase 40s)
+ */
+function switchVideoFormat(format) {
+    const tabs = {
+        horizontal: document.getElementById('tabHorizontal'),
+        vertical: document.getElementById('tabVertical'),
+        showcase: document.getElementById('tabShowcase')
+    };
+
+    const views = {
+        horizontal: document.getElementById('viewHorizontal'),
+        vertical: document.getElementById('viewVertical'),
+        showcase: document.getElementById('viewShowcase')
+    };
+
+    const videos = {
+        horizontal: document.getElementById('videoHorizontal'),
+        vertical: document.getElementById('videoVertical'),
+        showcase: document.getElementById('videoShowcase')
+    };
+
+    // 1. Pausar todos los videos para evitar solapamiento de audio
+    Object.values(videos).forEach(v => {
+        if (v && !v.paused) {
+            v.pause();
+        }
+    });
+
+    // 2. Desactivar todos los tabs y vistas
+    Object.values(tabs).forEach(t => t && t.classList.remove('active'));
+    Object.values(views).forEach(v => v && v.classList.remove('active'));
+
+    // 3. Activar el seleccionado
+    if (tabs[format]) tabs[format].classList.add('active');
+    if (views[format]) views[format].classList.add('active');
+}
+
+/**
+ * Detecta si el usuario está en celular o PC y selecciona automáticamente el formato óptimo
+ */
+function initAdaptiveVideoPlayer() {
+    const isMobile = window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Si está en celular, se activa la versión vertical optimizada para teléfonos; si está en PC, la horizontal
+    if (isMobile) {
+        switchVideoFormat('vertical');
+    } else {
+        switchVideoFormat('horizontal');
+    }
+
+    // Re-evaluar si cambia el tamaño de la ventana (ej. giro de pantalla)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const currentIsMobile = window.innerWidth < 768;
+            const currentActiveTab = document.querySelector('.video-tab-btn.active');
+            
+            // Solo auto-conmutar si no se ha iniciado reproducción manual reciente
+            const hasPlayingVideo = Array.from(document.querySelectorAll('video')).some(v => !v.paused);
+            if (!hasPlayingVideo && currentActiveTab) {
+                if (currentIsMobile && currentActiveTab.id === 'tabHorizontal') {
+                    switchVideoFormat('vertical');
+                } else if (!currentIsMobile && currentActiveTab.id === 'tabVertical') {
+                    switchVideoFormat('horizontal');
+                }
+            }
+        }, 300);
+    });
+}

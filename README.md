@@ -1,69 +1,98 @@
-# Standard Work · Darnel Group — Portal de Descarga APK
+# Standard Work · Darnel Group (Ecosistema Integral de Gestión de Trabajo Estándar)
 
-Subcarpeta web corporativa, responsiva y autónoma para la presentación y distribución del archivo instalador **APK Android** de la aplicación **Standard Work** (Darnel Group).
-
----
-
-## 📁 Estructura del Directorio
-
-```text
-descargar-app/
-│
-├── index.html          # Página principal de presentación y descarga de la APK
-├── prueba.html         # Prototipo interactivo HTML original con barra de retorno integrada
-│
-├── css/
-│   └── styles.css      # Estilos corporativos (Darnel Blue, Glassmorphism, Responsive)
-│
-├── js/
-│   └── main.js         # Lógica interactiva (FAQ acordeón, telemetría y animaciones de descarga)
-│
-├── assets/
-│   └── app_icon.png    # Icono corporativo oficial en alta resolución
-│
-└── README.md           # Guía de uso, pruebas locales y publicación
-```
+Plataforma corporativa y móvil para la digitalización, estandarización y seguimiento en tiempo real de las rutinas de supervisión y liderazgo operativo en plantas industriales de **Darnel Group** (Extrusión, Termoformado, Calidad, Logística y SST).
 
 ---
 
-## 🚀 Cómo Probar la Página Localmente
+## 📌 Componentes del Ecosistema
 
-### Opción 1: Abrir directamente en el navegador
-Haz doble clic sobre el archivo `descargar-app/index.html` o ábrelo con Google Chrome, Microsoft Edge, Firefox o Safari.
+1. **Aplicación Móvil Nativa Flutter (`standard_work_app/`)**:
+   - Persistencia local **SQLite 100% offline-first** (`sqflite`).
+   - Gestión de turnos y actividades de lunes a viernes en bloques horarios.
+   - Tacómetro visual de adherencia al plan y porcentaje de cumplimiento.
+   - Registro de observaciones de inspección y hoja de reprogramación formal con motivo trazable.
+   - Matriz de 4 semanas del ciclo mensual sincronizada con la estructura operativa original.
+   - Control de calidad y revisión de **RMNC** (*Material No Conforme y Concesiones*).
+   - Tablero de distribución de tiempo en las 7 categorías estratégicas del negocio.
 
-### Opción 2: Usar un servidor web local
-Desde una terminal en la carpeta del proyecto:
+2. **Simulador y Prototipo Web Interactivo (`prueba.html` / `Mira.html`)**:
+   - Entorno interactivo montado sobre un chasis realista de smartphone corporativo.
+   - Permite recorrer todas las pantallas del sistema: Login, Dashboard, Calendario, 4 Semanas, Calidad y Tablero de Indicadores sin necesidad de compilar la app en un emulador Android.
+
+3. **Portal Web de Distribución y Descarga (`index.html`)**:
+   - Landing page corporativa con diseño Glassmorphism basada en los colores oficiales de Darnel Group (`#002F6C`, `#006DB2`, `#0095D9`).
+   - Enlace directo de descarga de la APK versión 2.0.0 alojada en Google Drive.
+   - Guía paso a paso de instalación en dispositivos Android y preguntas frecuentes (FAQ).
+
+4. **Suite de Producción Audiovisual Ejecutiva (`video-standard-work/`)**:
+   - Proyecto independiente desarrollado con **Remotion**, **React**, **TypeScript**, **Playwright**, **FFmpeg** y **Edge-TTS**.
+   - Composiciones de video corporativo con animación cinética, mockups 3D de smartphone, subtítulos sincronizados y locución neuronal profesional en español latinoamericano.
+
+---
+
+## 🎬 Videos Corporativos de Presentación
+
+Los videos oficiales listos para presentar ante gerencia y directivos se encuentran en:
+
+1. **`STANDARD_WORK_PRESENTACION_EJECUTIVA.mp4`**:
+   - Formato: **16:9 Horizontal** (1920 × 1080 @ 30 FPS).
+   - Códec: H.264 / AAC.
+   - Duración: ~2 minutos y 23 segundos (143.5 s / 4,305 frames).
+   - Diseñado para pantallas de juntas, conferencias y presentaciones a jefatura.
+
+2. **`STANDARD_WORK_PRESENTACION_VERTICAL.mp4`**:
+   - Formato: **9:16 Vertical** (1080 × 1920 @ 30 FPS).
+   - Códec: H.264 / AAC.
+   - Duración: ~2 minutos y 23 segundos.
+   - Adaptación nativa con encuadre reestructurado para smartphones corporativos, estados y plataformas móviles.
+
+---
+
+## 📑 Documentación Técnica y Estratégica
+
+- **`ANALISIS_STANDARD_WORK.md`**: Diagnóstico exhaustivo del proyecto, gobernanza de actividades ("el dato listo para decidir"), matriz de 7 categorías de tiempo y relación con RMNC.
+- **`GUION_PRESENTACION.md`**: Guion ejecutivo completo en 7 escenas con locución en español latinoamericano y visuales sincronizados.
+- **`STORYBOARD.md`**: Guía visual cuadro por cuadro, encuadres, transiciones, paleta cromática y especificaciones de animación.
+- **`video-standard-work/README.md`**: Manual técnico para desarrolladores sobre cómo iniciar Remotion Studio, modificar textos, cambiar música, regenerar audios y renderizar nuevas versiones.
+
+---
+
+## 🛠️ Herramientas y Skills Utilizadas
+
+- **Node.js v22.14.0 (LTS)** y **npm 10.9.2** (configurado en PATH de usuario).
+- **Remotion v4.0.260**: Framework de video programático.
+- **FFmpeg v8.0**: Síntesis de pistas de audio corporativas y empaquetado de video.
+- **Playwright (Python 1.64.1)**: Captura automatizada de pantallas en alta resolución de la app real.
+- **Edge-TTS (Python 7.3.1)**: Voz neuronal profesional (`es-CO-GonzaloNeural`).
+- **Skills de Agente**:
+  - `remotion-dev/skills` (`remotion-best-practices`, `remotion-render`, `remotion-studio`, etc.).
+  - `standard-work-video-production` (`.agents/skills/standard-work-video-production/SKILL.md`).
+
+---
+
+## 🚀 Cómo Iniciar la Previsualización Interactiva (Remotion Studio)
 
 ```bash
-# Con Python 3
-cd "descargar-app"
-python -m http.server 8080
-
-# O con Node.js / npx
-npx serve .
+cd video-standard-work
+npm start
 ```
-Luego accede a `http://localhost:8080`.
+Abre automáticamente `http://localhost:3000` con la línea de tiempo interactiva.
 
 ---
 
-## 🌐 Cómo Publicar y Compartir el Enlace
+## 📦 Cómo Renderizar los Videos Manualmente
 
-Esta subcarpeta es **100% estática y autónoma** (no depende de ningún servidor de base de datos ni backend). Puedes publicarla en cualquiera de las siguientes plataformas gratuitas:
+```bash
+cd video-standard-work
 
-### 1. GitHub Pages (Recomendado)
-1. Sube tu proyecto a un repositorio en GitHub.
-2. Ve a **Settings** > **Pages**.
-3. Selecciona la rama principal (`main` o `master`) y la carpeta raíz o `/docs` (puedes renombrar o copiar `descargar-app` a `docs` para que GitHub Pages la sirva directamente).
-4. GitHub te entregará un enlace público inmediato tipo `https://tu-usuario.github.io/tu-repositorio/descargar-app/`.
+# Renderizar versión horizontal (16:9)
+npm run render:horizontal
 
-### 2. Vercel o Netlify
-- Arrastra la carpeta `descargar-app` a la interfaz web de [Netlify Drop](https://app.netlify.com/drop) o vincúlala en [Vercel](https://vercel.com).
-- En menos de 10 segundos tendrás una URL pública HTTPS (`https://standard-work-darnel.netlify.app`) lista para compartir por WhatsApp, correo corporativo o Teams.
+# Renderizar versión vertical (9:16)
+npm run render:vertical
 
----
+# Renderizar ambas versiones
+npm run build
+```
 
-## 📲 Enlace de la APK Configurado
-
-El botón principal de descarga está enlazado a la APK en Google Drive:
-- **URL configurada:** [Google Drive APK Standard Work](https://drive.google.com/file/d/1UpShl1PM4BEjNxLTYKXEELd1HL-XYhmB/view?usp=drive_link)
-- Se abre en pestaña segura (`target="_blank" rel="noopener noreferrer"`) asegurando compatibilidad con la interfaz de descarga de Google Drive en Android.
+Los videos generados se guardan automáticamente en `video-standard-work/out/` y se copian en la raíz del proyecto para acceso inmediato.

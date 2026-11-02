@@ -39,3 +39,8 @@ Mira.html
 standard_work_app/
 *.xlsb
 *.xlsx
+
+# Node & Remotion build artifacts
+node_modules/
+**/node_modules/
+video-standard-work/out/

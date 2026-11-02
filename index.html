@@ -33,6 +33,7 @@
 
             <nav>
                 <ul class="nav-links">
+                    <li><a href="#video-presentacion" class="nav-link">Video Presentación</a></li>
                     <li><a href="#caracteristicas" class="nav-link">Características</a></li>
                     <li><a href="#instalacion" class="nav-link">Instalación</a></li>
                     <li><a href="#compatibilidad" class="nav-link">Requisitos</a></li>
@@ -96,6 +97,13 @@
                         </svg>
                         Ver Prototipo Web
                     </a>
+
+                    <a href="#video-presentacion" class="btn-video-hero">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Ver Video Oficial
+                    </a>
                 </div>
 
                 <div class="hero-meta-bar">
@@ -150,6 +158,173 @@
                                 <div class="role">Líder de Logística</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN DE PRODUCCIÓN AUDIOVISUAL EJECUTIVA -->
+    <section id="video-presentacion" class="section video-showcase-section">
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-tag-glow">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Producción Audiovisual Oficial · Darnel Group
+                </span>
+                <h2 class="section-title text-white">Presentación Ejecutiva del Proyecto</h2>
+                <p class="section-desc text-muted">
+                    Conoce el propósito operativo, módulos funcionales, sincronización con la matriz Excel de 4 semanas y arquitectura offline mediante la presentación oficial producida con Remotion.
+                </p>
+            </div>
+
+            <!-- Selector Inteligente de Formato (Adaptativo para PC y Móvil) -->
+            <div class="video-switcher-container">
+                <div class="video-switcher-tabs" role="tablist">
+                    <button class="video-tab-btn active" id="tabHorizontal" onclick="switchVideoFormat('horizontal')" title="Optimizado para pantallas de computador y salas de juntas">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        <span>Escritorio (Horizontal 16:9)</span>
+                        <span class="tab-badge">Oficial PC</span>
+                    </button>
+                    <button class="video-tab-btn" id="tabVertical" onclick="switchVideoFormat('vertical')" title="Optimizado para dispositivos móviles, teléfonos y formato Reels">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        </svg>
+                        <span>Celular (Vertical 9:16)</span>
+                        <span class="tab-badge">Móvil / Reels</span>
+                    </button>
+                    <button class="video-tab-btn" id="tabShowcase" onclick="switchVideoFormat('showcase')" title="Recorrido 100% visual de la interfaz de la aplicación Flutter">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                        <span>Showcase Rápido (40s)</span>
+                        <span class="tab-badge">100% Visual</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenedor Principal del Reproductor -->
+            <div class="video-player-card">
+                <!-- VISTA 1: HORIZONTAL 16:9 (ESCRITORIO / SALA DE JUNTAS) -->
+                <div class="video-view active" id="viewHorizontal">
+                    <div class="video-aspect-16-9">
+                        <video id="videoHorizontal" class="player-element" controls preload="metadata" playsinline poster="assets/poster_horizontal.jpg">
+                            <source src="STANDARD_WORK_PRESENTACION_EJECUTIVA.mp4" type="video/mp4">
+                            Tu navegador no soporta la reproducción de video HTML5.
+                        </video>
+                    </div>
+                    <div class="video-meta-bar-inner">
+                        <div class="v-meta-left">
+                            <span class="v-badge-pill">16:9 Full HD</span>
+                            <span class="v-title-text">Standard Work · Presentación Ejecutiva Oficial</span>
+                            <span class="v-duration-text">2 min 23 s · Narración & Gráficos</span>
+                        </div>
+                        <div class="v-meta-right">
+                            <a href="STANDARD_WORK_PRESENTACION_EJECUTIVA.mp4" download class="btn-video-download" title="Descargar video original en alta definición">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Descargar MP4 (15.5 MB)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISTA 2: VERTICAL 9:16 (CELULAR / SMARTPHONE) -->
+                <div class="video-view" id="viewVertical">
+                    <div class="phone-mockup-video-wrapper">
+                        <div class="phone-frame-bezel">
+                            <div class="phone-speaker-notch"></div>
+                            <video id="videoVertical" class="player-element-vertical" controls preload="metadata" playsinline poster="assets/poster_vertical.jpg">
+                                <source src="STANDARD_WORK_PRESENTACION_VERTICAL.mp4" type="video/mp4">
+                                Tu navegador no soporta la reproducción de video HTML5.
+                            </video>
+                        </div>
+                    </div>
+                    <div class="video-meta-bar-inner">
+                        <div class="v-meta-left">
+                            <span class="v-badge-pill">9:16 Vertical HD</span>
+                            <span class="v-title-text">Standard Work · Versión Ejecutiva Móvil</span>
+                            <span class="v-duration-text">2 min 23 s · Formato Redes & Teléfono</span>
+                        </div>
+                        <div class="v-meta-right">
+                            <a href="STANDARD_WORK_PRESENTACION_VERTICAL.mp4" download class="btn-video-download" title="Descargar video vertical para compartir">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Descargar MP4 (14.4 MB)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISTA 3: SHOWCASE 40s (100% VISUAL FLUTTER APP) -->
+                <div class="video-view" id="viewShowcase">
+                    <div class="video-aspect-16-9">
+                        <video id="videoShowcase" class="player-element" controls preload="metadata" playsinline poster="assets/poster_showcase.jpg">
+                            <source src="STANDARD_WORK_SHOWCASE_VISUAL_40S.mp4" type="video/mp4">
+                            Tu navegador no soporta la reproducción de video HTML5.
+                        </video>
+                    </div>
+                    <div class="video-meta-bar-inner">
+                        <div class="v-meta-left">
+                            <span class="v-badge-pill v-badge-cyan">Showcase 40s</span>
+                            <span class="v-title-text">Demostración 100% Visual de la App Flutter</span>
+                            <span class="v-duration-text">40 segundos · Sin voz en off · Pura Interfaz</span>
+                        </div>
+                        <div class="v-meta-right">
+                            <a href="STANDARD_WORK_SHOWCASE_VISUAL_40S.mp4" download class="btn-video-download" title="Descargar showcase visual rápido">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Descargar MP4 (20.6 MB)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Franja de Resumen de Contenido del Video -->
+            <div class="video-features-strip">
+                <div class="v-feature-card">
+                    <div class="v-feature-icon">🎯</div>
+                    <div class="v-feature-info">
+                        <strong>Propósito Operativo</strong>
+                        <span>Estandarización de rutinas diarias de lunes a viernes en planta.</span>
+                    </div>
+                </div>
+                <div class="v-feature-card">
+                    <div class="v-feature-icon">📊</div>
+                    <div class="v-feature-info">
+                        <strong>Planificación 4 Semanas</strong>
+                        <span>270 actividades reales de Yonny López (ST - WR YONNY LOPEZ.xlsb).</span>
+                    </div>
+                </div>
+                <div class="v-feature-card">
+                    <div class="v-feature-icon">⚡</div>
+                    <div class="v-feature-info">
+                        <strong>Persistencia 100% Offline</strong>
+                        <span>Base de datos SQLite local para registro continuo sin requerir internet.</span>
+                    </div>
+                </div>
+                <div class="v-feature-card">
+                    <div class="v-feature-icon">🛡️</div>
+                    <div class="v-feature-info">
+                        <strong>Trazabilidad y Auditoría</strong>
+                        <span>Bitácora inmutable con marcas de tiempo para auditorías de calidad.</span>
                     </div>
                 </div>
             </div>

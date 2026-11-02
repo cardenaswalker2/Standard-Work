@@ -1,0 +1,25 @@
+{
+  "name": "video-standard-work",
+  "version": "1.0.0",
+  "description": "Presentación Ejecutiva Oficial del Proyecto Standard Work - Darnel Group",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "remotion studio",
+    "render:horizontal": "remotion render ExecutiveComposition out/STANDARD_WORK_PRESENTACION_EJECUTIVA.mp4 --concurrency=4",
+    "render:vertical": "remotion render VerticalComposition out/STANDARD_WORK_PRESENTACION_VERTICAL.mp4 --concurrency=4",
+    "build": "npm run render:horizontal && npm run render:vertical"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.260",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "4.0.260"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "puppeteer-core": "^25.16.0",
+    "typescript": "^5.6.3"
+  }
+}
