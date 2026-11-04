@@ -16,6 +16,7 @@ local.properties
 captures/
 **/captures/
 *.apk
+!descargas/*.apk
 !descargar-app/**/*.png
 
 # IDEs & System files
