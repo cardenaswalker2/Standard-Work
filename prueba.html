@@ -623,6 +623,41 @@
             color: #ffffff;
         }
 
+        
+        .notif-bell-btn {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .notif-bell-btn:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+        .notif-badge-pill {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #DC2626;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            min-width: 17px;
+            height: 17px;
+            line-height: 17px;
+            text-align: center;
+            border-radius: 10px;
+            border: 2px solid #002F6C;
+            padding: 0 4px;
+        }
+
         .dash-avatar-btn {
             width: 36px;
             height: 36px;
@@ -1569,7 +1604,13 @@
                                     <div class="dash-user-meta" id="dashColabRole">Supervisor de Producción</div>
                                 </div>
                             </div>
-                            <div class="dash-avatar-btn" id="dashAvatarPill" onclick="openColabMenuSheet()">CM</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="notif-bell-btn" id="colabNotifBellBtn" onclick="openColabNotifSheet()" title="Notificaciones">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                    <span class="notif-badge-pill" id="colabNotifBadge" style="display: none;">0</span>
+                                </div>
+                                <div class="dash-avatar-btn" id="dashAvatarPill" onclick="openColabMenuSheet()">CM</div>
+                            </div>
                         </div>
 
                         <div class="dash-kpi-bar">
@@ -2120,7 +2161,7 @@
          LÓGICA JAVASCRIPT COMPLETA E INTERACTIVA
     ========================================================== -->
     <script>
-        // Datos de usuarios registrados en el sistema
+                // Datos de usuarios registrados en el sistema (Estándar de 10 actividades diarias L-V)
         const USERS = {
             X: {
                 id: "X",
@@ -2130,13 +2171,16 @@
                 area: "Producción",
                 ini: "CM",
                 acts: [
-                    { id: 101, n: "Reunión Diaria (Visual Room)", d: "Revisión de KPIs, seguridad y prioridades del día", cat: "Operación y Ejecución", area: "Producción", s: "07:00", e: "07:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 102, n: "Gemba Walk en Planta", d: "Recorrido y control en piso de termoformado", cat: "Operación y Ejecución", area: "Producción", s: "07:30", e: "08:15", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 103, n: "Revisión OEE y Desempeño", d: "Análisis de paradas y disponibilidad de líneas", cat: "Resultados y Productividad", area: "Producción", s: "09:00", e: "09:45", dias: [1, 3, 5], prio: "Media" },
-                    { id: 104, n: "Seguimiento de Scrap y Desperdicio", d: "Pareto de desperdicio con líderes de máquina", cat: "Resultados y Productividad", area: "Producción", s: "11:00", e: "11:30", dias: [2, 4], prio: "Alta" },
-                    { id: 105, n: "Auditoría 5S en Estaciones", d: "Verificación de orden, limpieza y rotulación", cat: "Proyectos y Mejora Continua", area: "Producción", s: "14:00", e: "14:30", dias: [3], prio: "Media" },
-                    { id: 106, n: "Verificación de Setup y Arranques", d: "Control de tiempos de cambio de molde", cat: "Operación y Ejecución", area: "Producción", s: "15:00", e: "15:45", dias: [1, 4], prio: "Alta" },
-                    { id: 107, n: "Cierre Semanal de Producción", d: "Consolidado de toneladas procesadas", cat: "Administración", area: "Producción", s: "16:00", e: "16:45", dias: [5], prio: "Alta" }
+                    { id: 101, n: "Reunión Diaria (Visual Room)", d: "Revisión de KPIs, seguridad y prioridades del turno", cat: "Operación y Ejecución", area: "Producción", s: "07:00", e: "07:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 102, n: "Gemba Walk en Planta", d: "Recorrido y control en piso de termoformado y extrusión", cat: "Operación y Ejecución", area: "Producción", s: "07:30", e: "08:15", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 103, n: "Revisión OEE y Desempeño", d: "Análisis de paradas, velocidad de línea y disponibilidad", cat: "Resultados y Productividad", area: "Producción", s: "08:30", e: "09:15", dias: [1, 2, 3, 4, 5], prio: "Media" },
+                    { id: 104, n: "Seguimiento de Scrap y Desperdicio", d: "Pareto de merma con operadores y acciones correctivas", cat: "Resultados y Productividad", area: "Producción", s: "09:30", e: "10:15", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 105, n: "Auditoría 5S en Estaciones", d: "Inspección de orden, pasillos despejados y rotulación", cat: "Mejora Continua", area: "Producción", s: "10:30", e: "11:15", dias: [1, 2, 3, 4, 5], prio: "Media" },
+                    { id: 106, n: "Verificación de Setup y Arranques", d: "Control de tiempos estándar en cambio de molde", cat: "Operación y Ejecución", area: "Producción", s: "11:30", e: "12:15", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 107, n: "Seguimiento de Planes de Acción", d: "Estado de acciones abiertas y compromisos operativos", cat: "Mejora Continua", area: "Producción", s: "13:30", e: "14:15", dias: [1, 2, 3, 4, 5], prio: "Media" },
+                    { id: 108, n: "Charla de Seguridad Operativa", d: "Revisión de riesgos, prevención y EPP con el personal", cat: "Seguridad", area: "Producción", s: "14:30", e: "15:00", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 109, n: "Revisión de Mantenimiento y Paros", d: "Órdenes preventivas y coordinación de paradas técnicas", cat: "Mantenimiento", area: "Producción", s: "15:15", e: "16:00", dias: [1, 2, 3, 4, 5], prio: "Media" },
+                    { id: 110, n: "Cierre Semanal y Balance Operativo", d: "Consolidado de kilogramos, merma y balance de turno", cat: "Administración", area: "Producción", s: "16:00", e: "16:45", dias: [1, 2, 3, 4, 5], prio: "Alta" }
                 ]
             },
             Y: {
@@ -2147,10 +2191,10 @@
                 area: "Calidad",
                 ini: "LP",
                 acts: [
-                    { id: 201, n: "Reunión Diaria de Calidad", d: "Alineación de criterios con inspectores", cat: "Calidad e Inocuidad", area: "Calidad", s: "07:00", e: "07:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 202, n: "Liberación de Lotes Críticos", d: "Muestreo y verificación dimensional de producto", cat: "Calidad e Inocuidad", area: "Calidad", s: "08:30", e: "09:30", dias: [1, 2, 4], prio: "Alta" },
-                    { id: 203, n: "Auditoría de Buenas Prácticas (BPM)", d: "Inspección de higiene e inocuidad en planta", cat: "Calidad e Inocuidad", area: "Calidad", s: "10:30", e: "11:15", dias: [3, 5], prio: "Media" },
-                    { id: 204, n: "Calibración de Instrumentos", d: "Verificación de micrómetros y balanzas", cat: "Operación y Ejecución", area: "Calidad", s: "14:00", e: "14:45", dias: [2], prio: "Media" }
+                    { id: 201, n: "Reunión Diaria de Calidad", d: "Alineación de criterios con inspectores de línea", cat: "Calidad e Inocuidad", area: "Calidad", s: "07:00", e: "07:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 202, n: "Liberación de Lotes Críticos", d: "Muestreo destructivo y dimensional bajo norma técnica", cat: "Calidad e Inocuidad", area: "Calidad", s: "08:30", e: "09:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 203, n: "Auditoría de Buenas Prácticas (BPM)", d: "Inspección de higiene e inocuidad en planta", cat: "Calidad e Inocuidad", area: "Calidad", s: "10:30", e: "11:15", dias: [1, 2, 3, 4, 5], prio: "Media" },
+                    { id: 204, n: "Calibración de Instrumentos", d: "Verificación de micrómetros y balanzas analíticas", cat: "Operación y Ejecución", area: "Calidad", s: "14:00", e: "14:45", dias: [1, 2, 3, 4, 5], prio: "Media" }
                 ]
             },
             Z: {
@@ -2161,23 +2205,22 @@
                 area: "Logística",
                 ini: "AR",
                 acts: [
-                    { id: 301, n: "Plan de Despachos y Cargue", d: "Programación de tractomulas y muelles", cat: "Operación y Ejecución", area: "Logística", s: "07:00", e: "07:45", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 302, n: "Checklist Preoperacional Montacargas", d: "Inspección de seguridad mecánica y baterías", cat: "Seguridad", area: "Logística", s: "08:00", e: "08:30", dias: [1, 3, 5], prio: "Alta" },
-                    { id: 303, n: "Inventario Cíclico Bodega PT", d: "Conteo selectivo de referencias clave", cat: "Administración", area: "Logística", s: "13:30", e: "14:30", dias: [2, 4], prio: "Media" }
+                    { id: 301, n: "Plan de Cargue y Despachos", d: "Programación de vehículos y muelles de carga", cat: "Operación y Ejecución", area: "Logística", s: "07:00", e: "07:45", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 302, n: "Inspección de Montacargas", d: "Checklist preoperacional de seguridad de flota", cat: "Seguridad", area: "Logística", s: "08:00", e: "08:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 303, n: "Inventario Cíclico en Bodega PT", d: "Conteo y cuadre de referencias de alta rotación", cat: "Resultados y Productividad", area: "Logística", s: "10:00", e: "11:00", dias: [1, 2, 3, 4, 5], prio: "Media" },
+                    { id: 304, n: "Control de Exportaciones OTIF", d: "Verificación de documentación aduanera y contenedores", cat: "Administración", area: "Logística", s: "15:00", e: "15:45", dias: [1, 2, 3, 4, 5], prio: "Alta" }
                 ]
             },
             YL: {
                 id: "YL",
-                cedula: "72145890",
+                cedula: "1098765432",
                 nombre: "Yonny López",
-                cargo: "Líder Extrusión · Planta Extrusa",
+                cargo: "Jefe de Planta / Operaciones Extrusa",
                 area: "Planta Extrusa",
                 ini: "YL",
                 acts: [
-                    { id: 401, n: "Gemba Walk Extrusión", d: "Inspección visual de líneas 1 a 6 y temperaturas", cat: "Operación y Ejecución", area: "Planta Extrusa", s: "07:00", e: "07:45", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 402, n: "Reunión Diaria Visual Room", d: "Seguimiento a metas de toneladas y scrap", cat: "Operación y Ejecución", area: "Planta Extrusa", s: "08:00", e: "08:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 403, n: "Control de Variables de Proceso", d: "Perfil térmico, RPM husillos y presiones", cat: "Calidad e Inocuidad", area: "Planta Extrusa", s: "09:30", e: "10:30", dias: [1, 3, 5], prio: "Alta" },
-                    { id: 404, n: "Comité de Mantenimiento Autónomo", d: "Inspección preventiva con técnicos mecánicos", cat: "Operación y Ejecución", area: "Planta Extrusa", s: "14:00", e: "15:00", dias: [3], prio: "Media" }
+                    { id: 401, n: "Revisión Operativa General", d: "Indicadores clave de eficiencia y disponibilidad", cat: "Operación y Ejecución", area: "Planta Extrusa", s: "08:00", e: "09:00", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 402, n: "Comité de Planta y Proyectos", d: "Revisión de iniciativas de ahorro y seguridad", cat: "Proyectos y Mejora Continua", area: "Planta Extrusa", s: "14:00", e: "15:00", dias: [1, 2, 3, 4, 5], prio: "Media" }
                 ]
             }
         };
@@ -2187,6 +2230,82 @@
         const YONNY_CATEGORIES = [{"categoria": "Operación y Ejecución", "porcentaje": 28, "colorHex": "#006DB2"}, {"categoria": "Resultados y Productividad", "porcentaje": 18, "colorHex": "#2E7D32"}, {"categoria": "Liderazgo y Desarrollo de Personas", "porcentaje": 15, "colorHex": "#E65100"}, {"categoria": "Proyectos y Mejora Continua", "porcentaje": 11, "colorHex": "#0288D1"}, {"categoria": "Calidad e Inocuidad", "porcentaje": 9, "colorHex": "#7B1FA2"}, {"categoria": "Seguridad", "porcentaje": 5, "colorHex": "#D32F2F"}, {"categoria": "Administración", "porcentaje": 12, "colorHex": "#546E7A"}, {"categoria": "Sin asignación (espacios libres)", "porcentaje": 2, "colorHex": "#9E9E9E"}];
 
         // Estado vivo en memoria y persistente
+        // Almacén de Notificaciones Internas TRACK60
+        const NOTIFICATIONS = {
+            X: [
+                {
+                    id: 1,
+                    title: "Bienvenido a TRACK60",
+                    body: "Tu programación operativa estándar de 10 actividades diarias está activa y sincronizada.",
+                    time: "Hace 10 min",
+                    isRead: false,
+                    type: "assignment"
+                }
+            ],
+            Y: [],
+            Z: [],
+            YL: []
+        };
+
+        function updateNotifBadge() {
+            const notifs = NOTIFICATIONS[currentUserId] || [];
+            const unread = notifs.filter(n => !n.isRead).length;
+            const badge = document.getElementById('colabNotifBadge');
+            if (badge) {
+                if (unread > 0) {
+                    badge.innerText = unread;
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        function openColabNotifSheet() {
+            renderColabNotifs();
+            document.getElementById('modalNotifs').classList.add('active');
+        }
+
+        function markAllNotifsRead() {
+            const list = NOTIFICATIONS[currentUserId] || [];
+            list.forEach(n => n.isRead = true);
+            updateNotifBadge();
+            renderColabNotifs();
+            showToast("Todas las notificaciones marcadas como leídas");
+        }
+
+        function markNotifRead(id) {
+            const list = NOTIFICATIONS[currentUserId] || [];
+            const item = list.find(n => n.id === id);
+            if (item) item.isRead = true;
+            updateNotifBadge();
+            renderColabNotifs();
+        }
+
+        function renderColabNotifs() {
+            const list = NOTIFICATIONS[currentUserId] || [];
+            const container = document.getElementById('colabNotifsList');
+            if (!container) return;
+            if (list.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 36px 16px; color: #64748B;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">🔔</div>
+                    <div style="font-weight: 700; font-size: 14px; color: #002F6C;">No tienes notificaciones pendientes</div>
+                    <div style="font-size: 12px; margin-top: 4px;">Las nuevas tareas asignadas por supervisión aparecerán aquí con su horario.</div>
+                </div>`;
+                return;
+            }
+            container.innerHTML = list.map(n => `
+                <div onclick="markNotifRead(${n.id})" style="padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid ${n.isRead ? '#E2E8F0' : '#BAE6FD'}; background: ${n.isRead ? '#ffffff' : '#F0F9FF'}; cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-weight: 800; font-size: 13px; color: #002F6C;">${n.title}</span>
+                        ${!n.isRead ? '<span style="width: 8px; height: 8px; border-radius: 50%; background: #DC2626;"></span>' : ''}
+                    </div>
+                    <div style="font-size: 12px; color: #334155; line-height: 1.35;">${n.body}</div>
+                    <div style="font-size: 10.5px; color: #94A3B8; margin-top: 4px;">${n.time}</div>
+                </div>
+            `).join('');
+        }
+
         let currentUserId = "X";
         let currentDayOfWeek = 2; // Martes
         let stateData = {};
@@ -2422,6 +2541,20 @@
                 reason: reason
             });
 
+            // Efectivizar movimiento de día (10 estándar se convierte en 9 y 11)
+            const origIdx = act.dias.indexOf(currentDayOfWeek);
+            if (origIdx !== -1) {
+                act.dias.splice(origIdx, 1);
+            }
+            if (!act.dias.includes(targetDay)) {
+                act.dias.push(targetDay);
+                act.dias.sort((a, b) => a - b);
+            }
+            const newKey = `${act.id}_${targetDay}`;
+            if (!stateData[currentUserId][newKey]) {
+                stateData[currentUserId][newKey] = { done: false, reprogTo: null };
+            }
+
             auditLogs.unshift({
                 id: Date.now(),
                 action: "REPROGRAMAR_ACTIVIDAD",
@@ -2642,17 +2775,39 @@
             const newId = Date.now();
             const newAct = { id: newId, n: titulo, d: desc, cat, area, s: start, e: end, prio, dias };
 
+            const diasNombres = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+            const diasText = dias.map(d => diasNombres[d].substring(0, 3)).join(', ');
+
             if (dest === "ALL") {
                 Object.keys(USERS).forEach(uid => {
                     USERS[uid].acts.push({ ...newAct });
                     initUserData(uid);
+                    NOTIFICATIONS[uid] = NOTIFICATIONS[uid] || [];
+                    NOTIFICATIONS[uid].unshift({
+                        id: Date.now() + Math.random(),
+                        title: "Nueva Actividad Asignada",
+                        body: `El Administrador asignó "${titulo}" (${s} - ${e}) para los días: ${diasText}.`,
+                        time: "Hace un momento",
+                        isRead: false,
+                        type: "assignment"
+                    });
                 });
                 showToast("Actividad asignada masivamente a todos los colaboradores");
             } else {
                 USERS[dest].acts.push(newAct);
                 initUserData(dest);
+                NOTIFICATIONS[dest] = NOTIFICATIONS[dest] || [];
+                NOTIFICATIONS[dest].unshift({
+                    id: Date.now(),
+                    title: "Nueva Actividad Asignada",
+                    body: `El Administrador te asignó "${titulo}" (${s} - ${e}) para los días: ${diasText}.`,
+                    time: "Hace un momento",
+                    isRead: false,
+                    type: "assignment"
+                });
                 showToast(`Actividad asignada a ${USERS[dest].nombre}`);
             }
+            updateNotifBadge();
 
             auditLogs.unshift({
                 id: Date.now(),
