@@ -29,13 +29,13 @@ export const theme = {
 };
 
 export const sceneDurations = {
-  scene1: 540, // 18.0s
-  scene2: 735, // 24.5s
-  scene3: 645, // 21.5s
-  scene4: 705, // 23.5s
-  scene5: 660, // 22.0s
-  scene6: 555, // 18.5s
-  scene7: 465, // 15.5s
+  scene1: 478, // 14.76s - Apertura e Identidad TRACK60
+  scene2: 568, // 17.74s - El Desafío Operativo en Gemba
+  scene3: 594, // 18.60s - Arquitectura y Acceso Seguro
+  scene4: 735, // 23.30s - Flujo Operativo y 10 Actividades
+  scene5: 503, // 15.58s - Suite Administrativa 360° y Planificación
+  scene6: 419, // 12.77s - Impacto y Valor Organizacional
+  scene7: 364, // 10.94s - Cierre Institucional
 };
 
 export const TOTAL_FRAMES =
@@ -45,5 +45,5 @@ export const TOTAL_FRAMES =
   sceneDurations.scene4 +
   sceneDurations.scene5 +
   sceneDurations.scene6 +
-  sceneDurations.scene7; // 4305 frames (~2 min 23.5s)
+  sceneDurations.scene7; // 3661 frames (~2 min 02s @ 30fps)
 

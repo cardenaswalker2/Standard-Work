@@ -36,13 +36,13 @@ export const Scene7Outro: React.FC<SceneProps> = ({ vertical = false }) => {
   const cues = [
     {
       startFrame: 0,
-      endFrame: 230,
-      text: 'Standard Work es más que una aplicación: es el estándar de excelencia operativa que impulsa el futuro de Darnel Group.',
+      endFrame: 180,
+      text: 'TRACK60 es el nuevo estándar de excelencia operativa de Darnel Group.',
     },
     {
-      startFrame: 230,
-      endFrame: 465,
-      text: 'Una herramienta lista, comprobada y en marcha para llevar nuestra gestión al siguiente nivel. Muchas gracias.',
+      startFrame: 180,
+      endFrame: 364,
+      text: 'Una plataforma robusta, probada y lista para instalar en Android. ¡Muchas gracias!',
     },
   ];
 
@@ -122,7 +122,7 @@ export const Scene7Outro: React.FC<SceneProps> = ({ vertical = false }) => {
               margin: '0 0 10px 0',
             }}
           >
-            STANDARD <span style={{ color: '#0095D9' }}>WORK</span>
+            TRACK<span style={{ color: '#0095D9' }}>60</span>
           </h1>
 
           <p
@@ -134,7 +134,7 @@ export const Scene7Outro: React.FC<SceneProps> = ({ vertical = false }) => {
               lineHeight: 1.4,
             }}
           >
-            El nuevo estándar de gestión operativa en planta.
+            El nuevo estándar de excelencia operativa en planta.
           </p>
 
           <div
@@ -212,7 +212,7 @@ export const Scene7Outro: React.FC<SceneProps> = ({ vertical = false }) => {
                 lineHeight: 1.1,
               }}
             >
-              STANDARD <span style={{ color: '#0095D9' }}>WORK</span>
+              TRACK<span style={{ color: '#0095D9' }}>60</span>
             </h1>
 
             <p

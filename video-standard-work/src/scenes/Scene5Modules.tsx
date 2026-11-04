@@ -21,47 +21,47 @@ export const Scene5Modules: React.FC<SceneProps> = ({ vertical = false }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // 4 Modules cycled over 660 frames (~165 frames each)
+  // 4 Core Admin & Operational Modules cycled over 503 frames (~125 frames each)
   const modules = [
     {
-      id: 'excel_weeks',
-      tag: 'MÓDULO 1',
-      title: 'Planificador de 4 Semanas',
-      desc: 'Digitaliza la matriz mensual de Excel. Visualiza y audita las Semanas 1 a 4 de lunes a viernes.',
-      image: 'screenshots/screen_excel_weeks.png',
+      id: 'asig_admin',
+      tag: 'ADMINISTRACIÓN 360°',
+      title: 'Asignación Masiva e Individual',
+      desc: 'Crea y distribuye actividades por colaborador, área y categoría con plantillas predefinidas en un clic.',
+      image: 'screenshots/screen_admin_asig.png',
       color: '#0095D9',
     },
     {
-      id: 'calendar',
-      tag: 'MÓDULO 2',
-      title: 'Calendario Dinámico',
-      desc: 'Navegación ágil por día y turno de trabajo con filtrado de franjas horarias y actividades programadas.',
-      image: 'screenshots/screen_calendar.png',
+      id: 'superv_reprog',
+      tag: 'GOBERNANZA OPERATIVA',
+      title: 'Supervisión de Justificaciones',
+      desc: 'Revisión y aprobación de reprogramaciones de contingencia garantizando trazabilidad y balance operativo.',
+      image: 'screenshots/screen_admin_superv.png',
+      color: '#F97316',
+    },
+    {
+      id: 'excel_weeks',
+      tag: 'MATRIZ PLANTA REAL',
+      title: 'Planificación de 4 Semanas (Excel)',
+      desc: 'Integración oficial de las 270 actividades reales del libro operativo de planta categorizadas por tiempo.',
+      image: 'screenshots/screen_excel_weeks.png',
       color: '#16A34A',
     },
     {
-      id: 'rmnc_quality',
-      tag: 'MÓDULO 3',
-      title: 'Calidad & Control RMNC',
-      desc: 'Revisión sistemática de Material No Conforme, concesiones y alertas para blindar los despachos.',
-      image: 'screenshots/screen_activity_detail.png',
+      id: 'audit_logs',
+      tag: 'TRAZABILIDAD TOTAL',
+      title: 'Historial y Auditoría Inmutable',
+      desc: 'Registro cronológico inalterable de cada asignación, check completado y novedad operativa en planta.',
+      image: 'screenshots/screen_admin_audit.png',
       color: '#7C3AED',
-    },
-    {
-      id: 'indicators',
-      tag: 'MÓDULO 4',
-      title: 'Tablero de Indicadores',
-      desc: 'Gráficas de distribución del tiempo real frente al planificado en las 7 categorías estratégicas.',
-      image: 'screenshots/screen_indicators.png',
-      color: '#F97316',
     },
   ];
 
-  const currentModuleIndex = Math.min(Math.floor(frame / 165), 3);
+  const currentModuleIndex = Math.min(Math.floor(frame / 125), 3);
   const currentMod = modules[currentModuleIndex];
 
   const modSpring = spring({
-    frame: frame % 165,
+    frame: frame % 125,
     fps,
     config: { damping: 14, stiffness: 90 },
   });
@@ -69,23 +69,23 @@ export const Scene5Modules: React.FC<SceneProps> = ({ vertical = false }) => {
   const cues = [
     {
       startFrame: 0,
-      endFrame: 165,
-      text: 'Standard Work articula todos los procesos en módulos: el Planificador de Cuatro Semanas sincroniza la matriz operativa del mes.',
+      endFrame: 125,
+      text: 'Para la gestión gerencial, el panel administrativo ofrece control total con asignación masiva por área y categoría.',
     },
     {
-      startFrame: 165,
-      endFrame: 330,
-      text: 'El Calendario Dinámico permite navegar entre turnos y días de la semana con total agilidad.',
+      startFrame: 125,
+      endFrame: 250,
+      text: 'Supervisa y aprueba cada justificación de reprogramación garantizando disciplina operativa.',
     },
     {
-      startFrame: 330,
-      endFrame: 495,
-      text: 'El módulo de Calidad asegura el control de alertas y la revisión oportuna de material no conforme.',
+      startFrame: 250,
+      endFrame: 375,
+      text: 'Consulta la matriz oficial de cuatro semanas con sus doscientas setenta actividades reales del Excel.',
     },
     {
-      startFrame: 495,
-      endFrame: 660,
-      text: 'Y el Tablero de Indicadores mide la distribución del tiempo en las siete categorías estratégicas del negocio.',
+      startFrame: 375,
+      endFrame: 503,
+      text: 'Y audita cada evento con el historial inmutable para máxima transparencia institucional.',
     },
   ];
 

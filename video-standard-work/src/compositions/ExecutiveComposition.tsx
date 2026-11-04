@@ -12,8 +12,8 @@ import { sceneDurations } from '../styles/theme';
 export const ExecutiveComposition: React.FC = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: '#080E1A' }}>
-      {/* Background Corporate Music Track (Mixed low to give voice clarity) */}
-      <Audio src={staticFile('music/background_corporate.mp3')} volume={0.15} />
+      {/* Background Corporate Music Track (Mixed lower to guarantee voice presence) */}
+      <Audio src={staticFile('music/background_corporate.mp3')} volume={0.09} />
 
       {/* Main 7 Scenes Series */}
       <Series>

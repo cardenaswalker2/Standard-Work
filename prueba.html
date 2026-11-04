@@ -1982,6 +1982,27 @@
             <!-- =========================================================
                  MODAL: REPROGRAMACIÓN JUSTIFICADA
             ========================================================== -->
+                        <!-- MODAL: CENTRO DE NOTIFICACIONES COLABORADOR -->
+            <div class="modal-overlay" id="modalNotifs">
+                <div class="modal-box" style="max-height: 82vh; display: flex; flex-direction: column;">
+                    <div class="modal-header" style="margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 28px; height: 28px; background: rgba(0, 47, 108, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px;">🔔</div>
+                            <div class="modal-title" style="font-size: 14px;">Centro de Notificaciones</div>
+                        </div>
+                        <button class="modal-close-btn" onclick="closeModal('modalNotifs')">&times;</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #E2E8F0;">
+                        <span style="font-size: 11px; color: #64748B;">Novedades y tareas asignadas</span>
+                        <button onclick="markAllNotifsRead()" style="background: none; border: none; color: #0095D9; font-size: 11px; font-weight: 800; cursor: pointer; padding: 0;">Marcar leídas</button>
+                    </div>
+                    <div id="colabNotifsList" style="flex: 1; overflow-y: auto; max-height: 50vh;"></div>
+                    <button class="btn-ingresar-portal" onclick="closeModal('modalNotifs')" style="margin-top: 10px; background: #64748B;">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+
             <div class="modal-overlay" id="modalReprog">
                 <div class="modal-box">
                     <div class="modal-header">

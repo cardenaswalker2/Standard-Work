@@ -13,7 +13,7 @@ export const VerticalComposition: React.FC = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: '#080E1A' }}>
       {/* Background Corporate Music Track */}
-      <Audio src={staticFile('music/background_corporate.mp3')} volume={0.15} />
+      <Audio src={staticFile('music/background_corporate.mp3')} volume={0.09} />
 
       {/* Main 7 Scenes Series (Vertical Adaptation) */}
       <Series>

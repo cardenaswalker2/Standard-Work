@@ -5,8 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "remotion studio",
-    "render:horizontal": "remotion render ExecutiveComposition out/STANDARD_WORK_PRESENTACION_EJECUTIVA.mp4 --concurrency=4",
-    "render:vertical": "remotion render VerticalComposition out/STANDARD_WORK_PRESENTACION_VERTICAL.mp4 --concurrency=4",
+    "render:horizontal": "remotion render ExecutiveComposition out/TRACK60_PRESENTACION_EJECUTIVA.mp4 --concurrency=4",
+    "render:vertical": "remotion render VerticalComposition out/TRACK60_PRESENTACION_VERTICAL.mp4 --concurrency=4",
     "build": "npm run render:horizontal && npm run render:vertical"
   },
   "dependencies": {

@@ -29,35 +29,45 @@ export const Scene4Workflow: React.FC<SceneProps> = ({ vertical = false }) => {
     })
   );
 
-  // Transition from Dashboard to Activity Detail Modal around frame 350
-  const isDetailView = frame > 360;
-
   const phoneScale = spring({
     frame,
     fps,
     config: { damping: 15, stiffness: 90 },
   });
 
-  const zoomDetail = interpolate(frame, [350, 390], [1, 1.08], {
+  const zoomDetail = interpolate(frame, [350, 390], [1, 1.06], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
+  // Transition between Dashboard, Reprogramming, and Notifications
+  const currentScreenImage =
+    frame > 540
+      ? 'screenshots/screen_notifs.png'
+      : frame > 350
+      ? 'screenshots/screen_reprog.png'
+      : 'screenshots/screen_dashboard.png';
+
   const cues = [
     {
       startFrame: 0,
-      endFrame: 170,
-      text: 'El flujo de trabajo es directo y natural. Al ingresar, el dashboard presenta un tacómetro visual con el avance en tiempo real.',
+      endFrame: 180,
+      text: 'Usar TRACK60 es intuitivo: cada colaborador inicia su turno con 10 actividades estándar asignadas.',
     },
     {
-      startFrame: 170,
-      endFrame: 370,
-      text: 'Cada actividad está organizada por hora y código de color. El supervisor confirma la ejecución con un solo toque y notas.',
+      startFrame: 180,
+      endFrame: 360,
+      text: 'Al ejecutar una tarea, la marca con un toque y su avance se refleja en vivo en el tacómetro.',
     },
     {
-      startFrame: 370,
-      endFrame: 705,
-      text: 'Si una urgencia requiere mover una tarea, registra el motivo formalmente garantizando una auditoría transparente.',
+      startFrame: 360,
+      endFrame: 550,
+      text: 'Si surge una eventualidad en línea, puede reprogramarla con motivo justificado, equilibrando el balance a 9 y 11 tareas.',
+    },
+    {
+      startFrame: 550,
+      endFrame: 735,
+      text: 'Además, cuenta con una campanita de notificaciones que avisa en rojo cada nueva asignación del administrador.',
     },
   ];
 
@@ -135,11 +145,7 @@ export const Scene4Workflow: React.FC<SceneProps> = ({ vertical = false }) => {
             }}
           >
             <PhoneMockup
-              imageSrc={
-                isDetailView
-                  ? 'screenshots/screen_activity_detail.png'
-                  : 'screenshots/screen_dashboard.png'
-              }
+              imageSrc={currentScreenImage}
               width={380}
               height={760}
             />
@@ -253,9 +259,9 @@ export const Scene4Workflow: React.FC<SceneProps> = ({ vertical = false }) => {
                   fontWeight: 500,
                 }}
               >
-                <span>✓ Actividades Ejecutadas</span>
-                <span>• Observaciones Registradas</span>
-                <span>• Trazabilidad SQLite</span>
+                <span>✓ 10 Actividades Estándar</span>
+                <span>• Balance 9 y 11 al Reprogramar</span>
+                <span>• Campanita de Notificaciones 🔔</span>
               </div>
             </div>
           </div>
@@ -270,11 +276,7 @@ export const Scene4Workflow: React.FC<SceneProps> = ({ vertical = false }) => {
             }}
           >
             <PhoneMockup
-              imageSrc={
-                isDetailView
-                  ? 'screenshots/screen_activity_detail.png'
-                  : 'screenshots/screen_dashboard.png'
-              }
+              imageSrc={currentScreenImage}
               width={390}
               height={780}
               glow

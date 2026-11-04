@@ -60,18 +60,18 @@ export const Scene6Value: React.FC<SceneProps> = ({ vertical = false }) => {
   const cues = [
     {
       startFrame: 0,
-      endFrame: 160,
-      text: 'El impacto en nuestra organización es directo: estandarizamos la gestión en todos los turnos y eliminamos la pérdida de información.',
+      endFrame: 140,
+      text: 'El impacto de TRACK60 en Darnel Group es directo: eliminamos la pérdida de información.',
     },
     {
-      startFrame: 160,
-      endFrame: 340,
-      text: 'Garantizamos que el tiempo de los líderes se concentre en lo que genera verdadero valor en piso.',
+      startFrame: 140,
+      endFrame: 280,
+      text: 'Aseguramos el cumplimiento de estándares de seguridad, OEE y control de scrap...',
     },
     {
-      startFrame: 340,
-      endFrame: 555,
-      text: 'La seguridad de los colaboradores, la calidad del producto y la mejora continua de nuestras líneas.',
+      startFrame: 280,
+      endFrame: 419,
+      text: '...y generamos reportes oficiales en PDF y CSV listos para auditorías gerenciales.',
     },
   ];
 

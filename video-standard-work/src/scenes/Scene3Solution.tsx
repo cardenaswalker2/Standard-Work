@@ -36,36 +36,36 @@ export const Scene3Solution: React.FC<SceneProps> = ({ vertical = false }) => {
   const cues = [
     {
       startFrame: 0,
-      endFrame: 160,
-      text: 'Para responder a esta necesidad nace Standard Work, una aplicación móvil con arquitectura offline first.',
+      endFrame: 180,
+      text: 'Así nace TRACK60, con arquitectura 100% local sobre SQLite, garantizando funcionamiento continuo en planta.',
     },
     {
-      startFrame: 160,
+      startFrame: 180,
       endFrame: 380,
-      text: 'Funciona de manera ininterrumpida en cualquier punto de la planta, incluso sin cobertura de red.',
+      text: 'Los colaboradores ingresan directamente con su número de cédula o huella digital...',
     },
     {
       startFrame: 380,
-      endFrame: 645,
-      text: 'Con una interfaz limpia y moderna, cada supervisor inicia su turno con claridad absoluta de sus prioridades.',
+      endFrame: 594,
+      text: '...mientras la supervisión cuenta con un acceso administrativo protegido por PIN.',
     },
   ];
 
   const features = [
     {
-      title: 'Arquitectura Offline-First',
-      detail: 'Persistencia SQLite local ultra veloz: cero dependencia de WiFi o datos móviles en planta.',
+      title: 'Arquitectura 100% Offline (SQLite)',
+      detail: 'Cero dependencia de internet en piso de planta; datos seguros, rápidos e inmutables.',
       icon: '⚡',
     },
     {
-      title: 'Desarrollada en Flutter Nativo',
-      detail: 'Rendimiento fluido a 60 FPS, diseño ergonómico y compatibilidad total con dispositivos Android.',
-      icon: '📱',
+      title: 'Ingreso por Cédula y Biometría',
+      detail: 'Validación ágil por documento de identidad y sensor de huella para colaboradores.',
+      icon: '🪪',
     },
     {
-      title: 'Ingreso Rápido por Perfil',
-      detail: 'Autenticación instantánea por supervisor con asignación de turnos y áreas especializadas.',
-      icon: '👤',
+      title: 'Acceso Administrativo con PIN',
+      detail: 'Módulo de gobernanza, asignación y auditoría protegido para líderes de planta.',
+      icon: '🛡️',
     },
   ];
 

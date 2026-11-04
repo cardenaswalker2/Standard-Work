@@ -54,17 +54,17 @@ export const Scene2Context: React.FC<SceneProps> = ({ vertical = false }) => {
     {
       startFrame: 0,
       endFrame: 180,
-      text: 'Tradicionalmente, coordinar las rutinas en extrusión, termoformado y calidad implicaba hojas de cálculo y registros en papel.',
+      text: 'Tradicionalmente, coordinar las rutinas en extrusión, termoformado, calidad y logística dependía de planillas y hojas de cálculo dispersas.',
     },
     {
       startFrame: 180,
-      endFrame: 410,
-      text: 'Los líderes dedicaban tiempo valioso a conciliar datos en oficina, en lugar de acompañar los procesos en el Gemba.',
+      endFrame: 360,
+      text: 'Los líderes invertían tiempo valioso cuadrando datos en oficina en vez de acompañar el Gemba.',
     },
     {
-      startFrame: 410,
-      endFrame: 735,
-      text: 'Hacía falta una herramienta ágil, confiable y con movilidad total para decidir con datos verificados en tiempo real.',
+      startFrame: 360,
+      endFrame: 568,
+      text: 'Hacía falta un sistema digital único, con movilidad total y datos verificados en tiempo real.',
     },
   ];
 

@@ -48,18 +48,18 @@ export const Scene1Intro: React.FC<SceneProps> = ({ vertical = false }) => {
   const cues = [
     {
       startFrame: 0,
-      endFrame: 150,
-      text: 'En el entorno industrial moderno, la excelencia operativa se construye día a día en el piso de planta.',
+      endFrame: 140,
+      text: 'En la industria moderna de empaques, la excelencia operativa se construye día a día en el piso de planta.',
     },
     {
-      startFrame: 150,
-      endFrame: 330,
-      text: 'Bienvenidos a la presentación de Standard Work, la solución tecnológica de Darnel Group.',
+      startFrame: 140,
+      endFrame: 300,
+      text: 'Bienvenidos a TRACK60, la plataforma corporativa de Darnel Group...',
     },
     {
-      startFrame: 330,
-      endFrame: 540,
-      text: 'Diseñada para transformar la disciplina operativa y el liderazgo de nuestros supervisores.',
+      startFrame: 300,
+      endFrame: 478,
+      text: '...diseñada para estandarizar, asignar y supervisar la disciplina operativa de nuestros supervisores y líderes de producción.',
     },
   ];
 
@@ -176,7 +176,7 @@ export const Scene1Intro: React.FC<SceneProps> = ({ vertical = false }) => {
             lineHeight: 1.05,
           }}
         >
-          STANDARD <span style={{ color: '#0095D9' }}>WORK</span>
+          TRACK<span style={{ color: '#0095D9' }}>60</span>
         </h1>
 
         {/* Subtitle */}
@@ -191,8 +191,7 @@ export const Scene1Intro: React.FC<SceneProps> = ({ vertical = false }) => {
             opacity: subtitleOpacity,
           }}
         >
-          Gestión de trabajo estándar para supervisores de planta,
-          disciplina operativa y trazabilidad en tiempo real.
+          Plataforma de asignación, seguimiento y disciplina operativa para supervisores de planta.
         </p>
 
         {/* Feature Pills */}
@@ -206,7 +205,7 @@ export const Scene1Intro: React.FC<SceneProps> = ({ vertical = false }) => {
             opacity: subtitleOpacity,
           }}
         >
-          {['100% Offline (SQLite)', 'Matriz 4 Semanas', 'Control RMNC & Calidad'].map((tag, i) => (
+          {['100% Offline (SQLite)', '10 Actividades Base', 'Notificaciones 🔔', 'Matriz 4 Semanas Real'].map((tag, i) => (
             <div
               key={i}
               style={{
