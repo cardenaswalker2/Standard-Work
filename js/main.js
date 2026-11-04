@@ -100,20 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchVideoFormat(format) {
     const tabs = {
         horizontal: document.getElementById('tabHorizontal'),
-        vertical: document.getElementById('tabVertical'),
-        showcase: document.getElementById('tabShowcase')
+        vertical: document.getElementById('tabVertical')
     };
 
     const views = {
         horizontal: document.getElementById('viewHorizontal'),
-        vertical: document.getElementById('viewVertical'),
-        showcase: document.getElementById('viewShowcase')
+        vertical: document.getElementById('viewVertical')
     };
 
     const videos = {
         horizontal: document.getElementById('videoHorizontal'),
-        vertical: document.getElementById('videoVertical'),
-        showcase: document.getElementById('videoShowcase')
+        vertical: document.getElementById('videoVertical')
     };
 
     // 1. Pausar todos los videos para evitar solapamiento de audio
