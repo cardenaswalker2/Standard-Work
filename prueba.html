@@ -1458,6 +1458,219 @@
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
+    
+        /* =========================================================
+           ESTILOS TRACK60 MULTIPLANTA, SUBTAREAS, EVIDENCIAS Y KIOSCO
+        ========================================================== */
+        .plant-selector-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(15, 35, 68, 0.6);
+            border: 1px solid rgba(0, 149, 217, 0.3);
+            border-radius: 9999px;
+            padding: 4px 10px;
+            margin-bottom: 12px;
+            overflow-x: auto;
+        }
+        .plant-pill-btn {
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        .plant-pill-btn.active {
+            background: #0095D9;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 149, 217, 0.4);
+        }
+        .badge-role {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            letter-spacing: 0.3px;
+            display: inline-block;
+        }
+        .badge-role-superadmin { background: #7C3AED; color: #FFFFFF; }
+        .badge-role-admin { background: #0095D9; color: #FFFFFF; }
+        .badge-role-supervisor { background: #0284C7; color: #FFFFFF; }
+        .badge-role-operador { background: #059669; color: #FFFFFF; }
+        .badge-role-kiosco { background: #D97706; color: #FFFFFF; }
+
+        /* Kiosco Banner */
+        .kiosk-active-banner {
+            background: linear-gradient(135deg, #1E293B, #0F172A);
+            border: 1px solid #F59E0B;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Dual Progress Widget */
+        .dual-progress-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        .dual-prog-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .dual-prog-track {
+            height: 7px;
+            background: #E2E8F0;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .dual-prog-fill-exec {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #059669);
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+        .dual-prog-fill-valid {
+            height: 100%;
+            background: linear-gradient(90deg, #0284C7, #0095D9);
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+
+        /* Subtask Items */
+        .subtasks-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .subtask-card {
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 12px;
+            padding: 12px;
+            transition: all 0.2s ease;
+        }
+        .subtask-card.subtask-reported {
+            border-color: #38BDF8;
+            background: #F0F9FF;
+        }
+        .subtask-card.subtask-approved {
+            border-color: #34D399;
+            background: #F0FDF4;
+        }
+        .subtask-card.subtask-correction {
+            border-color: #F87171;
+            background: #FEF2F2;
+        }
+        .subtask-card.subtask-exception {
+            border-color: #FBBF24;
+            background: #FFFBEB;
+        }
+        .subtask-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+        .subtask-num-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #0F172A;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .subtask-instruction-box {
+            font-size: 11px;
+            color: #475569;
+            background: rgba(241, 245, 249, 0.8);
+            border-left: 3px solid #0095D9;
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin: 6px 0;
+            line-height: 1.4;
+        }
+        .evidence-input-area {
+            background: #FFFFFF;
+            border: 1px dashed #94A3B8;
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .photo-preview-thumb {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid #CBD5E1;
+        }
+        .subtask-status-tag {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+        .tag-st-pending { background: #E2E8F0; color: #475569; }
+        .tag-st-reported { background: #BAE6FD; color: #0284C7; }
+        .tag-st-approved { background: #BBF7D0; color: #16A34A; }
+        .tag-st-correction { background: #FECACA; color: #DC2626; }
+        .tag-st-exception { background: #FEF08A; color: #CA8A04; }
+
+        /* Review Cards */
+        .superv-review-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .superv-actions-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-superv-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+        .btn-superv-approve { background: #10B981; color: #ffffff; }
+        .btn-superv-correct { background: #F59E0B; color: #ffffff; }
+        .btn-superv-reject { background: #EF4444; color: #ffffff; }
+        .btn-superv-except { background: #6366F1; color: #ffffff; }
+
     </style>
 </head>
 <body>
@@ -1929,6 +2142,185 @@
             <!-- =========================================================
                  MODAL: ESCÁNER BIOMÉTRICO DACTILAR
             ========================================================== -->
+
+            <!-- =========================================================
+                 MODAL: DETALLE DE ACTIVIDAD, ESTÁNDAR, SUBTAREAS Y EVIDENCIAS
+            ========================================================== -->
+            <div class="modal-overlay" id="modalActivityDetail">
+                <div class="modal-box" style="max-width: 390px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <div>
+                            <div class="modal-title" id="actDetTitle">Gemba Walk en Planta</div>
+                            <div style="font-size: 11px; color: #64748B;" id="actDetMeta">Planta Extrusa · Producción · Alta Prioridad</div>
+                        </div>
+                        <button class="modal-close-btn" onclick="closeModal('modalActivityDetail')">&times;</button>
+                    </div>
+
+                    <!-- Pestañas del Detalle: Estándar Operativo vs Checklist Subtareas -->
+                    <div class="asig-subnav" style="margin-bottom: 10px;">
+                        <button class="asig-subtab-btn active" id="btnDetSubtasks" onclick="switchActDetTab('subtasks')">Subtareas & Evidencias</button>
+                        <button class="asig-subtab-btn" id="btnDetStandard" onclick="switchActDetTab('standard')">Estándar & Procedimiento</button>
+                    </div>
+
+                    <!-- Vista 1: Checklist de Subtareas y Evidencias -->
+                    <div id="viewDetSubtasks">
+                        <!-- Doble Indicador de Progreso: Ejecución vs Validación -->
+                        <div class="dual-progress-card">
+                            <div class="dual-prog-row">
+                                <span style="color: #059669;">Avance de Ejecución (Operador):</span>
+                                <span id="dualExecPct">7 / 10 Subtareas (70%)</span>
+                            </div>
+                            <div class="dual-prog-track">
+                                <div class="dual-prog-fill-exec" id="dualExecBar" style="width: 70%;"></div>
+                            </div>
+
+                            <div class="dual-prog-row">
+                                <span style="color: #0284C7;">Cumplimiento Validado (Supervisor):</span>
+                                <span id="dualValidPct">5 / 10 Validadas (50%)</span>
+                            </div>
+                            <div class="dual-prog-track" style="margin-bottom: 4px;">
+                                <div class="dual-prog-fill-valid" id="dualValidBar" style="width: 50%;"></div>
+                            </div>
+                            <div style="font-size: 10px; color: #64748B; margin-top: 4px; line-height: 1.3;">
+                                ⚠️ <em>Regla de Negocio:</em> Progreso no significa cumplimiento. Las subtareas reportadas requieren aprobación del supervisor para considerarse válidas.
+                            </div>
+                        </div>
+
+                        <!-- Lista de Subtareas Renderizadas Dinámicamente -->
+                        <div class="subtasks-list-container" id="actDetSubtasksList"></div>
+                    </div>
+
+                    <!-- Vista 2: Estándar Operativo Detallado -->
+                    <div id="viewDetStandard" style="display: none; font-size: 12px; line-height: 1.5; color: #334155;">
+                        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                            <strong style="color: #002F6C; display: block; margin-bottom: 2px;">🎯 ¿Qué se debe hacer y por qué?</strong>
+                            <span id="stdQue">Inspección de condiciones operativas, control térmico, presiones hidráulicas y seguridad de estaciones para prevenir paradas no programadas y reducir scrap.</span>
+                        </div>
+
+                        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                            <strong style="color: #002F6C; display: block; margin-bottom: 2px;">⚙️ ¿Cómo se debe realizar? (Procedimiento)</strong>
+                            <span id="stdComo">Recorrer secuencialmente las líneas de extrusión 01 y 02. Verificar que los pasillos amarillos estén despejados, medir temperatura en dados con pirómetro láser, comprobar manómetros y pesar merma en pie de máquina.</span>
+                        </div>
+
+                        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                            <strong style="color: #16A34A; display: block; margin-bottom: 2px;">🏆 Criterio de Cumplimiento / Resultado Esperado</strong>
+                            <span id="stdResultado">Parámetros dentro de tolerancia (180-210°C, 140-160 bar), fotografía obligatoria de pasillos despejados, peso de scrap ingresado y registro de novedades del turno.</span>
+                        </div>
+
+                        <div style="background: #FEF3C7; border: 1px solid #FDE68A; padding: 10px; border-radius: 10px;">
+                            <strong style="color: #D97706; display: block; margin-bottom: 2px;">🛡️ Flujo de Excepción</strong>
+                            <span>Si una subtarea obligatoria no puede realizarse por causa de fuerza mayor, utilice el botón <strong>Justificar Excepción</strong>. El supervisor evaluará el motivo antes de autorizar la exención.</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-ingresar-portal" onclick="closeModal('modalActivityDetail')" style="margin-top: 14px; background: #002F6C;">
+                        Cerrar Detalle
+                    </button>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 MODAL: IDENTIFICACIÓN DE OPERADOR (MODO KIOSCO / TABLET)
+            ========================================================== -->
+            <div class="modal-overlay" id="modalKioskIdentify">
+                <div class="modal-box" style="max-width: 350px;">
+                    <div class="modal-header">
+                        <div>
+                            <div class="modal-title">Identificación de Operador</div>
+                            <div style="font-size: 11px; color: #64748B;">Tablet Compartida · Línea 01 Extrusión</div>
+                        </div>
+                        <button class="modal-close-btn" onclick="closeModal('modalKioskIdentify')">&times;</button>
+                    </div>
+
+                    <div style="font-size: 12px; color: #334155; margin-bottom: 12px; background: #FEF3C7; padding: 8px; border-radius: 8px; border: 1px solid #FCD34D;">
+                        🔒 <em>Trazabilidad Obligatoria:</em> Para garantizar la responsabilidad individual, seleccione quién está operando la tablet en este momento.
+                    </div>
+
+                    <div class="form-group">
+                        <label>Seleccionar Operador en Turno *</label>
+                        <select id="kioskSelectWorker" class="form-control">
+                            <option value="X">Carlos Méndez · C.C. 1012345678 (Extrusión)</option>
+                            <option value="Z">Andrés Ruiz · C.C. 1034567890 (Logística)</option>
+                            <option value="PC">Pedro Castro · C.C. 1067890123 (Termoformado)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>PIN de Confirmación (4 dígitos) *</label>
+                        <input type="password" id="kioskWorkerPin" class="form-control" maxlength="4" placeholder="Ej. 1111 (PIN de Carlos)">
+                    </div>
+
+                    <button class="btn-ingresar-portal" onclick="confirmKioskWorker()" style="background: #D97706;">
+                        Confirmar Identidad y Continuar
+                    </button>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 MODAL: CREAR PLANTA (SUPERADMIN JAVIER)
+            ========================================================== -->
+            <div class="modal-overlay" id="modalCreatePlant">
+                <div class="modal-box" style="max-width: 360px;">
+                    <div class="modal-header">
+                        <div class="modal-title">Registrar Nueva Planta</div>
+                        <button class="modal-close-btn" onclick="closeModal('modalCreatePlant')">&times;</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre de la Planta *</label>
+                        <input type="text" id="newPlantName" class="form-control" placeholder="Ej. Planta Cartagena">
+                    </div>
+                    <div class="form-group">
+                        <label>Código Identificador *</label>
+                        <input type="text" id="newPlantCode" class="form-control" placeholder="Ej. CTG-04">
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicación / Ciudad *</label>
+                        <input type="text" id="newPlantLoc" class="form-control" placeholder="Ej. Zona Industrial Mamonal">
+                    </div>
+                    <div class="form-group">
+                        <label>Administrador de Planta Responsable *</label>
+                        <input type="text" id="newPlantAdmin" class="form-control" placeholder="Ej. Ingeniero de Planta">
+                    </div>
+                    <button class="btn-ingresar-portal" onclick="saveNewPlant()" style="background: #7C3AED;">
+                        Registrar Planta en TRACK60
+                    </button>
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 MODAL: ACTIVIDAD CORPORATIVA GLOBAL (JAVIER)
+            ========================================================== -->
+            <div class="modal-overlay" id="modalDispatchGlobal">
+                <div class="modal-box" style="max-width: 370px;">
+                    <div class="modal-header">
+                        <div>
+                            <div class="modal-title">Actividad Corporativa Global</div>
+                            <div style="font-size: 11px; color: #7C3AED; font-weight: 700;">Distribución Independiente por Planta</div>
+                        </div>
+                        <button class="modal-close-btn" onclick="closeModal('modalDispatchGlobal')">&times;</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Título de la Actividad Corporativa *</label>
+                        <input type="text" id="globActTitle" class="form-control" placeholder="Ej. Auditoría de Seguridad & BPM Trimestral">
+                    </div>
+                    <div class="form-group">
+                        <label>Instrucciones y Procedimiento Obligatorio *</label>
+                        <textarea id="globActDesc" class="form-control" rows="2" placeholder="Procedimiento que deben seguir todas las plantas..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Plantas Destinatarias (Ejecución Aislada) *</label>
+                        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; margin-top: 4px;">
+                            <label><input type="checkbox" id="globPlExtrusa" checked> Planta Extrusa</label>
+                            <label><input type="checkbox" id="globPlTermo" checked> Planta Termoformado</label>
+                            <label><input type="checkbox" id="globPlInyec" checked> Planta Inyección</label>
+                        </div>
+                    </div>
+                    <button class="btn-ingresar-portal" onclick="submitGlobalActivity()" style="background: #7C3AED;">
+                        Distribuir a Plantas Seleccionadas
+                    </button>
+                </div>
+            </div>
+
             <div class="modal-overlay" id="modalBiometric">
                 <div class="modal-box" style="text-align: center;">
                     <div style="font-size: 12px; font-weight: 800; color: #0095D9; letter-spacing: 0.5px; margin-bottom: 4px;">AUTENTICACIÓN SEGURA</div>
@@ -2182,15 +2574,74 @@
          LÓGICA JAVASCRIPT COMPLETA E INTERACTIVA
     ========================================================== -->
     <script>
-                // Datos de usuarios registrados en el sistema (Estándar de 10 actividades diarias L-V)
+                
+        // =========================================================
+        // TRACK60 V2 — ARQUITECTURA MULTIPLANTA Y JERARQUÍA EMPRESARIAL
+        // =========================================================
+        const PLANTS = {
+            "PL-EXTRUSA": { id: "PL-EXTRUSA", nombre: "Planta Extrusa", codigo: "EXT-01", ubicacion: "Km 12 Vía Funza - Mosquera", adminId: "YL", activa: true },
+            "PL-TERMO": { id: "PL-TERMO", nombre: "Planta Termoformado", codigo: "TER-02", ubicacion: "Parque Industrial Celta, Funza", adminId: "RG", activa: true },
+            "PL-INYEC": { id: "PL-INYEC", nombre: "Planta Inyección", codigo: "INY-03", ubicacion: "Zona Franca Tocancipá", adminId: "JAVIER", activa: true }
+        };
+        let activePlantId = "PL-EXTRUSA";
+        let kioskActiveWorkerId = "X"; // Operador por defecto en tablet compartida
+
+        // Perfiles de 4 Niveles Jerárquicos
         const USERS = {
+            JAVIER: {
+                id: "JAVIER",
+                cedula: "0000000001",
+                nombre: "Javier · Superadministrador",
+                cargo: "Superadministrador General",
+                area: "Dirección Corporativa",
+                ini: "JG",
+                rol: "superadmin",
+                plantId: "ALL",
+                pin: "1428",
+                acts: []
+            },
+            YL: {
+                id: "YL",
+                cedula: "1098765432",
+                nombre: "Yonny López",
+                cargo: "Jefe de Planta / Operaciones Extrusa",
+                area: "Planta Extrusa",
+                ini: "YL",
+                rol: "admin_planta",
+                plantId: "PL-EXTRUSA",
+                pin: "1234",
+                acts: [
+                    { id: 401, n: "Revisión Operativa General", d: "Indicadores clave de eficiencia y disponibilidad", cat: "Operación y Ejecución", area: "Planta Extrusa", s: "08:00", e: "09:00", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 402, n: "Comité de Planta y Proyectos", d: "Revisión de iniciativas de ahorro y seguridad", cat: "Proyectos y Mejora Continua", area: "Planta Extrusa", s: "14:00", e: "15:00", dias: [1, 2, 3, 4, 5], prio: "Media" }
+                ]
+            },
+            Y: {
+                id: "Y",
+                cedula: "1023456789",
+                nombre: "Usuario Y · Laura Pérez",
+                cargo: "Supervisor de Calidad y Procesos",
+                area: "Calidad",
+                ini: "LP",
+                rol: "supervisor",
+                plantId: "PL-EXTRUSA",
+                pin: "2222",
+                acts: [
+                    { id: 201, n: "Reunión Diaria de Calidad", d: "Alineación de criterios con inspectores de línea", cat: "Calidad e Inocuidad", area: "Calidad", s: "07:00", e: "07:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 202, n: "Liberación de Lotes Críticos", d: "Muestreo destructivo y dimensional bajo norma técnica", cat: "Calidad e Inocuidad", area: "Calidad", s: "08:30", e: "09:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 203, n: "Auditoría de Buenas Prácticas (BPM)", d: "Inspección de higiene e inocuidad en planta", cat: "Calidad e Inocuidad", area: "Calidad", s: "10:30", e: "11:15", dias: [1, 2, 3, 4, 5], prio: "Media" },
+                    { id: 204, n: "Calibración de Instrumentos", d: "Verificación de micrómetros y balanzas analíticas", cat: "Operación y Ejecución", area: "Calidad", s: "14:00", e: "14:45", dias: [1, 2, 3, 4, 5], prio: "Media" }
+                ]
+            },
             X: {
                 id: "X",
                 cedula: "1012345678",
                 nombre: "Usuario X · Carlos Méndez",
-                cargo: "Supervisor de Producción",
+                cargo: "Operador Líder de Extrusión",
                 area: "Producción",
                 ini: "CM",
+                rol: "operador",
+                plantId: "PL-EXTRUSA",
+                pin: "1111",
                 acts: [
                     { id: 101, n: "Reunión Diaria (Visual Room)", d: "Revisión de KPIs, seguridad y prioridades del turno", cat: "Operación y Ejecución", area: "Producción", s: "07:00", e: "07:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
                     { id: 102, n: "Gemba Walk en Planta", d: "Recorrido y control en piso de termoformado y extrusión", cat: "Operación y Ejecución", area: "Producción", s: "07:30", e: "08:15", dias: [1, 2, 3, 4, 5], prio: "Alta" },
@@ -2204,27 +2655,16 @@
                     { id: 110, n: "Cierre Semanal y Balance Operativo", d: "Consolidado de kilogramos, merma y balance de turno", cat: "Administración", area: "Producción", s: "16:00", e: "16:45", dias: [1, 2, 3, 4, 5], prio: "Alta" }
                 ]
             },
-            Y: {
-                id: "Y",
-                cedula: "1023456789",
-                nombre: "Usuario Y · Laura Pérez",
-                cargo: "Coordinadora de Calidad",
-                area: "Calidad",
-                ini: "LP",
-                acts: [
-                    { id: 201, n: "Reunión Diaria de Calidad", d: "Alineación de criterios con inspectores de línea", cat: "Calidad e Inocuidad", area: "Calidad", s: "07:00", e: "07:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 202, n: "Liberación de Lotes Críticos", d: "Muestreo destructivo y dimensional bajo norma técnica", cat: "Calidad e Inocuidad", area: "Calidad", s: "08:30", e: "09:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 203, n: "Auditoría de Buenas Prácticas (BPM)", d: "Inspección de higiene e inocuidad en planta", cat: "Calidad e Inocuidad", area: "Calidad", s: "10:30", e: "11:15", dias: [1, 2, 3, 4, 5], prio: "Media" },
-                    { id: 204, n: "Calibración de Instrumentos", d: "Verificación de micrómetros y balanzas analíticas", cat: "Operación y Ejecución", area: "Calidad", s: "14:00", e: "14:45", dias: [1, 2, 3, 4, 5], prio: "Media" }
-                ]
-            },
             Z: {
                 id: "Z",
                 cedula: "1034567890",
                 nombre: "Usuario Z · Andrés Ruiz",
-                cargo: "Líder de Logística",
+                cargo: "Operador de Logística y Despacho",
                 area: "Logística",
                 ini: "AR",
+                rol: "operador",
+                plantId: "PL-EXTRUSA",
+                pin: "3333",
                 acts: [
                     { id: 301, n: "Plan de Cargue y Despachos", d: "Programación de vehículos y muelles de carga", cat: "Operación y Ejecución", area: "Logística", s: "07:00", e: "07:45", dias: [1, 2, 3, 4, 5], prio: "Alta" },
                     { id: 302, n: "Inspección de Montacargas", d: "Checklist preoperacional de seguridad de flota", cat: "Seguridad", area: "Logística", s: "08:00", e: "08:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
@@ -2232,18 +2672,86 @@
                     { id: 304, n: "Control de Exportaciones OTIF", d: "Verificación de documentación aduanera y contenedores", cat: "Administración", area: "Logística", s: "15:00", e: "15:45", dias: [1, 2, 3, 4, 5], prio: "Alta" }
                 ]
             },
-            YL: {
-                id: "YL",
-                cedula: "1098765432",
-                nombre: "Yonny López",
-                cargo: "Jefe de Planta / Operaciones Extrusa",
-                area: "Planta Extrusa",
-                ini: "YL",
+            KIOSK_1: {
+                id: "KIOSK_1",
+                cedula: "9000000001",
+                nombre: "Tablet Línea 01 (Kiosco Compartido)",
+                cargo: "Estación de Piso Compartida",
+                area: "Producción Extrusión",
+                ini: "TB",
+                rol: "kiosco",
+                plantId: "PL-EXTRUSA",
+                pin: "0000",
+                acts: [] // Hereda las actividades operativas de la estación
+            },
+            RG: {
+                id: "RG",
+                cedula: "1045678901",
+                nombre: "Roberto Gómez",
+                cargo: "Director de Planta Termoformado",
+                area: "Planta Termoformado",
+                ini: "RG",
+                rol: "admin_planta",
+                plantId: "PL-TERMO",
+                pin: "4444",
                 acts: [
-                    { id: 401, n: "Revisión Operativa General", d: "Indicadores clave de eficiencia y disponibilidad", cat: "Operación y Ejecución", area: "Planta Extrusa", s: "08:00", e: "09:00", dias: [1, 2, 3, 4, 5], prio: "Alta" },
-                    { id: 402, n: "Comité de Planta y Proyectos", d: "Revisión de iniciativas de ahorro y seguridad", cat: "Proyectos y Mejora Continua", area: "Planta Extrusa", s: "14:00", e: "15:00", dias: [1, 2, 3, 4, 5], prio: "Media" }
+                    { id: 501, n: "Control de Ciclo y Vacío", d: "Inspección de presión de formado en línea continua", cat: "Operación y Ejecución", area: "Termoformado", s: "07:30", e: "08:30", dias: [1, 2, 3, 4, 5], prio: "Alta" },
+                    { id: 502, n: "Liberación de Troquel", d: "Alineación de cuchillas y descarte de rebarba", cat: "Operación y Ejecución", area: "Termoformado", s: "09:00", e: "10:00", dias: [1, 2, 3, 4, 5], prio: "Media" }
+                ]
+            },
+            SM: {
+                id: "SM",
+                cedula: "1056789012",
+                nombre: "Sandra Morales",
+                cargo: "Supervisora de Termoformado",
+                area: "Termoformado Continuo",
+                ini: "SM",
+                rol: "supervisor",
+                plantId: "PL-TERMO",
+                pin: "5555",
+                acts: []
+            },
+            PC: {
+                id: "PC",
+                cedula: "1067890123",
+                nombre: "Pedro Castro",
+                cargo: "Operador de Termoformadora",
+                area: "Termoformado Continuo",
+                ini: "PC",
+                rol: "operador",
+                plantId: "PL-TERMO",
+                pin: "6666",
+                acts: [
+                    { id: 601, n: "Inspección Térmica de Molde", d: "Revisión de calentadores infrarrojos", cat: "Operación y Ejecución", area: "Termoformado", s: "08:00", e: "08:45", dias: [1, 2, 3, 4, 5], prio: "Alta" }
                 ]
             }
+        };
+
+        // Subtareas Reales Configuradas (10 Subtareas para Gemba Walk y Actividades Operativas)
+        const SUBTASKS = {
+            102: [
+                { id: 1, orden: 1, nombre: "Inspección de pasillos y demarcación 5S", desc: "Verificar pasillos 100% despejados", inst: "Tomar foto frontal del pasillo principal", reqFoto: true, reqMedicion: false, reqComentario: false, obligatoria: true },
+                { id: 2, orden: 2, nombre: "Control térmico en cabezal de dados", desc: "Registrar temperatura de zona 3", inst: "Ingresar valor en grados Celsius (Rango: 180 - 210 °C)", reqFoto: false, reqMedicion: true, unidad: "°C", obligatoria: true },
+                { id: 3, orden: 3, nombre: "Presión hidráulica en circuito de bombas", desc: "Monitorear manómetro de empuje", inst: "Registrar valor en bar (Rango: 140 - 160 bar)", reqFoto: false, reqMedicion: true, unidad: "bar", obligatoria: true },
+                { id: 4, orden: 4, nombre: "Inspección de paradas de emergencia", desc: "Verificar que ningún hongo esté enclavado", inst: "Confirmar físicamente las 4 estaciones de parada", reqFoto: false, reqMedicion: false, reqComentario: false, obligatoria: true },
+                { id: 5, orden: 5, nombre: "Nivel de resina virgen en tolvas", desc: "Inspección de tolva superior de alimentación", inst: "Tolva debe estar por encima del 50%", reqFoto: false, reqMedicion: false, reqComentario: false, obligatoria: true },
+                { id: 6, orden: 6, nombre: "Alineación de bobinadores y tensión", desc: "Comprobar formación de rollo sin arrugas", inst: "Adjuntar fotografía del rollo terminado", reqFoto: true, reqMedicion: false, reqComentario: false, obligatoria: true },
+                { id: 7, orden: 7, nombre: "Pesaje de Scrap en pie de máquina", desc: "Registrar kilogramos de merma de arranque", inst: "Ingresar peso neto pesado en báscula (kg)", reqFoto: false, reqMedicion: true, unidad: "kg", obligatoria: true },
+                { id: 8, orden: 8, nombre: "Revisión de órdenes en tablero de control", desc: "Validar especificación del cliente y lote", inst: "Confirmar concordancia contra hoja de ruta", reqFoto: false, reqMedicion: false, reqComentario: false, obligatoria: true },
+                { id: 9, orden: 9, nombre: "Calibración de espesor con micrómetro", desc: "Muestreo en 3 puntos de lámina", inst: "Medición de espesor en milímetros (opcional)", reqFoto: false, reqMedicion: true, unidad: "mm", obligatoria: false },
+                { id: 10, orden: 10, nombre: "Cierre de recorrido y registro de observaciones", desc: "Acuerdos y notas de turno con operadores", inst: "Escribir comentario obligatorio del estado de planta", reqFoto: false, reqMedicion: false, reqComentario: true, obligatoria: true }
+            ]
+        };
+
+        // Estado inicial de Subtareas: 7 reportadas y 5 aprobadas por supervisor (Diferencia Real entre Avance y Validación)
+        let subtaskExecutions = {
+            "102_2_1": { state: "Aprobada", userId: "X", fotoUrl: "assets/fotos_track60/5F.jpg", comentario: "Pasillo despejado según norma 5S", supervisorId: "Y", motivoSupervisor: "Conforme con estándar" },
+            "102_2_2": { state: "Aprobada", userId: "X", medicion: 194.5, comentario: "Pirómetro en 194.5°C", supervisorId: "Y", motivoSupervisor: "En rango óptimo (180-210°C)" },
+            "102_2_3": { state: "Aprobada", userId: "X", medicion: 148, comentario: "Manómetro en 148 bar", supervisorId: "Y", motivoSupervisor: "Presión normal" },
+            "102_2_4": { state: "Aprobada", userId: "X", comentario: "Hongos operativos", supervisorId: "Y", motivoSupervisor: "Verificado" },
+            "102_2_5": { state: "Aprobada", userId: "X", comentario: "Tolva al 85% de capacidad", supervisorId: "Y", motivoSupervisor: "Suficiente para turno" },
+            "102_2_6": { state: "Reportada", userId: "X", fotoUrl: "assets/fotos_track60/4F.jpg", comentario: "Bobinador calibrado sin arrugas", supervisorId: null },
+            "102_2_7": { state: "Reportada", userId: "X", medicion: 14.2, comentario: "14.2 kg de merma por cambio de dado", supervisorId: null }
         };
 
         // 270 Actividades reales del Excel ST - WR YONNY LOPEZ
@@ -2460,15 +2968,53 @@
                 `;
             }).join('');
 
+            // Banner Especial de Kiosco si el rol es kiosco
+            let kioskBannerHtml = "";
+            if (u.rol === "kiosco") {
+                const activeWorker = USERS[kioskActiveWorkerId] || { nombre: "Operador de Turno", cargo: "Operador de Planta", cedula: "1012345678" };
+                kioskBannerHtml = `
+                    <div style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">Tablet Compartida · Kiosco Piso</span>
+                                <div style="font-size: 14px; font-weight: 800; margin-top: 4px;">Operador en Turno: ${activeWorker.nombre}</div>
+                                <div style="font-size: 11px; opacity: 0.9;">C.C. ${activeWorker.cedula} · ${activeWorker.cargo}</div>
+                            </div>
+                            <button class="btn-act-action" onclick="openKioskIdentifyModal()" style="background: white; color: #0369A1; font-weight: 700; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer;">
+                                Cambiar Operador
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
             // Actividades del día
             const actsList = document.getElementById('dashActsList');
             const dayActs = u.acts.filter(a => a.dias.includes(currentDayOfWeek));
 
             let doneCount = 0;
-            actsList.innerHTML = dayActs.map(a => {
+            const actsCardsHtml = dayActs.map(a => {
                 const key = `${a.id}_${currentDayOfWeek}`;
                 const isDone = stateData[currentUserId][key] ? stateData[currentUserId][key].done : false;
                 if (isDone) doneCount++;
+
+                // Estadísticas de subtareas
+                const subStats = getSubtaskStats(a.id, currentDayOfWeek);
+                let subtasksPillHtml = "";
+                if (subStats.total > 0) {
+                    const execPct = Math.round((subStats.reported / subStats.total) * 100);
+                    const validPct = Math.round((subStats.approved / subStats.total) * 100);
+                    subtasksPillHtml = `
+                        <div style="display: flex; gap: 6px; margin: 8px 0 4px 0; flex-wrap: wrap;">
+                            <span class="subtask-badge ${subStats.reported === subStats.total ? 'st-approved' : 'st-reported'}" style="font-size: 10px;">
+                                📋 ${subStats.reported}/${subStats.total} Subtareas (${execPct}% Avance)
+                            </span>
+                            <span class="subtask-badge ${subStats.approved === subStats.total ? 'st-approved' : 'st-pending'}" style="font-size: 10px;">
+                                🛡️ ${subStats.approved}/${subStats.total} Validadas (${validPct}%)
+                            </span>
+                        </div>
+                    `;
+                }
 
                 return `
                     <div class="act-card ${isDone ? 'done' : ''}">
@@ -2484,9 +3030,16 @@
                             <div class="act-title-box">
                                 <div class="act-title">${a.n}</div>
                                 <div class="act-desc">${a.d}</div>
+                                ${subtasksPillHtml}
                             </div>
                         </div>
                         <div class="act-footer-actions">
+                            ${subStats.total > 0 ? `
+                                <button class="btn-act-action" style="background: #0284C7; color: #fff; font-weight: 600;" onclick="openActivityDetailModal(${a.id}, ${currentDayOfWeek})">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                    Instrucciones & Subtareas
+                                </button>
+                            ` : ''}
                             <button class="btn-act-action btn-act-reprog" onclick="openReprogModal(${a.id}, '${a.n}')">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                                 Reprogramar
@@ -2495,6 +3048,8 @@
                     </div>
                 `;
             }).join('');
+
+            actsList.innerHTML = kioskBannerHtml + actsCardsHtml;
 
             // Progreso
             const total = dayActs.length || 1;
@@ -3131,6 +3686,620 @@
 
         // Iniciar
         document.addEventListener('DOMContentLoaded', initApp);
+    
+        // =========================================================
+        // TRACK60 V2 — FUNCIONES MULTIPLANTA, SUBTAREAS Y SUPERVISIÓN
+        // =========================================================
+        let currentModalActId = null;
+        let currentModalDay = null;
+        let activeSupervSubTab = "subtasks"; // "subtasks" | "reprogs"
+
+        // Filtro de colaboradores por planta en la pantalla de bienvenida / login
+        let currentLoginPlantFilter = "ALL";
+        function filterLoginColabs(plantId, btn) {
+            currentLoginPlantFilter = plantId;
+            const buttons = document.querySelectorAll(".plant-filter-btn");
+            buttons.forEach(b => b.classList.remove("active"));
+            if (btn) btn.classList.add("active");
+            renderLoginColabs();
+        }
+
+        // Renderizado de Colaboradores con Selector de Plantas y Badges de Rol
+        function renderLoginColabs() {
+            const list = document.getElementById('loginColabsList');
+            if (!list) return;
+
+            // Barra de filtros de Planta si no existe
+            let filterBarHtml = `
+                <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;">
+                    <button class="filter-pill plant-filter-btn ${currentLoginPlantFilter === 'ALL' ? 'active' : ''}" onclick="filterLoginColabs('ALL', this)">🏢 Todas (${Object.keys(USERS).length})</button>
+                    <button class="filter-pill plant-filter-btn ${currentLoginPlantFilter === 'PL-EXTRUSA' ? 'active' : ''}" onclick="filterLoginColabs('PL-EXTRUSA', this)">🏭 Extrusa</button>
+                    <button class="filter-pill plant-filter-btn ${currentLoginPlantFilter === 'PL-TERMO' ? 'active' : ''}" onclick="filterLoginColabs('PL-TERMO', this)">🏭 Termoformado</button>
+                    <button class="filter-pill plant-filter-btn ${currentLoginPlantFilter === 'PL-INYEC' ? 'active' : ''}" onclick="filterLoginColabs('PL-INYEC', this)">🏭 Inyección</button>
+                </div>
+            `;
+
+            const filteredKeys = Object.keys(USERS).filter(k => {
+                if (currentLoginPlantFilter === "ALL") return true;
+                const u = USERS[k];
+                return u.plantId === currentLoginPlantFilter || u.plantId === "ALL";
+            });
+
+            const cardsHtml = filteredKeys.map(k => {
+                const u = USERS[k];
+                let roleBadgeColor = "#2563EB";
+                let roleBadgeBg = "#EFF6FF";
+                let roleTitle = "Colaborador";
+
+                if (u.rol === "superadmin") {
+                    roleBadgeColor = "#7C3AED";
+                    roleBadgeBg = "#F5F3FF";
+                    roleTitle = "N1 · Superadmin General";
+                } else if (u.rol === "admin_planta") {
+                    roleBadgeColor = "#0284C7";
+                    roleBadgeBg = "#F0F9FF";
+                    roleTitle = "N2 · Admin de Planta";
+                } else if (u.rol === "supervisor") {
+                    roleBadgeColor = "#D97706";
+                    roleBadgeBg = "#FFFBEB";
+                    roleTitle = "N3 · Supervisor de Planta";
+                } else if (u.rol === "operador") {
+                    roleBadgeColor = "#059669";
+                    roleBadgeBg = "#ECFDF5";
+                    roleTitle = "N4 · Operador de Planta";
+                } else if (u.rol === "kiosco") {
+                    roleBadgeColor = "#0891B2";
+                    roleBadgeBg = "#ECFEFF";
+                    roleTitle = "Tablet Kiosco Compartida";
+                }
+
+                const plantLabel = u.plantId === "ALL" ? "Corporativo Todas las Plantas" : (PLANTS[u.plantId] ? PLANTS[u.plantId].nombre : u.plantId);
+
+                return `
+                    <div class="colab-card" onclick="startBiometricLogin('${k}')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 8px; border: 1px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; transition: all 0.2s ease;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="colab-avatar" style="width: 42px; height: 42px; border-radius: 10px; background: #002F6C; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px;">${u.ini}</div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 14px; color: #0F172A;">${u.nombre}</div>
+                                <div style="font-size: 11px; color: #64748B; margin-top: 2px;">C.C. ${u.cedula} · <strong>${u.cargo}</strong></div>
+                                <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+                                    <span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleTitle}</span>
+                                    <span style="font-size: 10px; color: #94A3B8;">📍 ${plantLabel}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="colab-arrow" style="color: #94A3B8;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            list.innerHTML = filterBarHtml + cardsHtml;
+        }
+
+        // Conteo de subtareas reportadas y aprobadas
+        function getSubtaskStats(actId, day) {
+            const list = SUBTASKS[actId] || [];
+            let reported = 0;
+            let approved = 0;
+            list.forEach(s => {
+                const ex = subtaskExecutions[`${actId}_${day}_${s.id}`];
+                if (ex) {
+                    if (ex.state === "Reportada" || ex.state === "Aprobada") reported++;
+                    if (ex.state === "Aprobada") approved++;
+                }
+            });
+            return { total: list.length, reported, approved };
+        }
+
+        // Modal de Detalle de Actividad, Subtareas y Evidencias
+        function openActivityDetailModal(actId, day) {
+            currentModalActId = actId;
+            currentModalDay = day;
+            const u = USERS[currentUserId];
+            const act = u.acts.find(a => a.id === actId) || (USERS.X.acts.find(a => a.id === actId)) || { n: "Actividad Operativa", area: "Planta", prio: "Alta", cat: "Operación" };
+
+            document.getElementById('actDetTitle').innerText = act.n;
+            const plantName = u.plantId === 'ALL' ? 'Corporativo Global' : (PLANTS[u.plantId]?.nombre || 'Planta Extrusa');
+            document.getElementById('actDetMeta').innerText = `${plantName} · ${act.area || 'Producción'} · Prioridad ${act.prio || 'Alta'}`;
+
+            // Actualizar datos del estándar
+            const elQue = document.getElementById('stdQue') || document.getElementById('actStdObjective');
+            if (elQue) elQue.innerText = act.objetivo || `Inspección de condiciones operativas, control térmico, presiones hidráulicas y seguridad de estaciones para prevenir paradas no programadas y reducir scrap.`;
+            const elComo = document.getElementById('stdComo') || document.getElementById('actStdProcedure');
+            if (elComo) elComo.innerText = act.procedimiento || `Recorrer secuencialmente las líneas de extrusión 01 y 02. Verificar que los pasillos amarillos estén despejados, medir temperatura en dados con pirómetro láser, comprobar manómetros y pesar merma en pie de máquina.`;
+            const elRes = document.getElementById('stdResultado') || document.getElementById('actStdExpected');
+            if (elRes) elRes.innerText = act.resultadoEsperado || `Parámetros dentro de tolerancia (180-210°C, 140-160 bar), pasillos 100% despejados y pesaje de merma inferior a 25 kg/turno.`;
+
+            // Calcular y renderizar estadísticas de progreso dual
+            renderSubtasksInModal();
+
+            // Abrir modal
+            document.getElementById('modalActivityDetail').classList.add('active');
+        }
+
+        function switchActDetTab(tab) {
+            const btnSub = document.getElementById('btnDetSubtasks');
+            const btnStd = document.getElementById('btnDetStandard');
+            const viewSub = document.getElementById('viewDetSubtasks');
+            const viewStd = document.getElementById('viewDetStandard');
+
+            if (tab === 'subtasks') {
+                btnSub.classList.add('active');
+                btnStd.classList.remove('active');
+                viewSub.style.display = 'block';
+                viewStd.style.display = 'none';
+            } else {
+                btnStd.classList.add('active');
+                btnSub.classList.remove('active');
+                viewSub.style.display = 'none';
+                viewStd.style.display = 'block';
+            }
+        }
+
+        function renderSubtasksInModal() {
+            const actId = currentModalActId;
+            const day = currentModalDay;
+            const subList = SUBTASKS[actId] || [];
+            const stats = getSubtaskStats(actId, day);
+
+            // Actualizar doble barra de progreso
+            const execPct = stats.total > 0 ? Math.round((stats.reported / stats.total) * 100) : 0;
+            const validPct = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
+
+            document.getElementById('dualExecPct').innerText = `${stats.reported} / ${stats.total} Subtareas (${execPct}%)`;
+            document.getElementById('dualExecBar').style.width = `${execPct}%`;
+
+            document.getElementById('dualValidPct').innerText = `${stats.approved} / ${stats.total} Validadas (${validPct}%)`;
+            document.getElementById('dualValidBar').style.width = `${validPct}%`;
+
+            // Renderizar tarjetas de subtareas
+            const container = document.getElementById('actDetSubtasksList');
+            if (subList.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: #64748B; padding: 20px; font-size: 12px;">Esta actividad no posee subtareas estructuradas.</div>`;
+                return;
+            }
+
+            container.innerHTML = subList.map(s => {
+                const key = `${actId}_${day}_${s.id}`;
+                const ex = subtaskExecutions[key];
+
+                let stateBadge = `<span class="subtask-badge st-pending">⏳ Pendiente</span>`;
+                let isEditable = true;
+
+                if (ex) {
+                    if (ex.state === "Aprobada") {
+                        stateBadge = `<span class="subtask-badge st-approved">✅ Aprobada por Supervisor</span>`;
+                        isEditable = false;
+                    } else if (ex.state === "Reportada") {
+                        stateBadge = `<span class="subtask-badge st-reported">📤 Reportada (Pendiente Aprobación)</span>`;
+                        isEditable = false;
+                    } else if (ex.state === "Requiere Corrección") {
+                        stateBadge = `<span class="subtask-badge st-pending" style="background: #FEF3C7; color: #D97706;">⚠️ Corrección Solicitada</span>`;
+                        isEditable = true;
+                    } else if (ex.state === "Rechazada") {
+                        stateBadge = `<span class="subtask-badge st-pending" style="background: #FEE2E2; color: #DC2626;">❌ Rechazada</span>`;
+                        isEditable = true;
+                    }
+                }
+
+                // Requisitos pills
+                let reqPills = "";
+                if (s.reqFoto) reqPills += `<span class="subtask-badge st-reported">📸 Foto</span>`;
+                if (s.reqMedicion) reqPills += `<span class="subtask-badge st-reported">📏 Medición (${s.unidad || ''})</span>`;
+                if (s.obligatoria) reqPills += `<span class="subtask-badge st-pending">⚠️ Obligatoria</span>`;
+
+                // Información ya reportada
+                let reportedInfoHtml = "";
+                if (ex) {
+                    const worker = USERS[ex.userId] ? USERS[ex.userId].nombre : ex.userId;
+                    reportedInfoHtml = `
+                        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px; margin-top: 8px; font-size: 11px;">
+                            <div style="color: #334155; font-weight: 700;">Evidencia Registrada por: <span style="color: #002F6C;">${worker}</span></div>
+                            ${ex.medicion !== undefined ? `<div style="margin-top: 3px; color: #0284C7; font-weight: 800;">Valor Medido: ${ex.medicion} ${s.unidad || ''}</div>` : ''}
+                            ${ex.comentario ? `<div style="margin-top: 3px; color: #475569;">Comentario: "${ex.comentario}"</div>` : ''}
+                            ${ex.fotoUrl ? `<div style="margin-top: 4px;"><img src="${ex.fotoUrl}" style="max-width: 100%; height: 90px; border-radius: 6px; object-fit: cover; border: 1px solid #CBD5E1;"></div>` : ''}
+                            ${ex.motivoSupervisor ? `<div style="margin-top: 4px; padding: 4px 8px; border-radius: 6px; background: ${ex.state === 'Aprobada' ? '#ECFDF5' : '#FEF3C7'}; color: ${ex.state === 'Aprobada' ? '#065F46' : '#92400E'}; font-weight: 600;">Nota Supervisor: ${ex.motivoSupervisor}</div>` : ''}
+                        </div>
+                    `;
+                }
+
+                // Formulario de ingreso si está pendiente o requiere corrección
+                let formHtml = "";
+                if (isEditable) {
+                    formHtml = `
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #E2E8F0;">
+                            ${s.reqMedicion ? `
+                                <div style="margin-bottom: 6px;">
+                                    <label style="font-size: 10px; font-weight: 700; color: #475569;">Medición Numérica (${s.unidad || ''}) *</label>
+                                    <input type="number" step="0.1" id="inMed_${s.id}" class="form-control" style="font-size: 11px; padding: 6px;" placeholder="Ej. 195">
+                                </div>
+                            ` : ''}
+                            ${s.reqFoto ? `
+                                <div style="margin-bottom: 6px;">
+                                    <label style="font-size: 10px; font-weight: 700; color: #475569;">Foto de Evidencia *</label>
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        <button type="button" class="btn-act-action" onclick="document.getElementById('inFoto_${s.id}').click()" style="background: #F1F5F9; color: #334155; font-size: 10px;">
+                                            📷 Seleccionar / Tomar Foto
+                                        </button>
+                                        <span id="fotoLabel_${s.id}" style="font-size: 10px; color: #64748B;">Ningún archivo</span>
+                                    </div>
+                                    <input type="file" id="inFoto_${s.id}" accept="image/*" style="display: none;" onchange="document.getElementById('fotoLabel_${s.id}').innerText = this.files[0]?.name || 'Foto lista'">
+                                </div>
+                            ` : ''}
+                            <div style="margin-bottom: 6px;">
+                                <label style="font-size: 10px; font-weight: 700; color: #475569;">Comentario u Observación:</label>
+                                <input type="text" id="inCom_${s.id}" class="form-control" style="font-size: 11px; padding: 6px;" placeholder="Observaciones de piso...">
+                            </div>
+                            <button class="btn-ingresar-portal" onclick="submitSubtaskExecution(${actId}, ${day}, ${s.id})" style="padding: 7px; font-size: 11px; background: #059669; margin-top: 4px;">
+                                📤 Enviar Subtarea #${s.orden}
+                            </button>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="subtask-card" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px; margin-bottom: 8px; background: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                            <div style="font-size: 12px; font-weight: 800; color: #0F172A;">${s.orden}. ${s.nombre}</div>
+                            ${stateBadge}
+                        </div>
+                        <div style="font-size: 11px; color: #64748B; margin-top: 3px;">${s.desc}</div>
+                        <div style="font-size: 10px; color: #0284C7; margin-top: 3px; font-style: italic;">📝 ${s.inst}</div>
+                        <div style="display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;">${reqPills}</div>
+                        ${reportedInfoHtml}
+                        ${formHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Envío de evidencia de subtarea
+        function submitSubtaskExecution(actId, day, subId) {
+            const u = USERS[currentUserId];
+            // Identidad individual: si está en modo kiosco, atribuir al trabajador activo del kiosco
+            const effectiveWorkerId = (u.rol === "kiosco") ? kioskActiveWorkerId : currentUserId;
+            const sub = (SUBTASKS[actId] || []).find(s => s.id === subId);
+            if (!sub) return;
+
+            let medicionVal = null;
+            if (sub.reqMedicion) {
+                const inMed = document.getElementById(`inMed_${subId}`);
+                if (!inMed || !inMed.value) {
+                    alert(`⚠️ Debe ingresar el valor numérico obligatorio en ${sub.unidad || 'la unidad especificada'}.`);
+                    return;
+                }
+                medicionVal = parseFloat(inMed.value);
+            }
+
+            let fotoUrlVal = null;
+            if (sub.reqFoto) {
+                const inFoto = document.getElementById(`inFoto_${subId}`);
+                if (inFoto && inFoto.files && inFoto.files.length > 0) {
+                    fotoUrlVal = "assets/fotos_track60/5F.jpg"; // Simulación de carga de imagen local
+                } else {
+                    fotoUrlVal = "assets/fotos_track60/3F.jpg"; // Foto estándar de evidencia
+                }
+            }
+
+            const inCom = document.getElementById(`inCom_${subId}`);
+            const comentarioVal = inCom ? inCom.value : "";
+
+            const key = `${actId}_${day}_${subId}`;
+            subtaskExecutions[key] = {
+                state: "Reportada",
+                userId: effectiveWorkerId,
+                medicion: medicionVal,
+                fotoUrl: fotoUrlVal,
+                comentario: comentarioVal || "Evidencia registrada en piso",
+                supervisorId: null,
+                motivoSupervisor: null,
+                fecha: new Date().toISOString()
+            };
+
+            // Registrar en auditoría inmutable
+            const workerName = USERS[effectiveWorkerId] ? USERS[effectiveWorkerId].nombre : effectiveWorkerId;
+            const plantId = USERS[effectiveWorkerId] ? USERS[effectiveWorkerId].plantId : u.plantId;
+            addAuditLog("SUBTASK_REPORTED", effectiveWorkerId, `Subtarea #${subId} ("${sub.nombre}") reportada por ${workerName}. Avance actualizado, pendiente de validación de supervisor.`, plantId);
+
+            // Re-renderizar modal y dashboard
+            renderSubtasksInModal();
+            renderDashboard();
+            renderAdminSupervision();
+            alert(`✅ Subtarea #${subId} reportada exitosamente por ${workerName}.
+El porcentaje de ejecución aumentó. El cumplimiento se actualizará cuando el Supervisor apruebe la evidencia.`);
+        }
+
+        // Supervisor: Aprobación, Rechazo o Corrección de Subtareas
+        function reviewSubtaskAction(key, action) {
+            const ex = subtaskExecutions[key];
+            if (!ex) return;
+
+            const u = USERS[currentUserId];
+            const supervisorName = u ? u.nombre : "Supervisor de Planta";
+
+            if (action === "Aprobada") {
+                ex.state = "Aprobada";
+                ex.supervisorId = currentUserId;
+                ex.motivoSupervisor = "Evidencia validada y conforme con los estándares de planta.";
+                addAuditLog("SUBTASK_APPROVED", currentUserId, `Subtarea (${key}) APROBADA por ${supervisorName}. Cumplimiento validado actualizado.`, u.plantId);
+            } else if (action === "Correccion") {
+                const motivo = prompt("Ingrese el motivo de la corrección requerida para el operador:", "La foto no muestra claramente el manómetro / Valor fuera de tolerancia.");
+                if (!motivo) return;
+                ex.state = "Requiere Corrección";
+                ex.supervisorId = currentUserId;
+                ex.motivoSupervisor = motivo;
+                addAuditLog("SUBTASK_CORRECTION_REQUESTED", currentUserId, `Corrección solicitada en subtarea (${key}) por ${supervisorName}: ${motivo}`, u.plantId);
+            } else if (action === "Rechazada") {
+                const motivo = prompt("Ingrese el motivo del rechazo:", "No cumple especificaciones técnicas ni estándar 5S.");
+                if (!motivo) return;
+                ex.state = "Rechazada";
+                ex.supervisorId = currentUserId;
+                ex.motivoSupervisor = motivo;
+                addAuditLog("SUBTASK_REJECTED", currentUserId, `Subtarea (${key}) RECHAZADA por ${supervisorName}: ${motivo}`, u.plantId);
+            }
+
+            renderAdminSupervision();
+            if (currentModalActId) renderSubtasksInModal();
+            renderDashboard();
+        }
+
+        // Cambiar pestaña en vista de Supervisión (Subtareas de Piso vs Reprogramaciones)
+        function switchSupervSubTab(tab) {
+            activeSupervSubTab = tab;
+            const btnSub = document.getElementById('btnSupervSubtasks');
+            const btnRep = document.getElementById('btnSupervReprogs');
+            if (btnSub && btnRep) {
+                if (tab === 'subtasks') {
+                    btnSub.classList.add('active');
+                    btnRep.classList.remove('active');
+                } else {
+                    btnRep.classList.add('active');
+                    btnSub.classList.remove('active');
+                }
+            }
+            renderAdminSupervision();
+        }
+
+        // Renderizado del Panel de Supervisión Integrado
+        function renderAdminSupervision() {
+            const list = document.getElementById('adminSupervList');
+            if (!list) return;
+
+            // Header con Sub-Pestañas: Evidencias en Piso vs Reprogramaciones
+            const tabsHeader = `
+                <div style="display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">
+                    <button class="filter-pill ${activeSupervSubTab === 'subtasks' ? 'active' : ''}" id="btnSupervSubtasks" onclick="switchSupervSubTab('subtasks')">
+                        📋 Evidencias en Piso (Subtareas)
+                    </button>
+                    <button class="filter-pill ${activeSupervSubTab === 'reprogs' ? 'active' : ''}" id="btnSupervReprogs" onclick="switchSupervSubTab('reprogs')">
+                        🔄 Reprogramaciones (${pendingSupervisions.length})
+                    </button>
+                </div>
+            `;
+
+            if (activeSupervSubTab === 'subtasks') {
+                // Listado de Subtareas reportadas para validación
+                const keys = Object.keys(subtaskExecutions);
+                const countReported = keys.filter(k => subtaskExecutions[k].state === 'Reportada').length;
+                document.getElementById('adminSupervCount').innerText = `${countReported} evidencias pendientes`;
+                document.getElementById('supervBadgeCount').innerText = countReported + pendingSupervisions.length;
+
+                if (keys.length === 0) {
+                    list.innerHTML = tabsHeader + `<div style="text-align: center; padding: 24px; color: #64748B; font-size: 12px;">No hay evidencias registradas en piso aún.</div>`;
+                    return;
+                }
+
+                const subtasksCardsHtml = keys.map(k => {
+                    const ex = subtaskExecutions[k];
+                    const parts = k.split('_');
+                    const actId = parseInt(parts[0]);
+                    const day = parseInt(parts[1]);
+                    const subId = parseInt(parts[2]);
+                    const sub = (SUBTASKS[actId] || []).find(s => s.id === subId) || { nombre: `Subtarea #${subId}`, orden: subId };
+                    const worker = USERS[ex.userId] || { nombre: ex.userId, cargo: "Operador de Planta" };
+                    const dias = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+
+                    let stateBg = "#EFF6FF";
+                    let stateColor = "#2563EB";
+                    if (ex.state === "Aprobada") { stateBg = "#ECFDF5"; stateColor = "#059669"; }
+                    if (ex.state === "Requiere Corrección") { stateBg = "#FEF3C7"; stateColor = "#D97706"; }
+                    if (ex.state === "Rechazada") { stateBg = "#FEE2E2"; stateColor = "#DC2626"; }
+
+                    return `
+                        <div class="superv-card" style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 10px; background: white;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="colab-avatar" style="width: 32px; height: 32px; font-size: 11px;">${worker.ini || 'OP'}</div>
+                                    <div>
+                                        <div style="font-size: 12px; font-weight: 800; color: #0F172A;">${worker.nombre}</div>
+                                        <div style="font-size: 10px; color: #64748B;">${dias[day]} · ${worker.cargo}</div>
+                                    </div>
+                                </div>
+                                <span style="font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; background: ${stateBg}; color: ${stateColor};">${ex.state}</span>
+                            </div>
+
+                            <div style="font-size: 12px; font-weight: 700; color: #002F6C; margin-top: 4px;">
+                                Subtarea #${sub.orden}: ${sub.nombre}
+                            </div>
+                            <div style="font-size: 11px; color: #475569; margin-top: 2px;">
+                                Comentario del operador: "${ex.comentario || 'Sin comentarios'}"
+                            </div>
+                            ${ex.medicion !== undefined ? `
+                                <div style="font-size: 12px; font-weight: 800; color: #0284C7; margin-top: 4px;">
+                                    📏 Medición Reportada: ${ex.medicion} ${sub.unidad || ''}
+                                </div>
+                            ` : ''}
+                            ${ex.fotoUrl ? `
+                                <div style="margin-top: 6px;">
+                                    <img src="${ex.fotoUrl}" style="max-width: 100%; height: 110px; border-radius: 8px; object-fit: cover; border: 1px solid #CBD5E1;">
+                                </div>
+                            ` : ''}
+                            ${ex.motivoSupervisor ? `
+                                <div style="margin-top: 6px; padding: 6px 10px; border-radius: 6px; background: ${stateBg}; color: ${stateColor}; font-size: 11px; font-weight: 600;">
+                                    Dictamen del Supervisor: ${ex.motivoSupervisor}
+                                </div>
+                            ` : ''}
+
+                            <div style="display: flex; gap: 6px; margin-top: 10px;">
+                                <button class="btn-superv btn-superv-approve" onclick="reviewSubtaskAction('${k}', 'Aprobada')" style="flex: 1; padding: 6px; font-size: 11px;">
+                                    ✅ Aprobar
+                                </button>
+                                <button class="btn-act-action" onclick="reviewSubtaskAction('${k}', 'Correccion')" style="flex: 1; padding: 6px; font-size: 11px; background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A;">
+                                    ⚠️ Corregir
+                                </button>
+                                <button class="btn-superv btn-superv-reject" onclick="reviewSubtaskAction('${k}', 'Rechazada')" style="flex: 1; padding: 6px; font-size: 11px;">
+                                    ❌ Rechazar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                list.innerHTML = tabsHeader + subtasksCardsHtml;
+            } else {
+                // Listado de Reprogramaciones Justificadas (Original)
+                document.getElementById('adminSupervCount').innerText = `${pendingSupervisions.length} reprogramaciones`;
+                document.getElementById('supervBadgeCount').innerText = pendingSupervisions.length;
+                document.getElementById('adminKpiReprog').innerText = pendingSupervisions.length;
+
+                if (pendingSupervisions.length === 0) {
+                    list.innerHTML = tabsHeader + `<div style="text-align: center; padding: 24px; color: #64748B; font-size: 12px;">No hay reprogramaciones pendientes</div>`;
+                    return;
+                }
+
+                const reprogHtml = pendingSupervisions.map(s => `
+                    <div class="superv-card">
+                        <div class="superv-user-row">
+                            <span class="superv-user-name">${s.userName}</span>
+                            <span class="superv-date-badge">${s.fecha}</span>
+                        </div>
+                        <div class="superv-act-title">${s.actName}</div>
+                        <div class="superv-flow-row">
+                            <span>Día ${s.diaOriginal}</span>
+                            <span>➔</span>
+                            <span style="font-weight: 700; color: #002F6C;">Día ${s.diaNuevo}</span>
+                        </div>
+                        <div class="superv-motivo-box">
+                            <strong>Motivo justificado:</strong> "${s.motivo}"
+                        </div>
+                        <div class="superv-actions-row">
+                            <button class="btn-superv btn-superv-reject" onclick="resolveSupervision(${s.id}, false)">Rechazar</button>
+                            <button class="btn-superv btn-superv-approve" onclick="resolveSupervision(${s.id}, true)">Aprobar</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                list.innerHTML = tabsHeader + reprogHtml;
+            }
+        }
+
+        // Modo Kiosco: Identificación de Operador en Tablet Compartida
+        function openKioskIdentifyModal() {
+            document.getElementById('modalKioskIdentify').classList.add('active');
+        }
+
+        function confirmKioskWorker() {
+            const sel = document.getElementById('kioskWorkerSelect');
+            const newWorkerId = sel.value;
+            kioskActiveWorkerId = newWorkerId;
+            closeModal('modalKioskIdentify');
+            renderDashboard();
+            const wName = USERS[kioskActiveWorkerId]?.nombre || kioskActiveWorkerId;
+            alert(`✅ Operador activo en Tablet Kiosco cambiado a:
+${wName}.
+Toda evidencia reportada a partir de ahora se registrará bajo su nombre individual.`);
+        }
+
+        // Superadministrador: Crear Nueva Planta
+        function openCreatePlantModal() {
+            document.getElementById('modalCreatePlant').classList.add('active');
+        }
+
+        function saveNewPlant() {
+            const cod = document.getElementById('newPlantCode').value.trim();
+            const nom = document.getElementById('newPlantName').value.trim();
+            const ubi = document.getElementById('newPlantLocation').value.trim();
+            const adm = document.getElementById('newPlantAdmin').value;
+
+            if (!cod || !nom) {
+                alert("⚠️ Debe ingresar el código y el nombre de la planta.");
+                return;
+            }
+
+            const plantId = `PL-${cod.toUpperCase().replace(/\s+/g, '')}`;
+            PLANTS[plantId] = {
+                id: plantId,
+                nombre: nom,
+                codigo: cod.toUpperCase(),
+                ubicacion: ubi || "Sede Darnel Group",
+                adminId: adm,
+                activa: true
+            };
+
+            addAuditLog("PLANT_CREATED", currentUserId, `Nueva planta "${nom}" (${cod}) registrada en TRACK60 por Superadministrador.`, plantId);
+            closeModal('modalCreatePlant');
+            renderLoginColabs();
+            alert(`✅ Planta "${nom}" registrada exitosamente.
+ID asignado: ${plantId}`);
+        }
+
+        // Superadministrador: Distribuir Actividad Corporativa Global a Plantas
+        function openDispatchGlobalModal() {
+            document.getElementById('modalDispatchGlobal').classList.add('active');
+        }
+
+        function submitGlobalActivity() {
+            const title = document.getElementById('globActTitle').value.trim();
+            const desc = document.getElementById('globActDesc').value.trim();
+            const plExt = document.getElementById('globPlExtrusa').checked;
+            const plTer = document.getElementById('globPlTermo').checked;
+            const plIny = document.getElementById('globPlInyec').checked;
+
+            if (!title) {
+                alert("⚠️ Ingrese el título de la actividad corporativa.");
+                return;
+            }
+
+            const targetPlants = [];
+            if (plExt) targetPlants.push("PL-EXTRUSA");
+            if (plTer) targetPlants.push("PL-TERMO");
+            if (plIny) targetPlants.push("PL-INYEC");
+
+            if (targetPlants.length === 0) {
+                alert("⚠️ Debe seleccionar al menos una planta destinataria.");
+                return;
+            }
+
+            // Crear actividad global asignada independientemente a cada planta
+            targetPlants.forEach(pId => {
+                const newAct = {
+                    id: 900 + Math.floor(Math.random() * 90),
+                    n: `[GLOBAL] ${title}`,
+                    d: desc || "Actividad corporativa obligatoria Darnel Group",
+                    cat: "Seguridad y BPM",
+                    area: PLANTS[pId]?.nombre || pId,
+                    s: "07:30",
+                    e: "08:30",
+                    dias: [1, 2, 3, 4, 5],
+                    prio: "Alta"
+                };
+
+                // Asignar al admin de la planta correspondiente
+                const admId = PLANTS[pId]?.adminId || "YL";
+                if (USERS[admId]) {
+                    USERS[admId].acts.unshift(newAct);
+                }
+            });
+
+            addAuditLog("GLOBAL_ACTIVITY_DISPATCHED", currentUserId, `Actividad Corporativa "${title}" distribuida a ${targetPlants.length} plantas con ejecución independiente.`, "ALL");
+            closeModal('modalDispatchGlobal');
+            renderDashboard();
+            alert(`✅ Actividad corporativa "${title}" distribuida a ${targetPlants.length} plantas.
+Cada planta ha recibido su propia instancia de ejecución independiente.`);
+        }
+
     </script>
 </body>
 </html>
