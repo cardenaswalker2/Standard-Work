@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Descargar Standard Work · Darnel Group (APK Android)</title>
-    <meta name="description" content="Descarga oficial de Standard Work para Android (Darnel Group). Gestión de trabajo estándar de supervisores y coordinadores, persistencia SQLite 100% offline y trazabilidad.">
+    <title>TRACK60 · Darnel Group (APK Android Oficial)</title>
+    <meta name="description" content="Descarga oficial de TRACK60 para Android (Darnel Group). Plataforma empresarial de gestión, asignación y seguimiento operativo. Persistencia SQLite 100% offline y matriz de 270 actividades.">
     
     <!-- Fuentes Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,6 +14,263 @@
     <!-- Hoja de Estilos Corporativa -->
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/png" href="assets/app_icon.png">
+
+    <style>
+        /* Estilos complementarios específicos para la identidad TRACK60 y galería */
+        .track60-pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(0, 149, 217, 0.15), rgba(124, 58, 237, 0.2));
+            border: 1px solid rgba(0, 149, 217, 0.4);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #38BDF8;
+            letter-spacing: 0.5px;
+            margin-bottom: 18px;
+        }
+
+        .track60-brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #002F6C, #0095D9);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 149, 217, 0.35);
+        }
+
+        .hero-title .track-text {
+            color: #ffffff;
+        }
+        .hero-title .sixty-text {
+            color: #38BDF8;
+            background: linear-gradient(135deg, #38BDF8, #818CF8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Galería de Capturas Reales */
+        .gallery-section {
+            background: #081326;
+            padding: 90px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .gallery-card {
+            background: #0F2344;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-6px);
+            border-color: #0095D9;
+            box-shadow: 0 12px 30px rgba(0, 149, 217, 0.25);
+        }
+
+        .gallery-img-wrap {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            background: #050C1A;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-card:hover .gallery-img-wrap img {
+            transform: scale(1.04);
+        }
+
+        .gallery-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 47, 108, 0.85);
+            backdrop-filter: blur(8px);
+            color: #38BDF8;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+        }
+
+        .gallery-info {
+            padding: 16px;
+            background: #0F2344;
+            flex: 1;
+        }
+
+        .gallery-title {
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .gallery-desc {
+            color: #94A3B8;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* Lightbox modal */
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            z-index: 99999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 7, 18, 0.92);
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .lightbox-modal.active {
+            display: flex;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .lightbox-content img {
+            max-width: 100%;
+            max-height: 82vh;
+            border-radius: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+        }
+
+        .lightbox-caption {
+            margin-top: 14px;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -45px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: #ffffff;
+            font-size: 26px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .lightbox-close:hover {
+            background: #DC2626;
+        }
+
+        /* Hero phone preview */
+        .hero-phone-container {
+            width: 310px;
+            max-width: 100%;
+            background: #000000;
+            border: 8px solid #1E293B;
+            border-radius: 38px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 47, 108, 0.5), 0 0 40px rgba(0, 149, 217, 0.3);
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .hero-phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 18px;
+            background: #1E293B;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 10;
+        }
+
+        .hero-phone-img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .direct-apk-btn {
+            background: linear-gradient(135deg, #002F6C 0%, #0095D9 100%) !important;
+            box-shadow: 0 10px 25px rgba(0, 149, 217, 0.4) !important;
+            transition: all 0.3s ease !important;
+        }
+        .direct-apk-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px rgba(0, 149, 217, 0.6) !important;
+        }
+
+        .support-card-banner {
+            background: linear-gradient(135deg, #0A1E3F, #122852);
+            border: 1px solid rgba(0, 149, 217, 0.3);
+            border-radius: 18px;
+            padding: 24px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        @media (max-width: 768px) {
+            .support-card-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -21,34 +278,32 @@
     <header class="navbar">
         <div class="container nav-container">
             <div class="brand-wrapper">
-                <div class="darnel-badge-logo">
-                    <span class="logo-main">DARNEL</span>
-                    <span class="logo-sub">GROUP</span>
-                </div>
+                <div class="track60-brand-icon">60</div>
                 <div class="brand-text">
-                    <span class="brand-title">Standard Work</span>
-                    <span class="brand-subtitle">Aplicación Android Oficial</span>
+                    <span class="brand-title" style="letter-spacing: -0.3px;">TRACK60</span>
+                    <span class="brand-subtitle">Darnel Group · Oficial</span>
                 </div>
             </div>
 
             <nav>
                 <ul class="nav-links">
-                    <li><a href="#video-presentacion" class="nav-link">Video Presentación</a></li>
-                    <li><a href="#caracteristicas" class="nav-link">Características</a></li>
+                    <li><a href="#video-presentacion" class="nav-link">Video</a></li>
+                    <li><a href="#galeria-pantallas" class="nav-link">Capturas Reales</a></li>
+                    <li><a href="#caracteristicas" class="nav-link">Funciones</a></li>
                     <li><a href="#instalacion" class="nav-link">Instalación</a></li>
                     <li><a href="#compatibilidad" class="nav-link">Requisitos</a></li>
                     <li><a href="#faq" class="nav-link">Preguntas</a></li>
                     <li>
-                        <a href="prueba.html" class="nav-btn-prototype" title="Abrir prototipo interactivo HTML original">
+                        <a href="prueba.html" class="nav-btn-prototype" title="Abrir simulador web interactivo de TRACK60">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
                                 <line x1="12" y1="18" x2="12.01" y2="18"></line>
                             </svg>
-                            Prototipo Web
+                            Simulador Web
                         </a>
                     </li>
                     <li>
-                        <a href="https://drive.google.com/file/d/1UpShl1PM4BEjNxLTYKXEELd1HL-XYhmB/view?usp=drive_link" target="_blank" rel="noopener noreferrer" class="nav-btn-download btn-download-action">
+                        <a href="descargas/TRACK60_v1.0.0_release.apk" download="TRACK60_v1.0.0_release.apk" class="nav-btn-download btn-download-action direct-apk-btn">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -66,113 +321,71 @@
     <section class="hero-section">
         <div class="container hero-grid">
             <div class="hero-content">
-                <div class="hero-badge-tag">
+                <div class="track60-pill-badge">
                     <span class="pulse-dot"></span>
-                    Versión Oficial 2.0.0 · Flutter & SQLite
+                    TRACK60 · Versión Oficial 1.0.0 Release · Darnel Group
                 </div>
-                <h1 class="hero-title">Gestión de Trabajo Estándar <span>Darnel Group</span></h1>
+                <h1 class="hero-title">
+                    <span class="track-text">TRACK</span><span class="sixty-text">60</span><br>
+                    <span>Gestión, Asignación y Seguimiento Operativo</span>
+                </h1>
                 <p class="hero-desc">
-                    La herramienta móvil diseñada para supervisores y coordinadores de Producción, Calidad y Logística. Control de actividades de lunes a viernes, cálculo de cumplimiento y persistencia 100% offline.
+                    Plataforma empresarial diseñada para supervisores y coordinadores de Producción, Calidad y Logística. Estandarización de rutinas diarias de lunes a viernes, matriz de 270 actividades reales de planta, portal con cédula y biometría, panel administrativo con supervisión de reprogramaciones y persistencia 100% offline con SQLite.
                 </p>
 
                 <div class="hero-actions">
-                    <a href="descargas/TRACK60_v1.0.0_release.apk" download class="btn-primary-download btn-download-action" style="background: linear-gradient(135deg, #002F6C, #0056B3);">
+                    <!-- BOTÓN DE DESCARGA DIRECTA DE LA APK RELEASE -->
+                    <a href="descargas/TRACK60_v1.0.0_release.apk" download="TRACK60_v1.0.0_release.apk" class="btn-primary-download btn-download-action direct-apk-btn">
                         <div class="btn-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="7 10 12 15 17 10"></polyline>
                                 <line x1="12" y1="15" x2="12" y2="3"></line>
                             </svg>
                         </div>
                         <div>
-                            <div>Descargar TRACK60 APK (v1.0)</div>
-                            <div style="font-size: 11px; font-weight: 500; opacity: 0.85;">Descarga Directa (58.9 MB)</div>
+                            <div style="font-size: 15px; font-weight: 800;">Descargar TRACK60 APK</div>
+                            <div style="font-size: 11px; font-weight: 600; opacity: 0.9;">Descarga Directa Oficial (59.0 MB)</div>
                         </div>
                     </a>
 
-                    <a href="https://drive.google.com/file/d/1UpShl1PM4BEjNxLTYKXEELd1HL-XYhmB/view?usp=drive_link" target="_blank" rel="noopener noreferrer" class="btn-primary-download btn-download-action" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);">
-                        <div class="btn-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                        </div>
-                        <div>
-                            <div>Google Drive Mirror</div>
-                            <div style="font-size: 11px; font-weight: 500; opacity: 0.85;">Enlace de Respaldo</div>
-                        </div>
-                    </a>
-
-                    <a href="prueba.html" class="btn-secondary-proto">
+                    <a href="prueba.html" class="btn-secondary-proto" style="border: 1px solid rgba(0, 149, 217, 0.4); background: rgba(0, 47, 108, 0.25);">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
                         </svg>
-                        Ver Prototipo Web
+                        Simulador Web
                     </a>
 
                     <a href="#video-presentacion" class="btn-video-hero">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
-                        Ver Video Oficial
+                        Ver Video
                     </a>
                 </div>
 
                 <div class="hero-meta-bar">
                     <div class="meta-pill">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        Instalador seguro Android
+                        APK Firmada Release
                     </div>
                     <div class="meta-pill">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
-                        Base de Datos SQLite Local
+                        SQLite 100% Offline
                     </div>
                     <div class="meta-pill">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-                        Lunes a Viernes
+                        270 Actividades Excel
                     </div>
                 </div>
             </div>
 
-            <!-- TARJETA EJECUTIVA DE PRESENTACIÓN -->
+            <!-- TARJETA VISUAL REAL DEL DISPOSITIVO -->
             <div class="hero-mockup-wrapper">
-                <div class="mockup-card-executive">
-                    <img src="assets/app_icon.png" alt="Icono oficial Standard Work Darnel" class="app-icon-display">
-                    <h3 class="mockup-app-title">Standard Work</h3>
-                    <p class="mockup-app-sub">Darnel Group · Planta de Operaciones</p>
-                    
-                    <div class="profiles-mini-stack">
-                        <div class="profile-chip" style="background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35);">
-                            <div class="chip-avatar" style="background: #0095D9; color: #fff;">YL</div>
-                            <div class="chip-info">
-                                <div class="name">Yonny López</div>
-                                <div class="role">Líder Extrusión · Planta Extrusa</div>
-                            </div>
-                        </div>
-                        <div class="profile-chip">
-                            <div class="chip-avatar">CM</div>
-                            <div class="chip-info">
-                                <div class="name">Carlos Méndez</div>
-                                <div class="role">Supervisor de Producción</div>
-                            </div>
-                        </div>
-                        <div class="profile-chip">
-                            <div class="chip-avatar">LP</div>
-                            <div class="chip-info">
-                                <div class="name">Laura Pérez</div>
-                                <div class="role">Coordinadora de Calidad</div>
-                            </div>
-                        </div>
-                        <div class="profile-chip">
-                            <div class="chip-avatar">AR</div>
-                            <div class="chip-info">
-                                <div class="name">Andrés Ruiz</div>
-                                <div class="role">Líder de Logística</div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="hero-phone-container">
+                    <div class="hero-phone-notch"></div>
+                    <img src="assets/fotos_track60/12F.jpg" alt="Pantalla real de TRACK60 en Android" class="hero-phone-img">
                 </div>
             </div>
         </div>
@@ -186,11 +399,11 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
-                    Producción Audiovisual Oficial · Darnel Group
+                    Producción Audiovisual Corporativa · Darnel Group
                 </span>
                 <h2 class="section-title text-white">Presentación Ejecutiva del Proyecto</h2>
                 <p class="section-desc text-muted">
-                    Conoce el propósito operativo, módulos funcionales, sincronización con la matriz Excel de 4 semanas y arquitectura offline mediante la presentación oficial producida con Remotion.
+                    Conoce el propósito operativo, módulos funcionales, sincronización con la matriz Excel de 4 semanas y arquitectura offline. El reproductor detecta tu pantalla (PC o Móvil) para mostrar la orientación ideal.
                 </p>
             </div>
 
@@ -212,9 +425,9 @@
                             <line x1="12" y1="18" x2="12.01" y2="18"></line>
                         </svg>
                         <span>Celular (Vertical 9:16)</span>
-                        <span class="tab-badge">Móvil / Reels</span>
+                        <span class="tab-badge">Móvil / Teléfono</span>
                     </button>
-                    <button class="video-tab-btn" id="tabShowcase" onclick="switchVideoFormat('showcase')" title="Recorrido 100% visual de la interfaz de la aplicación Flutter">
+                    <button class="video-tab-btn" id="tabShowcase" onclick="switchVideoFormat('showcase')" title="Recorrido 100% visual de la interfaz de la aplicación">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                         </svg>
@@ -237,7 +450,7 @@
                     <div class="video-meta-bar-inner">
                         <div class="v-meta-left">
                             <span class="v-badge-pill">16:9 Full HD</span>
-                            <span class="v-title-text">Standard Work · Presentación Ejecutiva Oficial</span>
+                            <span class="v-title-text">TRACK60 · Presentación Ejecutiva Oficial</span>
                             <span class="v-duration-text">2 min 23 s · Narración & Gráficos</span>
                         </div>
                         <div class="v-meta-right">
@@ -267,8 +480,8 @@
                     <div class="video-meta-bar-inner">
                         <div class="v-meta-left">
                             <span class="v-badge-pill">9:16 Vertical HD</span>
-                            <span class="v-title-text">Standard Work · Versión Ejecutiva Móvil</span>
-                            <span class="v-duration-text">2 min 23 s · Formato Redes & Teléfono</span>
+                            <span class="v-title-text">TRACK60 · Versión Ejecutiva Móvil</span>
+                            <span class="v-duration-text">2 min 23 s · Formato Vertical & Celular</span>
                         </div>
                         <div class="v-meta-right">
                             <a href="STANDARD_WORK_PRESENTACION_VERTICAL.mp4" download class="btn-video-download" title="Descargar video vertical para compartir">
@@ -283,7 +496,7 @@
                     </div>
                 </div>
 
-                <!-- VISTA 3: SHOWCASE 40s (100% VISUAL FLUTTER APP) -->
+                <!-- VISTA 3: SHOWCASE 40s (100% VISUAL) -->
                 <div class="video-view" id="viewShowcase">
                     <div class="video-aspect-16-9">
                         <video id="videoShowcase" class="player-element" controls preload="metadata" playsinline poster="assets/poster_showcase.jpg">
@@ -294,8 +507,8 @@
                     <div class="video-meta-bar-inner">
                         <div class="v-meta-left">
                             <span class="v-badge-pill v-badge-cyan">Showcase 40s</span>
-                            <span class="v-title-text">Demostración 100% Visual de la App Flutter</span>
-                            <span class="v-duration-text">40 segundos · Sin voz en off · Pura Interfaz</span>
+                            <span class="v-title-text">Demostración Rápida 100% Visual</span>
+                            <span class="v-duration-text">40 segundos · Pura Interfaz</span>
                         </div>
                         <div class="v-meta-right">
                             <a href="STANDARD_WORK_SHOWCASE_VISUAL_40S.mp4" download class="btn-video-download" title="Descargar showcase visual rápido">
@@ -316,15 +529,15 @@
                 <div class="v-feature-card">
                     <div class="v-feature-icon">🎯</div>
                     <div class="v-feature-info">
-                        <strong>Propósito Operativo</strong>
-                        <span>Estandarización de rutinas diarias de lunes a viernes en planta.</span>
+                        <strong>Estandarización y Disciplina</strong>
+                        <span>Rutinas claras y medibles de lunes a viernes en planta.</span>
                     </div>
                 </div>
                 <div class="v-feature-card">
                     <div class="v-feature-icon">📊</div>
                     <div class="v-feature-info">
                         <strong>Planificación 4 Semanas</strong>
-                        <span>270 actividades reales de Yonny López (ST - WR YONNY LOPEZ.xlsb).</span>
+                        <span>270 actividades oficiales de Yonny López (Planta Extrusa).</span>
                     </div>
                 </div>
                 <div class="v-feature-card">
@@ -337,31 +550,205 @@
                 <div class="v-feature-card">
                     <div class="v-feature-icon">🛡️</div>
                     <div class="v-feature-info">
-                        <strong>Trazabilidad y Auditoría</strong>
-                        <span>Bitácora inmutable con marcas de tiempo para auditorías de calidad.</span>
+                        <strong>Supervisión & Auditoría</strong>
+                        <span>Gestión de reprogramaciones con justificación y bitácora inmutable.</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SECCIÓN DE CARACTERÍSTICAS -->
+    <!-- NUEVA SECCIÓN: GALERÍA DE CAPTURAS REALES DEL DISPOSITIVO -->
+    <section id="galeria-pantallas" class="gallery-section">
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-tag-glow">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                    Capturas Reales de Producción
+                </span>
+                <h2 class="section-title text-white">Galería Oficial de la Aplicación TRACK60</h2>
+                <p class="section-desc text-muted">
+                    Capturas tomadas directamente en dispositivo físico Android ejecutando la compilación Release v1.0. Haz clic sobre cualquier pantalla para verla en alta definición.
+                </p>
+            </div>
+
+            <div class="gallery-grid">
+                <!-- 1. Inicio y Login -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/12F.jpg', 'Pantalla de Inicio · Portal del Colaborador con Cédula y Acceso Administrativo')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Inicio</span>
+                        <img src="assets/fotos_track60/12F.jpg" alt="Inicio y Login con Cédula">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Inicio & Portal con Cédula</div>
+                        <div class="gallery-desc">Ingreso ágil con documento de identidad, colaboradores registrados y acceso administrativo con PIN.</div>
+                    </div>
+                </div>
+
+                <!-- 2. Menú Colaborador -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/2F.jpg', 'Menú del Colaborador · Planificación 4 Semanas, Indicadores y Herramientas')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Colaborador</span>
+                        <img src="assets/fotos_track60/2F.jpg" alt="Menú del Colaborador">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Menú de Navegación 360°</div>
+                        <div class="gallery-desc">Acceso a matriz Excel, centro de indicadores, simulación de turnos, calendario y reportes.</div>
+                    </div>
+                </div>
+
+                <!-- 3. Planificación 4 Semanas -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/3F.jpg', 'Planificación 4 Semanas (Excel) · 270 Actividades Oficiales de Yonny López')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Excel Real</span>
+                        <img src="assets/fotos_track60/3F.jpg" alt="Planificación 4 Semanas Excel">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Matriz Excel de 4 Semanas</div>
+                        <div class="gallery-desc">270 actividades reales de planta categorizadas de acuerdo al modelo operativo original.</div>
+                    </div>
+                </div>
+
+                <!-- 4. Indicadores y Gráficos -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/4F.jpg', 'Centro de Indicadores · Cumplimiento por Categoría y Módulo de Planta')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Métricas</span>
+                        <img src="assets/fotos_track60/4F.jpg" alt="Centro de Indicadores">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Centro de Indicadores & KPIs</div>
+                        <div class="gallery-desc">Desglose porcentual por áreas operativas, cumplimiento global y gráficas de avance.</div>
+                    </div>
+                </div>
+
+                <!-- 5. Calendario -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/5F.jpg', 'Calendario Laboral · Navegación Día, Semana y Mes con Botón Hoy')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Calendario</span>
+                        <img src="assets/fotos_track60/5F.jpg" alt="Calendario Laboral">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Calendario Operativo</div>
+                        <div class="gallery-desc">Vistas por semana y mes con selección de turno, actividades programadas y estado.</div>
+                    </div>
+                </div>
+
+                <!-- 6. Reportes PDF/CSV -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/6F.jpg', 'Reportes de Cumplimiento · Exportación Ejecutiva en PDF y Tabular en CSV')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Reportes</span>
+                        <img src="assets/fotos_track60/6F.jpg" alt="Reportes de Cumplimiento">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Exportación de Reportes</div>
+                        <div class="gallery-desc">Generación de informes ejecutivos listos para imprimir o compartir por WhatsApp o correo.</div>
+                    </div>
+                </div>
+
+                <!-- 7. Admin Dashboard -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/7F.jpg', 'Panel Administrativo · Dashboard General y KPIs Operativos')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Admin</span>
+                        <img src="assets/fotos_track60/7F.jpg" alt="Panel Admin Dashboard">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Panel Admin: Dashboard</div>
+                        <div class="gallery-desc">Consolidado general de cumplimiento, colaboradores activos y estado de módulos de planta.</div>
+                    </div>
+                </div>
+
+                <!-- 8. Admin Colaboradores -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/8F.jpg', 'Panel Administrativo · Gestión de Colaboradores y Perfil 360')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Admin</span>
+                        <img src="assets/fotos_track60/8F.jpg" alt="Gestión de Colaboradores">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Admin: Colaboradores</div>
+                        <div class="gallery-desc">Monitoreo individual de líderes, supervisores, tasas de cumplimiento y carga operativa.</div>
+                    </div>
+                </div>
+
+                <!-- 9. Admin Catálogo -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/9F.jpg', 'Panel Administrativo · Catálogo de Actividades con Búsqueda y Edición')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Asignaciones</span>
+                        <img src="assets/fotos_track60/9F.jpg" alt="Catálogo de Actividades">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Catálogo de Actividades</div>
+                        <div class="gallery-desc">Buscador en tiempo real, filtros por colaborador y área, y edición directa de actividades.</div>
+                    </div>
+                </div>
+
+                <!-- 10. Admin Nueva Asignación -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/10F.jpg', 'Panel Administrativo · Nueva Asignación y Biblioteca de Plantillas')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Asignaciones</span>
+                        <img src="assets/fotos_track60/10F.jpg" alt="Nueva Asignación y Plantillas">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Asignación & Plantillas</div>
+                        <div class="gallery-desc">Creación de actividades con horarios, prioridad y asignación masiva a equipos.</div>
+                    </div>
+                </div>
+
+                <!-- 11. Admin Supervisión -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/11F.jpg', 'Panel Administrativo · Supervisión y Aprobación de Reprogramaciones')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Supervisión</span>
+                        <img src="assets/fotos_track60/11F.jpg" alt="Supervisión de Reprogramaciones">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Supervisión de Cambios</div>
+                        <div class="gallery-desc">Bandeja de reprogramaciones con justificación obligatoria y aprobación/rechazo en un toque.</div>
+                    </div>
+                </div>
+
+                <!-- 12. Admin Auditoría -->
+                <div class="gallery-card" onclick="openLightbox('assets/fotos_track60/13F.jpg', 'Panel Administrativo · Historial y Auditoría Inmutable')">
+                    <div class="gallery-img-wrap">
+                        <span class="gallery-badge">Auditoría</span>
+                        <img src="assets/fotos_track60/13F.jpg" alt="Historial y Auditoría Inmutable">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Auditoría Inmutable</div>
+                        <div class="gallery-desc">Bitácora forense de eventos con filtros (Admin, Colaborador) y marcas de tiempo exactas.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LIGHTBOX PARA VER PANTALLAS EN ALTA RESOLUCIÓN -->
+    <div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox(event)">
+        <div class="lightbox-content">
+            <button class="lightbox-close" onclick="closeLightboxDirect()">&times;</button>
+            <img id="lightboxImg" src="" alt="Captura de pantalla">
+            <div class="lightbox-caption" id="lightboxCaption"></div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE CARACTERÍSTICAS TÉCNICAS -->
     <section id="caracteristicas" class="section">
         <div class="container">
             <div class="section-header">
-                <span class="section-tag">Capacidades Reales</span>
-                <h2 class="section-title">Diseñada para la disciplina operativa</h2>
-                <p class="section-desc">Construida con base en los procesos reales de planta de Darnel Group, garantizando trazabilidad y cumplimiento exacto.</p>
+                <span class="section-tag">Capacidades Empresariales</span>
+                <h2 class="section-title">Evolución integral hacia TRACK60</h2>
+                <p class="section-desc">Diseñada con base en las auditorías de planta de Darnel Group, garantizando disciplina operativa y soporte a la toma de decisiones.</p>
             </div>
 
             <div class="features-grid">
-                <!-- 1. Perfiles de Usuario -->
+                <!-- 1. Portal con Cédula y Biometría -->
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     </div>
-                    <h3>Perfiles Operativos y Excel Real</h3>
-                    <p>Acceso personalizado para Yonny López (Planta Extrusa con sus 270 actividades reales de 4 semanas), Producción, Calidad y Logística.</p>
+                    <h3>Portal del Colaborador & Cédula</h3>
+                    <p>Ingreso seguro mediante número de cédula o huella dactilar biométrica. Cada usuario visualiza únicamente sus actividades y turnos programados.</p>
                 </div>
 
                 <!-- 2. SQLite Local y Offline -->
@@ -370,43 +757,63 @@
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
                     </div>
                     <h3>Persistencia 100% Offline</h3>
-                    <p>Base de datos SQLite local en el teléfono. Funciona en zonas de planta sin conexión WiFi o cobertura de datos móviles, guardando cada check al instante.</p>
+                    <p>Base de datos SQLite local en el teléfono. Funciona en zonas de planta sin conexión WiFi o datos móviles, guardando cada evento al instante.</p>
                 </div>
 
-                <!-- 3. Indicadores y Cumplimiento -->
+                <!-- 3. Matriz Excel 4 Semanas -->
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                     </div>
-                    <h3>Calendario Laboral Día / Semana / Mes</h3>
-                    <p>Vistas adaptativas con botón "Hoy", navegación por semanas, control visual de cumplimiento y desglose exacto de tareas ejecutadas vs planificadas.</p>
+                    <h3>Matriz Excel de 270 Actividades</h3>
+                    <p>Sincronización completa con el archivo de Yonny López (ST - WR YONNY LOPEZ.xlsb), preservando las 7 categorías y fórmulas operativas.</p>
                 </div>
 
-                <!-- 4. Registro de Auditoría -->
+                <!-- 4. Panel Admin y Asignaciones -->
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                     </div>
-                    <h3>Auditoría y Trazabilidad</h3>
-                    <p>Tabla interna de logs que registra fecha, hora y usuario cada vez que se marca, desmarca o agrega una observación en cualquier actividad.</p>
+                    <h3>Catálogo y Asignación de Tareas</h3>
+                    <p>Panel administrativo con catálogo searchable, edición rápida de horarios y asignación individual o masiva a supervisores y coordinadores.</p>
                 </div>
 
-                <!-- 5. Reportes PDF y CSV -->
+                <!-- 5. Supervisión de Reprogramaciones -->
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
                     </div>
-                    <h3>Exportación de Informes</h3>
-                    <p>Generación de reportes ejecutivos en PDF listos para imprimir o compartir, así como exportación tabular CSV para análisis detallado en Excel.</p>
+                    <h3>Supervisión de Reprogramaciones</h3>
+                    <p>Flujo estructurado: el colaborador justifica el aplazamiento con motivo obligatorio y el administrador aprueba o rechaza con trazabilidad inmediata.</p>
                 </div>
 
-                <!-- 6. Copias de Seguridad -->
+                <!-- 6. Bitácora de Auditoría Inmutable -->
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                     </div>
-                    <h3>Backup y Restauración JSON</h3>
-                    <p>Exporta tu historial completo a un archivo JSON seguro y restáuralo en cualquier momento o teléfono sin perder ningún registro operativo.</p>
+                    <h3>Historial y Auditoría Inmutable</h3>
+                    <p>Registro forense con marca de tiempo, usuario y acción realizada. Permite filtros por Admin y Colaborador para auditorías de calidad.</p>
+                </div>
+            </div>
+
+            <!-- TARJETA DE SOPORTE TÉCNICO OFICIAL -->
+            <div class="support-card-banner">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="width: 50px; height: 50px; border-radius: 12px; background: #0095D9; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 20px;">
+                        LC
+                    </div>
+                    <div>
+                        <div style="color: #38BDF8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Soporte Técnico & Coordinación Operativa</div>
+                        <div style="color: #ffffff; font-size: 18px; font-weight: 800;">Luis Cárdenas</div>
+                        <div style="color: #94A3B8; font-size: 13px;">Darnel Group · Implementación TRACK60</div>
+                    </div>
+                </div>
+                <div>
+                    <a href="mailto:luis.cardenas@darnel.com" style="display: inline-flex; align-items: center; gap: 8px; background: #0095D9; color: #ffffff; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        luis.cardenas@darnel.com
+                    </a>
                 </div>
             </div>
         </div>
@@ -416,46 +823,46 @@
     <section id="instalacion" class="section section-alt">
         <div class="container">
             <div class="section-header">
-                <span class="section-tag">Guía Práctica</span>
-                <h2 class="section-title">¿Cómo instalar el archivo APK en Android?</h2>
-                <p class="section-desc">Instalar la aplicación es muy sencillo siguiendo estos cuatro pasos en tu dispositivo móvil.</p>
+                <span class="section-tag">Instalación en 4 Pasos</span>
+                <h2 class="section-title">¿Cómo instalar la APK de TRACK60 en Android?</h2>
+                <p class="section-desc">Instalar la aplicación oficial de producción es rápido y seguro.</p>
             </div>
 
             <div class="steps-container">
                 <div class="step-card">
                     <div class="step-number">1</div>
                     <h4>Descargar la APK</h4>
-                    <p>Toca el botón de descarga principal. Se abrirá el archivo en Google Drive. Haz clic en el icono de descarga (flecha hacia abajo) para bajar el archivo a tu teléfono.</p>
+                    <p>Presiona el botón de descarga principal. El archivo <strong>TRACK60_v1.0.0_release.apk</strong> se descargará directamente a tu teléfono en la carpeta <em>Descargas</em>.</p>
                 </div>
 
                 <div class="step-card">
                     <div class="step-number">2</div>
-                    <h4>Permitir instalación</h4>
-                    <p>Si es la primera vez que instalas una app fuera de Google Play, Android te solicitará activar <em>"Instalar aplicaciones desconocidas"</em> en tu navegador o explorador de archivos.</p>
+                    <h4>Habilitar permiso</h4>
+                    <p>Al abrir el archivo, si es la primera vez que instalas una app corporativa, Android solicitará activar <em>"Permitir desde esta fuente"</em>.</p>
                 </div>
 
                 <div class="step-card">
                     <div class="step-number">3</div>
                     <h4>Confirmar instalación</h4>
-                    <p>Abre el archivo descargado desde la barra de notificaciones o tu carpeta de <em>Descargas</em> y presiona el botón <strong>Instalar</strong>.</p>
+                    <p>Presiona el botón <strong>Instalar</strong>. El instalador seguro de Android completará el proceso en pocos segundos.</p>
                 </div>
 
                 <div class="step-card">
                     <div class="step-number">4</div>
-                    <h4>Abrir y Comenzar</h4>
-                    <p>Una vez completada la instalación, toca <strong>Abrir</strong>. Verás el splash corporativo de Darnel Group y podrás seleccionar tu perfil de inmediato.</p>
+                    <h4>Abrir e Iniciar</h4>
+                    <p>Toca <strong>Abrir</strong>. Verás el splash corporativo de TRACK60 y podrás ingresar tu cédula o escanear tu huella dactilar.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- REQUISITOS TÉCNICOS Y COMPATIBILIDAD -->
+    <!-- REQUISITOS TÉCNICOS Y ESPECIFICACIONES -->
     <section id="compatibilidad" class="section">
         <div class="container">
             <div class="section-header">
-                <span class="section-tag">Especificaciones Verificadas</span>
-                <h2 class="section-title">Requisitos Técnicos del Proyecto</h2>
-                <p class="section-desc">Datos reales comprobados directamente a partir de la configuración del proyecto y de Gradle.</p>
+                <span class="section-tag">Ficha Técnica Oficial</span>
+                <h2 class="section-title">Especificaciones Técnicas del Software</h2>
+                <p class="section-desc">Comprobadas y verificadas directamente sobre el entorno de producción Android.</p>
             </div>
 
             <div class="specs-wrapper">
@@ -466,7 +873,7 @@
                         </div>
                         <div class="spec-info">
                             <div class="spec-label">Sistema Operativo</div>
-                            <div class="spec-val">Android (minSdk 21 / Android 5.0+)</div>
+                            <div class="spec-val">Android (minSdk 21 / Android 5.0 hasta Android 14)</div>
                         </div>
                     </div>
 
@@ -475,8 +882,8 @@
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
                         </div>
                         <div class="spec-info">
-                            <div class="spec-label">Versión del Software</div>
-                            <div class="spec-val">v2.0.0 (Release v2)</div>
+                            <div class="spec-label">Versión de Producción</div>
+                            <div class="spec-val">TRACK60 Release v1.0.0 (Build 1)</div>
                         </div>
                     </div>
 
@@ -486,7 +893,7 @@
                         </div>
                         <div class="spec-info">
                             <div class="spec-label">Tecnología</div>
-                            <div class="spec-val">Flutter & Dart Nativo</div>
+                            <div class="spec-val">Flutter 3.x & Dart Nativo (Release Mode)</div>
                         </div>
                     </div>
 
@@ -495,8 +902,8 @@
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
                         </div>
                         <div class="spec-info">
-                            <div class="spec-label">Almacenamiento</div>
-                            <div class="spec-val">Base de Datos SQLite Local</div>
+                            <div class="spec-label">Base de Datos</div>
+                            <div class="spec-val">SQLite Local Persistente (sqflite)</div>
                         </div>
                     </div>
 
@@ -506,7 +913,7 @@
                         </div>
                         <div class="spec-info">
                             <div class="spec-label">ID de Paquete</div>
-                            <div class="spec-val" style="font-size: 13px;">com.darnel.standardwork.standard_work</div>
+                            <div class="spec-val" style="font-size: 13px;">com.darnel.track60.track60_app</div>
                         </div>
                     </div>
 
@@ -516,7 +923,7 @@
                         </div>
                         <div class="spec-info">
                             <div class="spec-label">Conectividad Requerida</div>
-                            <div class="spec-val">Ninguna (100% Funcional Offline)</div>
+                            <div class="spec-val">100% Funcional Offline en Planta</div>
                         </div>
                     </div>
                 </div>
@@ -530,7 +937,7 @@
             <div class="section-header">
                 <span class="section-tag">Resolución de Dudas</span>
                 <h2 class="section-title">Preguntas Frecuentes</h2>
-                <p class="section-desc">Respuestas claras sobre la descarga, instalación y seguridad de la aplicación.</p>
+                <p class="section-desc">Respuestas sobre descarga, instalación, seguridad y uso de TRACK60.</p>
             </div>
 
             <div class="faq-list">
@@ -540,56 +947,57 @@
                         <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                     <div class="faq-answer">
-                        Es el comportamiento estándar de Android cuando instalas una aplicación que no proviene de Google Play Store. La aplicación Standard Work es un software corporativo interno de Darnel Group, libre de publicidad y seguro. Solo debes presionar "Instalar de todas formas" o "Permitir desde esta fuente".
+                        Es el comportamiento habitual de Android cuando se instala una aplicación empresarial directamente por APK sin pasar por Google Play. TRACK60 es software oficial de uso interno en Darnel Group, limpio y seguro. Simplemente presiona "Instalar de todas formas" o "Permitir desde esta fuente".
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
-                        <span>¿Qué hago si Google Drive muestra un mensaje de vista previa?</span>
+                        <span>¿Dónde se guardan mis actividades si no hay internet en planta?</span>
                         <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                     <div class="faq-answer">
-                        Google Drive no puede previsualizar archivos con extensión .apk. Simplemente presiona el botón azul o icono que dice <strong>Descargar</strong> en la esquina superior o en el centro de la pantalla de Drive para iniciar la bajada.
+                        TRACK60 utiliza un motor de base de datos SQLite integrado en el dispositivo. Cada actividad completada, justificación de reprogramación o nota queda almacenada al instante en el almacenamiento seguro de tu teléfono.
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
-                        <span>¿Se pierden mis actividades si cierro la aplicación o apago el teléfono?</span>
+                        <span>¿Cómo accedo al Panel Administrativo de TRACK60?</span>
                         <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                     <div class="faq-answer">
-                        No. A diferencia de las pruebas web que se reinician al recargar, la aplicación Android cuenta con una base de datos local SQLite persistente. Cada actividad marcada, nota u observación queda guardada de forma definitiva en la memoria de tu teléfono.
+                        En la parte superior de la pantalla de inicio encontrarás el botón <strong>[ 🛡️ Acceso Administrativo ]</strong>. Al presionarlo se solicitará el PIN de seguridad administrativo, permitiendo acceder a los módulos de Catálogo, Supervisión, Colaboradores y Auditoría.
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
-                        <span>¿Puedo probar la aplicación antes de instalarla en mi teléfono?</span>
+                        <span>¿A quién debo acudir en caso de dudas o soporte técnico?</span>
                         <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                     <div class="faq-answer">
-                        Sí. Puedes abrir el enlace <a href="prueba.html" style="color: #0095D9; font-weight: 700; text-decoration: underline;">Prototipo Web</a> en la barra de navegación para interactuar con la interfaz original desde tu navegador en computador o celular.
+                        Puedes comunicarte directamente con <strong>Luis Cárdenas</strong>, Líder de Implementación y Soporte de la plataforma TRACK60 en Darnel Group, a través del correo electrónico <strong>luis.cardenas@darnel.com</strong> o mediante el botón de Ayuda [?] dentro de la app.
                     </div>
                 </div>
             </div>
 
             <!-- CTA BANNER INFERIOR -->
             <div class="cta-banner">
-                <h2>¿Listo para instalar Standard Work?</h2>
-                <p>Descarga la APK directamente en tu dispositivo y empieza a registrar las actividades de tu turno de forma ágil y ordenada.</p>
-                <a href="https://drive.google.com/file/d/1UpShl1PM4BEjNxLTYKXEELd1HL-XYhmB/view?usp=drive_link" target="_blank" rel="noopener noreferrer" class="btn-primary-download btn-download-action" style="box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+                <div class="track60-brand-icon" style="width: 48px; height: 48px; font-size: 20px; margin: 0 auto 16px;">60</div>
+                <h2>¿Listo para instalar TRACK60?</h2>
+                <p>Descarga el paquete oficial directamente a tu teléfono Android y optimiza el seguimiento operativo de tu turno hoy mismo.</p>
+                <a href="descargas/TRACK60_v1.0.0_release.apk" download="TRACK60_v1.0.0_release.apk" class="btn-primary-download btn-download-action direct-apk-btn" style="box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                     <div class="btn-icon-wrapper">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
                     </div>
                     <div>
-                        <div>Descargar APK Oficial (v2)</div>
-                        <div style="font-size: 11px; font-weight: 500; opacity: 0.85;">Enlace Directo en Google Drive</div>
+                        <div style="font-size: 16px; font-weight: 800;">Descargar TRACK60 APK Oficial</div>
+                        <div style="font-size: 11px; font-weight: 600; opacity: 0.9;">Archivo Release Directo · 59.0 MB</div>
                     </div>
                 </a>
             </div>
@@ -602,46 +1010,77 @@
             <div class="footer-grid">
                 <div class="footer-col">
                     <div class="brand-wrapper" style="margin-bottom: 16px;">
-                        <div class="darnel-badge-logo">
-                            <span class="logo-main">DARNEL</span>
-                            <span class="logo-sub">GROUP</span>
-                        </div>
+                        <div class="track60-brand-icon">60</div>
                         <div class="brand-text">
-                            <span class="brand-title">Standard Work</span>
+                            <span class="brand-title">TRACK60</span>
+                            <span class="brand-subtitle">Darnel Group</span>
                         </div>
                     </div>
                     <p style="color: rgba(255, 255, 255, 0.65); font-size: 13px; line-height: 1.6;">
-                        Plataforma corporativa para el seguimiento de actividades estandarizadas en planta. Calidad, Producción y Logística coordinados bajo el modelo de excelencia operacional.
+                        Plataforma empresarial para la gestión, asignación y seguimiento de trabajo estándar en planta. Producción, Calidad y Logística bajo el modelo de excelencia operacional de Darnel Group.
                     </p>
                 </div>
 
                 <div class="footer-col">
-                    <h5>Navegación Rápida</h5>
+                    <h5>Navegación</h5>
                     <ul class="footer-links">
+                        <li><a href="#video-presentacion">Video Presentación</a></li>
+                        <li><a href="#galeria-pantallas">Galería de Pantallas Reales</a></li>
                         <li><a href="#caracteristicas">Características Principales</a></li>
                         <li><a href="#instalacion">Paso a Paso de Instalación</a></li>
-                        <li><a href="#compatibilidad">Requisitos de Android</a></li>
-                        <li><a href="#faq">Preguntas Frecuentes</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
-                    <h5>Recursos del Proyecto</h5>
+                    <h5>Recursos & Soporte</h5>
                     <ul class="footer-links">
-                        <li><a href="https://drive.google.com/file/d/1UpShl1PM4BEjNxLTYKXEELd1HL-XYhmB/view?usp=drive_link" target="_blank" rel="noopener noreferrer">Enlace en Google Drive (APK v2)</a></li>
-                        <li><a href="prueba.html">Abrir Prototipo Web HTML</a></li>
-                        <li><span style="color: rgba(255,255,255,0.4); font-size: 12px;">Desarrollado con Flutter & Dart</span></li>
+                        <li><a href="descargas/TRACK60_v1.0.0_release.apk" download="TRACK60_v1.0.0_release.apk">Descargar APK Oficial (59 MB)</a></li>
+                        <li><a href="prueba.html">Abrir Simulador Web Interactivo</a></li>
+                        <li><a href="mailto:luis.cardenas@darnel.com">Soporte: luis.cardenas@darnel.com</a></li>
+                        <li><span style="color: rgba(255,255,255,0.4); font-size: 12px;">Flutter 3.x · SQLite Local Offline</span></li>
                     </ul>
                 </div>
             </div>
 
             <div class="footer-bottom">
-                &copy; 2026 Darnel Group · Standard Work. Todos los derechos reservados.
+                &copy; 2026 Darnel Group · TRACK60. Todos los derechos reservados.
             </div>
         </div>
     </footer>
 
-    <!-- Script de Interacciones -->
+    <!-- Script de Interacciones y Lightbox -->
     <script src="js/main.js"></script>
+    <script>
+        // Lightbox para la galería de fotos
+        function openLightbox(src, caption) {
+            const modal = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxImg');
+            const cap = document.getElementById('lightboxCaption');
+            img.src = src;
+            cap.innerText = caption;
+            modal.classList.add('active');
+        }
+
+        function closeLightbox(e) {
+            if (e.target.id === 'lightboxModal') {
+                closeLightboxDirect();
+            }
+        }
+
+        function closeLightboxDirect() {
+            document.getElementById('lightboxModal').classList.remove('active');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeLightboxDirect();
+        });
+
+        // Detección automática en carga para seleccionar video vertical si es pantalla de celular
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth <= 768 && typeof switchVideoFormat === 'function') {
+                switchVideoFormat('vertical');
+            }
+        });
+    </script>
 </body>
 </html>
