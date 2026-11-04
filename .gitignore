@@ -37,6 +37,7 @@ Mira.html
 
 # Exclude Flutter code and private source files (web-only public portal)
 standard_work_app/
+track60_app/
 *.xlsb
 *.xlsx
 
