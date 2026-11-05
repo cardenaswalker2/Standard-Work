@@ -1871,6 +1871,11 @@
                 <div class="content-scroll" id="adminContentArea">
                     <!-- Vista Dashboard Admin -->
                     <div id="adminViewDashboard">
+                        <!-- SUITE DINÁMICA: SUPERADMIN (JAVIER JULIO) VS ADMIN DE PLANTA -->
+                        <div id="adminSuiteBanner" style="margin-bottom: 14px;">
+                            <!-- Inyectado dinámicamente por renderAdminDashboardView() -->
+                        </div>
+
                         <div class="admin-kpi-grid">
                             <div class="admin-kpi-card">
                                 <div class="admin-kpi-num" id="adminKpiCumplimiento">78%</div>
@@ -2353,20 +2358,64 @@
                  MODAL: PIN ACCESO ADMINISTRATIVO
             ========================================================== -->
             <div class="modal-overlay" id="modalAdminPin">
-                <div class="modal-box">
-                    <div class="modal-header">
-                        <div class="modal-title">Acceso Administrativo</div>
+                <div class="modal-box" style="max-width: 440px; border-radius: 18px;">
+                    <div class="modal-header" style="margin-bottom: 12px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="background:#002F6C; color:#FFF; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px;">LOGIN DIRECTIVO</span>
+                            <div class="modal-title" style="font-size:15px; font-weight:800; color:#002F6C;">Portal Administrativo</div>
+                        </div>
                         <button class="modal-close-btn" onclick="closeModal('modalAdminPin')">&times;</button>
                     </div>
-                    <div style="font-size: 12px; color: #64748B; margin-bottom: 14px;">
-                        Ingrese el PIN de seguridad asignado para supervisores de planta (PIN predeterminado de prueba: <strong>1234</strong>).
+                    <div style="font-size: 11.5px; color: #64748B; margin-bottom: 12px; line-height: 1.4;">
+                        Seleccione su identidad directiva o digite su PIN. El sistema adaptará las vistas y permisos a su nivel jerárquico:
                     </div>
-                    <div class="form-group">
-                        <label>PIN de Administrador:</label>
-                        <input type="password" id="adminPinInput" class="form-control" placeholder="••••" maxlength="6" style="text-align: center; font-size: 20px; letter-spacing: 6px;">
+
+                    <!-- Perfiles Administrativos Configurables -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
+                        <!-- Javier Julio (Superadmin General) -->
+                        <div onclick="selectAdminProfileModal('JAVIER', '1428')" id="optAdmJavier" style="cursor: pointer; border: 2px solid #7C3AED; background: #F5F3FF; padding: 10px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:34px; height:34px; border-radius:50%; background:#7C3AED; color:#FFF; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;">JJ</div>
+                                <div>
+                                    <div style="font-size:13px; font-weight:800; color:#002F6C;">Javier Julio</div>
+                                    <div style="font-size:10.5px; color:#6B21A8; font-weight:600;">Superadministrador General · Corporativo Global</div>
+                                </div>
+                            </div>
+                            <span style="background:#7C3AED; color:#FFF; font-size:9px; font-weight:800; padding:3px 7px; border-radius:6px;">N1 · GLOBAL</span>
+                        </div>
+
+                        <!-- Yonny López (Admin Planta Extrusa) -->
+                        <div onclick="selectAdminProfileModal('YONNY', '1234')" id="optAdmYonny" style="cursor: pointer; border: 1px solid #E2E8F0; background: #FFF; padding: 10px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:34px; height:34px; border-radius:50%; background:#0284C7; color:#FFF; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;">YL</div>
+                                <div>
+                                    <div style="font-size:13px; font-weight:800; color:#002F6C;">Yonny López</div>
+                                    <div style="font-size:10.5px; color:#0369A1; font-weight:600;">Jefe de Planta · Planta Extrusa (Funza)</div>
+                                </div>
+                            </div>
+                            <span style="background:#E0F2FE; color:#0369A1; font-size:9px; font-weight:800; padding:3px 7px; border-radius:6px;">N2 · PLANTA</span>
+                        </div>
+
+                        <!-- Roberto Gómez (Admin Planta Termoformado) -->
+                        <div onclick="selectAdminProfileModal('ROBERTO', '5678')" id="optAdmRoberto" style="cursor: pointer; border: 1px solid #E2E8F0; background: #FFF; padding: 10px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:34px; height:34px; border-radius:50%; background:#059669; color:#FFF; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;">RG</div>
+                                <div>
+                                    <div style="font-size:13px; font-weight:800; color:#002F6C;">Roberto Gómez</div>
+                                    <div style="font-size:10.5px; color:#047857; font-weight:600;">Jefe de Planta · Planta Termoformado</div>
+                                </div>
+                            </div>
+                            <span style="background:#D1FAE5; color:#065F46; font-size:9px; font-weight:800; padding:3px 7px; border-radius:6px;">N2 · PLANTA</span>
+                        </div>
                     </div>
-                    <button class="btn-ingresar-portal" onclick="verifyAdminPin()" style="margin-top: 10px;">
-                        Verificar y Acceder
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-size:11px; font-weight:700; color:#64748B;">PIN de Seguridad del Perfil Seleccionado:</label>
+                        <input type="password" id="adminPinInput" class="form-control" placeholder="••••" maxlength="6" value="1428" style="text-align: center; font-size: 22px; letter-spacing: 8px; font-weight:bold; color:#002F6C;">
+                    </div>
+
+                    <button class="btn-ingresar-portal" onclick="verifyAdminPin()" style="margin-top: 4px; font-size:13px; font-weight:800; padding:12px; border-radius:12px;">
+                        Verificar e Ingresar al Dashboard
                     </button>
                 </div>
             </div>
@@ -3147,20 +3196,217 @@
         }
 
         // Acceso Administrativo
+        let activeAdminProfile = {
+            id: 'JAVIER',
+            nombre: 'Javier Julio',
+            cargo: 'Superadministrador General',
+            rol: 'SUPERADMIN',
+            plant: 'ALL',
+            plantName: 'Corporativo Global (Todas las Plantas)',
+            pin: '1428'
+        };
+
+        function selectAdminProfileModal(id, pin) {
+            document.getElementById('adminPinInput').value = pin;
+            const profiles = ['optAdmJavier', 'optAdmYonny', 'optAdmRoberto'];
+            profiles.forEach(p => {
+                const el = document.getElementById(p);
+                if (el) {
+                    el.style.border = '1px solid #E2E8F0';
+                    el.style.background = '#FFF';
+                }
+            });
+            if (id === 'JAVIER') {
+                document.getElementById('optAdmJavier').style.border = '2px solid #7C3AED';
+                document.getElementById('optAdmJavier').style.background = '#F5F3FF';
+            } else if (id === 'YONNY') {
+                document.getElementById('optAdmYonny').style.border = '2px solid #0284C7';
+                document.getElementById('optAdmYonny').style.background = '#F0F9FF';
+            } else if (id === 'ROBERTO') {
+                document.getElementById('optAdmRoberto').style.border = '2px solid #059669';
+                document.getElementById('optAdmRoberto').style.background = '#ECFDF5';
+            }
+        }
+
         function promptAdminPin() {
-            document.getElementById('adminPinInput').value = "";
+            selectAdminProfileModal('JAVIER', '1428');
             document.getElementById('modalAdminPin').classList.add('active');
             setTimeout(() => document.getElementById('adminPinInput').focus(), 150);
         }
 
         function verifyAdminPin() {
             const pin = document.getElementById('adminPinInput').value.trim();
-            if (pin === "1234" || pin === adminPin) {
+            if (pin === "1428") {
+                activeAdminProfile = {
+                    id: 'JAVIER',
+                    nombre: 'Javier Julio',
+                    cargo: 'Superadministrador General',
+                    rol: 'SUPERADMIN',
+                    plant: 'ALL',
+                    plantName: 'Corporativo Global (Todas las Plantas)',
+                    pin: '1428'
+                };
                 closeModal('modalAdminPin');
+                renderAdminDashboardView();
                 navTo('scrAdmin');
-                showToast("Acceso concedido al Panel Administrativo");
+                showToast("Bienvenido Javier Julio · Superadministrador General");
+            } else if (pin === "1234" || pin === adminPin) {
+                activeAdminProfile = {
+                    id: 'YONNY',
+                    nombre: 'Yonny López',
+                    cargo: 'Jefe de Planta / Operaciones Extrusa',
+                    rol: 'PLANTA_ADMIN',
+                    plant: 'PL-EXTRUSA',
+                    plantName: 'Planta Extrusa (Funza - Mosquera)',
+                    pin: '1234'
+                };
+                closeModal('modalAdminPin');
+                renderAdminDashboardView();
+                navTo('scrAdmin');
+                showToast("Acceso Concedido: Yonny López · Administrador Planta Extrusa");
+            } else if (pin === "5678") {
+                activeAdminProfile = {
+                    id: 'ROBERTO',
+                    nombre: 'Roberto Gómez',
+                    cargo: 'Jefe de Planta Termoformado',
+                    rol: 'PLANTA_ADMIN',
+                    plant: 'PL-TERMO',
+                    plantName: 'Planta Termoformado',
+                    pin: '5678'
+                };
+                closeModal('modalAdminPin');
+                renderAdminDashboardView();
+                navTo('scrAdmin');
+                showToast("Acceso Concedido: Roberto Gómez · Administrador Planta Termoformado");
             } else {
-                showToast("PIN incorrecto. Ingrese 1234");
+                showToast("PIN incorrecto. Ingrese 1428 (Superadmin) o 1234 / 5678 (Admins)");
+            }
+        }
+
+        function renderAdminDashboardView() {
+            const bannerContainer = document.getElementById('adminSuiteBanner');
+            const kpiCumplimiento = document.getElementById('adminKpiCumplimiento');
+            const headerTitle = document.getElementById('adminHeaderTitle');
+
+            if (!bannerContainer) return;
+
+            if (activeAdminProfile.rol === 'SUPERADMIN') {
+                headerTitle.innerText = "Suite Ejecutiva · Nivel 1 Global";
+                bannerContainer.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #1E1B4B 0%, #312E81 60%, #4C1D95 100%); border-radius: 16px; padding: 16px; color: #FFF; box-shadow: 0 4px 14px rgba(76, 29, 149, 0.25);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div>
+                                <span style="background: rgba(255,255,255,0.18); color: #E9D5FF; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;">DIRECCIÓN GENERAL CORPORATIVA</span>
+                                <div style="font-size: 17px; font-weight: 900; margin-top: 4px; color: #FFF;">Javier Julio</div>
+                                <div style="font-size: 11.5px; color: #C4B5FD;">Superadministrador General · Darnel Group Multiplanta</div>
+                            </div>
+                            <div style="background: #7C3AED; color: #FFF; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px;">
+                                N1 GLOBAL
+                            </div>
+                        </div>
+
+                        <!-- Selector Multiplanta -->
+                        <div style="font-size: 11px; font-weight: 700; color: #E9D5FF; margin-bottom: 6px;">Consolidado de Plantas:</div>
+                        <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px;" class="custom-scroll">
+                            <button onclick="filterSimulatorPlant('ALL')" class="plant-pill active" id="btnPltAll" style="background: #FFF; color: #4C1D95; border: none; font-size: 10.5px; font-weight: 800; padding: 5px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🌐 Consolidado Todas (12)</button>
+                            <button onclick="filterSimulatorPlant('EXTRUSA')" class="plant-pill" id="btnPltExtrusa" style="background: rgba(255,255,255,0.15); color: #FFF; border: none; font-size: 10.5px; font-weight: 600; padding: 5px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🏭 Planta Extrusa</button>
+                            <button onclick="filterSimulatorPlant('TERMO')" class="plant-pill" id="btnPltTermo" style="background: rgba(255,255,255,0.15); color: #FFF; border: none; font-size: 10.5px; font-weight: 600; padding: 5px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🏭 Planta Termoformado</button>
+                            <button onclick="filterSimulatorPlant('INYECCION')" class="plant-pill" id="btnPltIny" style="background: rgba(255,255,255,0.15); color: #FFF; border: none; font-size: 10.5px; font-weight: 600; padding: 5px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap;">🏭 Planta Inyección</button>
+                        </div>
+
+                        <!-- Acciones Ejecutivas de Superadmin -->
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <button onclick="promptCreateNewPlant()" style="flex: 1; background: #7C3AED; color: #FFF; border: none; padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span>➕</span> Registrar Nueva Planta
+                            </button>
+                            <button onclick="promptCorporateActivity()" style="flex: 1; background: rgba(255,255,255,0.2); color: #FFF; border: 1px solid rgba(255,255,255,0.3); padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span>📢</span> Despacho Corporativo Global
+                            </button>
+                        </div>
+                    </div>
+                `;
+                if (kpiCumplimiento) kpiCumplimiento.innerText = "88.4%";
+            } else {
+                headerTitle.innerText = "Panel de Planta · " + activeAdminProfile.plantName;
+                bannerContainer.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 60%, #0284C7 100%); border-radius: 16px; padding: 16px; color: #FFF; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div>
+                                <span style="background: rgba(255,255,255,0.18); color: #BAE6FD; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;">ADMINISTRADOR DE PLANTA</span>
+                                <div style="font-size: 17px; font-weight: 900; margin-top: 4px; color: #FFF;">${activeAdminProfile.nombre}</div>
+                                <div style="font-size: 11.5px; color: #E0F2FE;">${activeAdminProfile.cargo}</div>
+                            </div>
+                            <div style="background: #0284C7; color: #FFF; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px;">
+                                N2 PLANTA
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(0,0,0,0.15); border-radius: 10px; padding: 8px 12px; margin-top: 8px; font-size: 11px; color: #E0F2FE;">
+                            📍 <strong>Alcance Operativo:</strong> ${activeAdminProfile.plantName}. Visión y permisos de gestión limitados a esta sede y sus equipos.
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <button onclick="switchAdminModule('asignaciones'); switchAsigTab('nueva');" style="flex: 1; background: #FFF; color: #0369A1; border: none; padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span>➕</span> Nueva Asignación Local
+                            </button>
+                            <button onclick="switchAdminModule('supervision')" style="flex: 1; background: rgba(255,255,255,0.2); color: #FFF; border: 1px solid rgba(255,255,255,0.3); padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span>👁️</span> Revisar Evidencias
+                            </button>
+                        </div>
+                    </div>
+                `;
+                if (kpiCumplimiento) kpiCumplimiento.innerText = "78%";
+            }
+        }
+
+        function filterSimulatorPlant(plant) {
+            const pills = ['btnPltAll', 'btnPltExtrusa', 'btnPltTermo', 'btnPltIny'];
+            pills.forEach(p => {
+                const b = document.getElementById(p);
+                if (b) {
+                    b.style.background = 'rgba(255,255,255,0.15)';
+                    b.style.color = '#FFF';
+                    b.style.fontWeight = '600';
+                }
+            });
+            const activeMap = {
+                'ALL': 'btnPltAll',
+                'EXTRUSA': 'btnPltExtrusa',
+                'TERMO': 'btnPltTermo',
+                'INYECCION': 'btnPltIny'
+            };
+            const activeBtn = document.getElementById(activeMap[plant]);
+            if (activeBtn) {
+                activeBtn.style.background = '#FFF';
+                activeBtn.style.color = '#4C1D95';
+                activeBtn.style.fontWeight = '800';
+            }
+            if (plant === 'ALL') {
+                document.getElementById('adminKpiCumplimiento').innerText = "88.4%";
+                showToast("Visualizando Consolidado Multiplanta (12 Sedes)");
+            } else if (plant === 'EXTRUSA') {
+                document.getElementById('adminKpiCumplimiento').innerText = "92.1%";
+                showToast("Filtrado a Planta Extrusa (Yonny López)");
+            } else if (plant === 'TERMO') {
+                document.getElementById('adminKpiCumplimiento').innerText = "84.5%";
+                showToast("Filtrado a Planta Termoformado (Roberto Gómez)");
+            } else {
+                document.getElementById('adminKpiCumplimiento').innerText = "89.0%";
+                showToast("Filtrado a Planta Inyección");
+            }
+        }
+
+        function promptCreateNewPlant() {
+            const nom = prompt("Nombre de la nueva planta industrial (Ej: Planta Rígidos Mosquera):");
+            if (nom) {
+                showToast(`Planta "${nom}" registrada en TRACK60 por Javier Julio`);
+            }
+        }
+
+        function promptCorporateActivity() {
+            const act = prompt("Nombre de la Actividad Corporativa Global a distribuir a todas las plantas:");
+            if (act) {
+                showToast(`Actividad Corporativa "${act}" despachada a todas las plantas`);
             }
         }
 
