@@ -3406,8 +3406,43 @@
         function promptCorporateActivity() {
             const act = prompt("Nombre de la Actividad Corporativa Global a distribuir a todas las plantas:");
             if (act) {
-                showToast(`Actividad Corporativa "${act}" despachada a todas las plantas`);
+                const now = new Date();
+                const timeStr = "Hoy " + String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+                
+                // Asignar notificación obligatoria a TODOS los colaboradores
+                ['X', 'Y', 'Z', 'YL'].forEach(uId => {
+                    if (!NOTIFICATIONS[uId]) NOTIFICATIONS[uId] = [];
+                    NOTIFICATIONS[uId].unshift({
+                        id: Date.now() + Math.random(),
+                        title: "Actividad Corporativa Global",
+                        body: `Javier Julio asignó esta actividad para todos: ${act}`,
+                        time: timeStr,
+                        isRead: false,
+                        type: "corporate"
+                    });
+                });
+                updateNotifBadge();
+                renderColabNotifs();
+                showToast(`Actividad "${act}" despachada a todas las plantas. Notificación enviada a todos.`);
             }
+        }
+
+        function promptCreateNewPlantAdmin() {
+            const nom = prompt("Nombre del Administrador de Planta (Ej: Mauricio Benítez):");
+            if (!nom) return;
+            const ced = prompt("Cédula de Identidad:");
+            const plt = prompt("Sede o Planta asignada (Ej: Planta Rígidos Mosquera):", "Planta Rígidos Mosquera");
+            const pin = prompt("PIN de Seguridad asignado (Ej: 4321):", "4321");
+            showToast(`Administrador "${nom}" asignado a ${plt} con PIN ${pin}`);
+        }
+
+        function promptCreatePlantMember() {
+            const esSup = confirm("¿Crear SUPERVISOR DE PLANTA (Nivel 3)?\n\nAceptar = Supervisor con PIN\nCancelar = Operador de Piso con Cédula");
+            const rol = esSup ? "Supervisor de Planta" : "Operador de Piso";
+            const nom = prompt(`Nombre completo del ${rol}:`);
+            if (!nom) return;
+            const ced = prompt("Cédula de Identidad:");
+            showToast(`${rol} "${nom}" registrado en el equipo de ${activeAdminProfile.plantName}`);
         }
 
         function exitAdmin() {
@@ -3809,25 +3844,76 @@
         // Colaboradores Admin List
         function renderAdminColabsList() {
             const list = document.getElementById('adminColabsCardsList');
-            list.innerHTML = Object.keys(USERS).map(k => {
-                const u = USERS[k];
-                return `
-                    <div class="form-card" style="margin-bottom: 0;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                            <div class="colab-avatar" style="width: 44px; height: 44px;">${u.ini}</div>
-                            <div style="flex: 1;">
-                                <div style="font-size: 14px; font-weight: 800; color: #002F6C;">${u.nombre}</div>
-                                <div style="font-size: 11px; color: #64748B;">C.C. ${u.cedula} · ${u.cargo}</div>
-                            </div>
-                            <span class="colabs-badge-count">Activo</span>
+            const isSuper = activeAdminProfile.rol === 'SUPERADMIN';
+
+            if (isSuper) {
+                // Javier Julio ve exclusivamente a sus Administradores de Planta (Nivel 2)
+                const plantAdminsList = [
+                    { nombre: "Yonny López", cargo: "Jefe de Planta / Operaciones", planta: "Planta Extrusa (Funza)", cedula: "1098765432", pin: "1234", acts: 270, cump: "92%" },
+                    { nombre: "Roberto Gómez", cargo: "Jefe de Planta Termoformado", planta: "Planta Termoformado", cedula: "1087654321", pin: "5678", acts: 180, cump: "85%" },
+                    { nombre: "Mauricio Benítez", cargo: "Jefe de Planta Inyección", planta: "Planta Inyección", cedula: "1076543210", pin: "9012", acts: 210, cump: "89%" }
+                ];
+
+                list.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div>
+                            <div style="font-size:13px; font-weight:800; color:#7C3AED;">Líderes de Planta Designados (Nivel 2)</div>
+                            <div style="font-size:11px; color:#64748B;">El Superadmin gestiona a los Administradores de Planta</div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-top: 1px solid #F1F5F9;">
-                            <span>Actividades asignadas: <strong>${u.acts.length}</strong></span>
-                            <span>Cumplimiento: <strong style="color: #16A34A;">88%</strong></span>
+                        <button onclick="promptCreateNewPlantAdmin()" style="background:#7C3AED; color:#FFF; border:none; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
+                            + Crear Administrador
+                        </button>
+                    </div>
+                ` + plantAdminsList.map(a => `
+                    <div class="form-card" style="margin-bottom: 0; border-left: 4px solid #7C3AED;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                            <div class="colab-avatar" style="width: 44px; height: 44px; background: #7C3AED;">${a.nombre.split(' ').map(p=>p[0]).join('')}</div>
+                            <div style="flex: 1;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <div style="font-size: 14px; font-weight: 800; color: #002F6C;">${a.nombre}</div>
+                                    <span style="background:#F5F3FF; color:#7C3AED; font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px;">ADMIN PLANTA</span>
+                                </div>
+                                <div style="font-size: 11px; color: #64748B;">${a.cargo} · <strong>${a.planta}</strong> · PIN: ${a.pin}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11.5px; padding: 6px 0; border-top: 1px solid #F1F5F9;">
+                            <span>Actividades de sede: <strong>${a.acts}</strong></span>
+                            <span>Cumplimiento Planta: <strong style="color: #16A34A;">${a.cump}</strong></span>
                         </div>
                     </div>
-                `;
-            }).join('');
+                `).join('');
+            } else {
+                // Administrador de Planta ve a sus Supervisores y Operadores locales
+                list.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div>
+                            <div style="font-size:13px; font-weight:800; color:#0284C7;">Equipo Local de ${activeAdminProfile.plantName}</div>
+                            <div style="font-size:11px; color:#64748B;">Supervisores y Operadores a cargo</div>
+                        </div>
+                        <button onclick="promptCreatePlantMember()" style="background:#0284C7; color:#FFF; border:none; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
+                            + Crear Miembro
+                        </button>
+                    </div>
+                ` + Object.keys(USERS).map(k => {
+                    const u = USERS[k];
+                    return `
+                        <div class="form-card" style="margin-bottom: 0;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <div class="colab-avatar" style="width: 44px; height: 44px;">${u.ini}</div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 14px; font-weight: 800; color: #002F6C;">${u.nombre}</div>
+                                    <div style="font-size: 11px; color: #64748B;">C.C. ${u.cedula} · ${u.cargo}</div>
+                                </div>
+                                <span class="colabs-badge-count">Activo</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-top: 1px solid #F1F5F9;">
+                                <span>Actividades asignadas: <strong>${u.acts.length}</strong></span>
+                                <span>Cumplimiento: <strong style="color: #16A34A;">88%</strong></span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         // Planificación 4 Semanas Excel (270 Acts)
