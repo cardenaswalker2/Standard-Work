@@ -23,7 +23,7 @@ services:
     name: track60-web
     runtime: static
     rootDir: track60_fin
-    buildCommand: flutter build web --release --dart-define=API_BASE_URL=https://track60-backend.onrender.com/api/v1
+    buildCommand: flutter build web --release --dart-define=API_BASE_URL=https://track60.onrender.com/api/v1
     staticPublishPath: ./build/web
     routes:
       - type: rewrite
