@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conectar Dispositivos - TRACK60 Grupo Darnel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0B132B;
+      color: #F8FAFC;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      background: #1C2541;
+      border: 1px solid #3A506B;
+      border-radius: 16px;
+      max-width: 520px;
+      width: 100%;
+      padding: 30px 26px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(0, 163, 224, 0.15);
+      color: #00A3E0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(0, 163, 224, 0.3);
+    }
+    h1 {
+      font-size: 23px;
+      color: #FFFFFF;
+      margin-bottom: 6px;
+    }
+    p.subtitle {
+      color: #94A3B8;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+    .qr-box {
+      background: #FFFFFF;
+      padding: 16px;
+      border-radius: 14px;
+      display: inline-block;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      min-width: 210px;
+      min-height: 210px;
+    }
+    #qrcode img, #qrcode canvas {
+      display: block;
+      margin: 0 auto;
+    }
+    .url-display {
+      background: #0B132B;
+      border: 1px solid #334155;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 15px;
+      color: #38BDF8;
+      font-weight: 700;
+      word-break: break-all;
+      margin-bottom: 16px;
+    }
+    .ip-config {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      align-items: center;
+      justify-content: center;
+      background: #111827;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+    }
+    .ip-config label {
+      font-size: 12px;
+      color: #9CA3AF;
+      font-weight: 600;
+    }
+    .ip-config input {
+      background: #1F2937;
+      border: 1px solid #4B5563;
+      color: #F9FAFB;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+      width: 170px;
+      text-align: center;
+    }
+    .ip-config button {
+      background: #0284C7;
+      color: #FFFFFF;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 13px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #002F6C, #00A3E0);
+      color: #FFFFFF;
+    }
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: #334155;
+      color: #F8FAFC;
+    }
+    .btn-secondary:hover {
+      background: #475569;
+    }
+    .instructions {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #334155;
+      text-align: left;
+      font-size: 12px;
+      color: #94A3B8;
+      line-height: 1.6;
+    }
+    .instructions strong {
+      color: #F8FAFC;
+    }
+  </style>
+  <!-- Generador QR local 100% offline (sin conexión a internet) -->
+  <script src="qrcode.min.js"></script>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">GRUPO DARNEL • STANDARD WORK</div>
+    <h1>Conectar Celular a TRACK60</h1>
+    <p class="subtitle">Escanea este código con la cámara de tu teléfono (iPhone o Android) para ingresar de inmediato.</p>
+
+    <div class="qr-box" id="qr-container">
+      <div id="qrcode"></div>
+    </div>
+
+    <div class="ip-config">
+      <label for="ip-input">IP de Red:</label>
+      <input type="text" id="ip-input" placeholder="Ej. 192.168.1.15">
+      <button onclick="updateTargetUrl()">Actualizar</button>
+    </div>
+
+    <div class="url-display" id="url-text">Cargando enlace...</div>
+
+    <div class="buttons">
+      <button class="btn btn-secondary" onclick="copyUrl()">📋 Copiar Enlace Directo</button>
+      <a class="btn btn-primary" href="/" target="_self">💻 Abrir TRACK60 en este Computador</a>
+    </div>
+
+    <div class="instructions">
+      <strong>Guía rápida de conexión con tu jefe:</strong><br>
+      1. Enciende la <b>Zona Wi-Fi (Punto de acceso)</b> de tu teléfono.<br>
+      2. Conecta este computador y el celular de tu jefe a esa misma red.<br>
+      3. Abre la cámara del teléfono del jefe y apunta a este código QR.<br>
+      4. Ingresa como <b>Superadmin (PIN 1428)</b> o <b>Admin Planta (PIN 1234)</b> con un solo toque.
+    </div>
+  </div>
+
+  <script>
+    let activeTargetUrl = '';
+    const params = new URLSearchParams(window.location.search);
+    const paramIp = params.get('ip');
+    const paramPort = params.get('port') || window.location.port || '8080';
+
+    let defaultHost = paramIp;
+    if (!defaultHost) {
+      if (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        defaultHost = window.location.hostname;
+      } else {
+        defaultHost = '192.168.1.100'; // Default placeholder si no detecta
+      }
+    }
+
+    const ipInput = document.getElementById('ip-input');
+    ipInput.value = defaultHost;
+
+    function renderQR(url) {
+      activeTargetUrl = url;
+      document.getElementById('url-text').innerText = url;
+      const container = document.getElementById('qrcode');
+      container.innerHTML = '';
+
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(container, {
+          text: url,
+          width: 200,
+          height: 200,
+          colorDark: '#002F6C',
+          colorLight: '#FFFFFF',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } else {
+        // Fallback a SVG estático si está presente
+        const img = document.createElement('img');
+        img.src = '/qr_code.svg?t=' + Date.now();
+        img.width = 200;
+        img.height = 200;
+        img.onerror = function() {
+          container.innerHTML = '<div style="color:#002F6C;font-size:12px;padding:24px;font-weight:bold;">' +
+            'Abre en el celular:<br><br><span style="font-size:15px;color:#00A3E0;">' + url + '</span></div>';
+        };
+        container.appendChild(img);
+      }
+    }
+
+    function updateTargetUrl() {
+      const ipVal = ipInput.value.trim();
+      if (!ipVal) return;
+      const newUrl = 'http://' + ipVal + ':' + paramPort;
+      renderQR(newUrl);
+    }
+
+    function copyUrl() {
+      navigator.clipboard.writeText(activeTargetUrl).then(() => {
+        alert('Enlace copiado al portapapeles: ' + activeTargetUrl);
+      }).catch(() => {
+        prompt('Copia este enlace para enviarlo:', activeTargetUrl);
+      });
+    }
+
+    // Inicializar
+    const initialUrl = (paramIp ? ('http://' + paramIp + ':' + paramPort) :
+      (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ?
+        window.location.origin : ('http://' + defaultHost + ':' + paramPort)));
+    renderQR(initialUrl);
+  </script>
+</body>
+</html>

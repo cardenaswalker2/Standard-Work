@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Sistema de Rutinas Operativas y Estándar de Trabajo - Grupo Darnel">
+
+  <!-- iOS / iPhone PWA Configuration -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TRACK60">
+  <link rel="apple-touch-icon" href="icons/track60-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/track60-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/track60-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/track60-512.png">
+
+  <!-- Android & Web App Meta -->
+  <meta name="theme-color" content="#002F6C">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Favicon Forzado Sin Caché -->
+  <link rel="shortcut icon" type="image/png" href="favicon.png?v=20261108"/>
+  <link rel="icon" type="image/png" href="favicon.png?v=20261108"/>
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=20261108"/>
+
+  <title>TRACK60 - Grupo Darnel</title>
+  <link rel="manifest" href="manifest.json?v=20261108">
+
+  <style>
+    body {
+      background-color: #002F6C;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #38BDF8;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-container">
+    <div class="spinner"></div>
+    <p style="margin-top: 16px; font-weight: 600; letter-spacing: 0.5px; font-size: 14px;">DARNEL STANDARD WORK</p>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
