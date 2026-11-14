@@ -1,0 +1,5 @@
+logging:
+  level:
+    com.track60: DEBUG
+    org.springframework.security: INFO
+

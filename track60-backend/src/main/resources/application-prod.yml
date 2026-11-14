@@ -1,0 +1,6 @@
+logging:
+  level:
+    com.track60: INFO
+    org.springframework.security: WARN
+    org.springframework.data.mongodb: WARN
+
