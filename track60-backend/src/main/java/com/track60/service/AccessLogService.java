@@ -16,6 +16,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -36,35 +37,43 @@ public class AccessLogService {
             String failureReason
     ) {
         try {
-            String ip = extractClientIp(request);
-            String ua = request != null ? safeHeader(request, "User-Agent") : "";
-            ParsedAgent agent = parseUserAgent(ua);
-            GeoInfo geo = resolveGeo(ip);
+            final String ip = extractClientIp(request);
+            final String ua = request != null ? safeHeader(request, "User-Agent") : "";
+            final ParsedAgent agent = parseUserAgent(ua);
+            final String safeIdentifier = maskIdentifier(rawIdentifier, user);
+            final String userId = user != null ? user.getId() : null;
+            final String userNombre = user != null ? user.getNombre() : "Desconocido";
+            final String rol = user != null ? user.getRol() : null;
+            final String plantId = user != null ? user.getPlantId() : null;
 
-            String safeIdentifier = maskIdentifier(rawIdentifier, user);
-
-            AccessLogDocument entry = AccessLogDocument.builder()
-                    .userId(user != null ? user.getId() : null)
-                    .userNombre(user != null ? user.getNombre() : "Desconocido")
-                    .identifier(safeIdentifier)
-                    .rol(user != null ? user.getRol() : null)
-                    .plantId(user != null ? user.getPlantId() : null)
-                    .success(success)
-                    .failureReason(failureReason)
-                    .ipAddress(ip)
-                    .city(geo.city)
-                    .region(geo.region)
-                    .country(geo.country)
-                    .isp(geo.isp)
-                    .deviceType(agent.deviceType)
-                    .os(agent.os)
-                    .browser(agent.browser)
-                    .userAgent(ua.length() > 300 ? ua.substring(0, 300) : ua)
-                    .build();
-
-            accessLogRepository.save(entry);
+            CompletableFuture.runAsync(() -> {
+                try {
+                    GeoInfo geo = resolveGeo(ip);
+                    AccessLogDocument entry = AccessLogDocument.builder()
+                            .userId(userId)
+                            .userNombre(userNombre)
+                            .identifier(safeIdentifier)
+                            .rol(rol)
+                            .plantId(plantId)
+                            .success(success)
+                            .failureReason(failureReason)
+                            .ipAddress(ip)
+                            .city(geo.city)
+                            .region(geo.region)
+                            .country(geo.country)
+                            .isp(geo.isp)
+                            .deviceType(agent.deviceType)
+                            .os(agent.os)
+                            .browser(agent.browser)
+                            .userAgent(ua.length() > 300 ? ua.substring(0, 300) : ua)
+                            .build();
+                    accessLogRepository.save(entry);
+                } catch (Exception e) {
+                    log.warn("No se pudo guardar access_log async: {}", e.getMessage());
+                }
+            });
         } catch (Exception e) {
-            log.warn("No se pudo guardar access_log: {}", e.getMessage());
+            log.warn("No se pudo iniciar access_log: {}", e.getMessage());
         }
     }
 

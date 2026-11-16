@@ -95,11 +95,9 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
 
   void _startLiveTimer() {
     _liveTimer?.cancel();
-    _liveTimer = Timer.periodic(const Duration(seconds: 25), (_) {
+    _liveTimer = Timer.periodic(const Duration(seconds: 35), (_) {
       if (_isLive && mounted) {
         _checkBackendHealth();
-        context.read<StandardWorkProvider>().refreshData();
-        if (_sectionIndex == 2) _loadAccessLogs(silent: true);
       }
     });
   }
