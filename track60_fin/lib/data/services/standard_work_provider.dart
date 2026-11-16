@@ -572,7 +572,38 @@ class StandardWorkProvider with ChangeNotifier {
     }
 
     try {
-      _notifications = await _db.getNotificationsForUser(_currentUser!.id);
+      final localNotifs = await _db.getNotificationsForUser(_currentUser!.id);
+      final merged = <NotificationModel>[];
+      try {
+        final token = await ApiClient.instance.getAccessToken();
+        if (token != null && token.isNotEmpty) {
+          final cloudRes = await ApiClient.instance.get('/notifications');
+          if (cloudRes is List) {
+            for (final item in cloudRes.whereType<Map>()) {
+              final map = Map<String, dynamic>.from(item);
+              merged.add(NotificationModel(
+                id: map['id']?.hashCode,
+                userId: _currentUser!.id,
+                title: map['titulo']?.toString() ?? map['title']?.toString() ?? 'Comunicado',
+                body: map['mensaje']?.toString() ?? map['message']?.toString() ?? '',
+                type: (map['tipo']?.toString() ?? 'INFO').toLowerCase() == 'alert' ? 'alert' : 'corporate_assignment',
+                timestamp: map['createdAt'] != null
+                    ? DateTime.tryParse(map['createdAt'].toString())?.toLocal() ?? DateTime.now()
+                    : DateTime.now(),
+                isRead: map['leida'] == true,
+              ));
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Error cargando notifications cloud: $e');
+      }
+      for (final n in localNotifs) {
+        final dup = merged.any((c) => c.title == n.title && c.body == n.body);
+        if (!dup) merged.add(n);
+      }
+      merged.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      _notifications = merged;
     } catch (e) {
       debugPrint('Error cargando notifications: $e');
       _notifications = [];

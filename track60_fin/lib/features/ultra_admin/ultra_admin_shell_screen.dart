@@ -1062,12 +1062,12 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
             child: Text('Aún no hay registros de acceso que coincidan con el filtro.', style: TextStyle(fontSize: 13, color: _muted)),
           )
         else
-          ...filtered.map(_buildAccessLogCard),
+          ...filtered.map((log) => _buildAccessLogCard(provider, log)),
       ],
     );
   }
 
-  Widget _buildAccessLogCard(AccessLogEntry log) {
+  Widget _buildAccessLogCard(StandardWorkProvider provider, AccessLogEntry log) {
     final isMobile = log.deviceType.contains('Móvil') || log.deviceType.contains('Teléfono');
     final isTablet = log.deviceType.contains('Tablet');
     final deviceIcon = isMobile ? Icons.smartphone_rounded : (isTablet ? Icons.tablet_mac_rounded : Icons.computer_rounded);
@@ -1075,64 +1075,203 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: _AppleCard(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: Icon(deviceIcon, color: statusColor, size: 20),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showAccessLogDetailDialog(context, provider, log),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _border),
             ),
-            const SizedBox(width: 12),
-            Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(deviceIcon, color: statusColor, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(log.userNombre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _ink)),
+                          _TagChip(label: log.success ? 'Exitoso' : 'Fallido', color: statusColor),
+                          if (log.rol != null) _TagChip(label: _roleLabel(log.rol!), color: _roleColor(log.rol!)),
+                          _TagChip(label: _fmtDateTime12h(log.createdAt), color: _blue),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 14,
+                        runSpacing: 4,
+                        children: [
+                          _InfoInline(icon: Icons.badge_outlined, text: 'ID: ${log.identifier}'),
+                          _InfoInline(icon: Icons.public_rounded, text: 'IP: ${log.ipAddress}'),
+                          _InfoInline(icon: Icons.location_on_outlined, text: log.locationLabel),
+                          _InfoInline(icon: Icons.devices_rounded, text: '${log.deviceType} · ${log.os} · ${log.browser}'),
+                        ],
+                      ),
+                      if (!log.success && log.failureReason != null) ...[
+                        const SizedBox(height: 5),
+                        Text('Motivo: ${log.failureReason}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _red)),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  tooltip: 'Copiar IP',
+                  icon: const Icon(Icons.copy_rounded, size: 17, color: _muted),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: log.ipAddress));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('IP ${log.ipAddress} copiada')));
+                  },
+                ),
+                const Icon(Icons.chevron_right_rounded, color: _muted, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAccessLogDetailDialog(BuildContext context, StandardWorkProvider provider, AccessLogEntry log) {
+    final statusColor = log.success ? _green : _red;
+    final matchedUser = log.userId == null
+        ? null
+        : provider.allUsers.where((u) => u.id == log.userId).firstOrNull;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: SingleChildScrollView(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                  Row(
                     children: [
-                      Text(log.userNombre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _ink)),
-                      _TagChip(label: log.success ? 'Exitoso' : 'Fallido', color: statusColor),
-                      if (log.rol != null) _TagChip(label: _roleLabel(log.rol!), color: _roleColor(log.rol!)),
-                      Text('ID: ${log.identifier}', style: const TextStyle(fontSize: 11, color: _muted)),
-                      _TagChip(label: _fmtDateTime12h(log.createdAt), color: _blue),
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          log.success ? Icons.verified_user_rounded : Icons.gpp_bad_rounded,
+                          color: statusColor,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(log.userNombre, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _ink)),
+                            const SizedBox(height: 3),
+                            Wrap(
+                              spacing: 6,
+                              children: [
+                                _TagChip(label: log.success ? 'Acceso Exitoso' : 'Acceso Fallido', color: statusColor),
+                                if (log.rol != null) _TagChip(label: _roleLabel(log.rol!), color: _roleColor(log.rol!)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close_rounded, color: _muted),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 14,
-                    runSpacing: 4,
-                    children: [
-                      _InfoInline(icon: Icons.public_rounded, text: 'IP: ${log.ipAddress}'),
-                      _InfoInline(icon: Icons.location_on_outlined, text: log.locationLabel),
-                      if (log.isp.isNotEmpty) _InfoInline(icon: Icons.router_rounded, text: log.isp),
-                      _InfoInline(icon: Icons.devices_rounded, text: '${log.deviceType} · ${log.os} · ${log.browser}'),
-                    ],
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: _bg, borderRadius: BorderRadius.circular(16)),
+                    child: Column(
+                      children: [
+                        _DetailRow(icon: Icons.schedule_rounded, label: 'Fecha y Hora', value: _fmtDateTime12h(log.createdAt)),
+                        _DetailRow(icon: Icons.badge_outlined, label: 'Cédula / ID', value: log.identifier),
+                        if (log.plantId != null && log.plantId!.isNotEmpty)
+                          _DetailRow(icon: Icons.factory_outlined, label: 'Planta', value: _plantName(provider.allPlants, log.plantId)),
+                        _DetailRow(icon: Icons.public_rounded, label: 'IP Pública', value: log.ipAddress),
+                        _DetailRow(icon: Icons.location_on_outlined, label: 'Ubicación (IP)', value: log.locationLabel),
+                        if (log.isp.isNotEmpty)
+                          _DetailRow(icon: Icons.router_rounded, label: 'Operador / ISP', value: log.isp),
+                        _DetailRow(icon: Icons.devices_rounded, label: 'Dispositivo', value: log.deviceType),
+                        _DetailRow(icon: Icons.memory_rounded, label: 'Sistema Operativo', value: log.os),
+                        _DetailRow(icon: Icons.language_rounded, label: 'Navegador / App', value: log.browser),
+                        if (!log.success && log.failureReason != null)
+                          _DetailRow(icon: Icons.error_outline_rounded, label: 'Motivo de Fallo', value: log.failureReason!, valueColor: _red),
+                      ],
+                    ),
                   ),
-                  if (!log.success && log.failureReason != null) ...[
-                    const SizedBox(height: 5),
-                    Text('Motivo: ${log.failureReason}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _red)),
+                  if (log.userAgent.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    const Text('User-Agent Técnico', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _muted)),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: _bg, borderRadius: BorderRadius.circular(10)),
+                      child: SelectableText(log.userAgent, style: const TextStyle(fontSize: 10, fontFamily: 'monospace', color: _ink)),
+                    ),
                   ],
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: log.ipAddress));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('IP ${log.ipAddress} copiada')));
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 16),
+                        label: const Text('Copiar IP'),
+                      ),
+                      if (matchedUser != null) ...[
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: _blue, foregroundColor: Colors.white),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _showUserEditorDialog(context, provider, matchedUser);
+                          },
+                          icon: const Icon(Icons.manage_accounts_rounded, size: 16),
+                          label: const Text('Gestionar Usuario'),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
-            IconButton(
-              tooltip: 'Copiar IP',
-              icon: const Icon(Icons.copy_rounded, size: 16, color: _muted),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: log.ipAddress));
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('IP ${log.ipAddress} copiada')));
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -2030,6 +2169,38 @@ class _AppleIconButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onTap,
       icon: spinning ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(icon, color: color, size: 20),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+  const _DetailRow({required this.icon, required this.label, required this.value, this.valueColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: const Color(0xFF86868B)),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 120,
+            child: Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF86868B), fontWeight: FontWeight.w500)),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: valueColor ?? const Color(0xFF1D1D1F)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
