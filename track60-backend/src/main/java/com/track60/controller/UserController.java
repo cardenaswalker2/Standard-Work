@@ -108,6 +108,89 @@ public class UserController {
         return ApiResponse.ok(AuthService.toDto(userRepository.save(user)), "Rol y planta actualizados");
     }
 
+    @PutMapping("/{id}")
+    public ApiResponse<UserDto> updateUser(@PathVariable String id, @RequestBody UpdateUserRequest req) {
+        var current = scope.currentUser();
+        if (!current.isUltraAdmin() && !current.isSuperAdmin()) {
+            throw ApiException.forbidden("Solo Ultra Admin o Super Admin pueden editar usuarios completos");
+        }
+        UserDocument user = userRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Usuario no encontrado"));
+
+        if (req.getCedula() != null && !req.getCedula().isBlank()) {
+            String newCedula = req.getCedula().trim();
+            if (!newCedula.equals(user.getCedula()) && userRepository.existsByCedula(newCedula)) {
+                throw ApiException.conflict("Ya existe otro usuario con esa cédula");
+            }
+            user.setCedula(newCedula);
+        }
+        if (req.getNombre() != null && !req.getNombre().isBlank()) {
+            user.setNombre(req.getNombre().trim());
+        }
+        if (req.getCargo() != null) {
+            user.setCargo(req.getCargo().trim());
+        }
+        if (req.getArea() != null) {
+            user.setArea(req.getArea().trim());
+        }
+        if (req.getIniciales() != null) {
+            user.setIniciales(req.getIniciales().trim());
+        }
+        if (req.getEmail() != null) {
+            user.setEmail(req.getEmail().trim().isEmpty() ? null : req.getEmail().trim());
+        }
+        if (req.getRol() != null && !req.getRol().isBlank()) {
+            if ("ultra_admin".equalsIgnoreCase(req.getRol()) && !current.isUltraAdmin()) {
+                throw ApiException.forbidden("Solo Ultra Admin puede asignar el rol Ultra Admin");
+            }
+            user.setRol(req.getRol().trim());
+        }
+        if (req.getPlantId() != null && !req.getPlantId().isBlank()) {
+            user.setPlantId(req.getPlantId().trim());
+        }
+        if (req.getActivo() != null) {
+            user.setActivo(req.getActivo());
+        }
+        if (req.getPin() != null && !req.getPin().trim().isEmpty()) {
+            if (req.getPin().trim().length() < 4) {
+                throw ApiException.badRequest("El PIN debe tener al menos 4 dígitos");
+            }
+            user.setPinHash(passwordEncoder.encode(req.getPin().trim()));
+        }
+
+        return ApiResponse.ok(AuthService.toDto(userRepository.save(user)), "Usuario actualizado completamente");
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteUser(@PathVariable String id) {
+        var current = scope.currentUser();
+        if (!current.isUltraAdmin()) {
+            throw ApiException.forbidden("Solo Ultra Admin puede eliminar usuarios");
+        }
+        if (id.equals(current.getUserId())) {
+            throw ApiException.badRequest("No puedes eliminar tu propia cuenta Ultra Admin");
+        }
+        if (!userRepository.existsById(id)) {
+            throw ApiException.notFound("Usuario no encontrado");
+        }
+        userRepository.deleteById(id);
+        return ApiResponse.ok(null, "Usuario eliminado");
+    }
+
+    @Data
+    public static class UpdateUserRequest {
+        private String cedula;
+        private String nombre;
+        private String cargo;
+        private String area;
+        private String iniciales;
+        private String email;
+        private String rol;
+        private String plantId;
+        private Boolean activo;
+        private String pin;
+    }
+
     @Data
     public static class ResetPinRequest {
         private String pin;

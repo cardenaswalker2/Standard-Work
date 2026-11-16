@@ -6,6 +6,7 @@ import com.track60.model.UserDocument;
 import com.track60.repository.UserRepository;
 import com.track60.security.JwtService;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final AccessLogService accessLogService;
 
     public AuthResponse login(LoginRequest req) {
+        return login(req, null);
+    }
+
+    public AuthResponse login(LoginRequest req, HttpServletRequest httpRequest) {
         String id = req.getIdentifier().trim();
         UserDocument user = userRepository.findByCedula(id)
                 .or(() -> userRepository.findById(id.toUpperCase()))
@@ -33,13 +39,18 @@ public class AuthService {
                     .orElse(null);
         } else if (!"operador".equalsIgnoreCase(user.getRol()) && req.getPin() != null && !req.getPin().isBlank()) {
             if (user.getPinHash() == null || !passwordEncoder.matches(req.getPin().trim(), user.getPinHash())) {
+                accessLogService.recordAttempt(httpRequest, id, user, false, "PIN incorrecto");
                 throw ApiException.unauthorized("PIN incorrecto");
             }
         }
 
         if (user == null || !user.isActivo()) {
+            String reason = user == null ? "Credenciales no encontradas" : "Usuario inactivo";
+            accessLogService.recordAttempt(httpRequest, id, user, false, reason);
             throw ApiException.unauthorized("Credenciales inválidas o usuario inactivo");
         }
+
+        accessLogService.recordAttempt(httpRequest, id, user, true, null);
 
         return AuthResponse.builder()
                 .accessToken(jwtService.generateAccessToken(user))

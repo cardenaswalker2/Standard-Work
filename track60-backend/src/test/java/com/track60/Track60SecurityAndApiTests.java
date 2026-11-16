@@ -58,6 +58,9 @@ class Track60SecurityAndApiTests {
     private com.track60.repository.ActionPlanRepository actionPlanRepository;
 
     @MockBean
+    private com.track60.repository.AccessLogRepository accessLogRepository;
+
+    @MockBean
     private com.track60.repository.CapacityRequestRepository capacityRequestRepository;
 
     @MockBean

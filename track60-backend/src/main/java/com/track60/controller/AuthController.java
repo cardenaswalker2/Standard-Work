@@ -7,6 +7,7 @@ import com.track60.security.ScopeValidator;
 import com.track60.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +24,8 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión con cédula o PIN directivo")
-    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.ok(authService.login(request), "Inicio de sesión exitoso");
+    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        return ApiResponse.ok(authService.login(request, httpRequest), "Inicio de sesión exitoso");
     }
 
     @PostMapping("/refresh")
