@@ -19,6 +19,7 @@ class IosPwaInstallGuideModal extends StatefulWidget {
 
 class _IosPwaInstallGuideModalState extends State<IosPwaInstallGuideModal> {
   bool _installing = false;
+  String? _statusNote;
 
   @override
   Widget build(BuildContext context) {
@@ -76,55 +77,84 @@ class _IosPwaInstallGuideModalState extends State<IosPwaInstallGuideModal> {
               ],
             ),
             const SizedBox(height: 16),
-            if (canInstall) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF007AFF).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.25)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Instalación directa disponible en este navegador',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF002F6C)),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Pulsa el botón para abrir el aviso oficial de instalación en tu pantalla de inicio o escritorio.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF334155)),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF007AFF),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: _installing
-                            ? null
-                            : () async {
-                                setState(() => _installing = true);
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF007AFF).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.25)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    canInstall
+                        ? 'Instalación directa disponible'
+                        : 'Instalar TRACK60 en este dispositivo',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF002F6C)),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    canInstall
+                        ? 'Pulsa el botón para abrir el instalador oficial en tu pantalla de inicio o escritorio.'
+                        : 'Pulsa el botón para lanzar el instalador o ver la opción en tu navegador (si ya está instalada, ábrela desde tu escritorio o menú de apps).',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF334155)),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF007AFF),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: _installing
+                          ? null
+                          : () async {
+                              if (PwaInstallHelper.canInstallDirectly()) {
+                                setState(() {
+                                  _installing = true;
+                                  _statusNote = null;
+                                });
                                 final ok = await PwaInstallHelper.promptInstall();
                                 if (mounted) {
                                   setState(() => _installing = false);
                                   if (ok) Navigator.pop(context);
                                 }
-                              },
-                        icon: const Icon(Icons.download_for_offline_rounded, size: 19),
-                        label: Text(_installing ? 'Abriendo instalador...' : 'Instalar App TRACK60 Ahora'),
+                              } else {
+                                setState(() {
+                                  _statusNote =
+                                      '• En Chrome PC/Android: toca el ícono de Instalar en la barra de direcciones (o menú ⋮ → Instalar aplicación).\n'
+                                      '• En iPhone (Safari): sigue los 3 pasos de abajo (Compartir → Agregar a pantalla de inicio).';
+                                });
+                              }
+                            },
+                      icon: const Icon(Icons.download_for_offline_rounded, size: 19),
+                      label: Text(_installing ? 'Abriendo instalador...' : 'Instalar App TRACK60 Ahora'),
+                    ),
+                  ),
+                  if (_statusNote != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFBAE6FD)),
+                      ),
+                      child: Text(
+                        _statusNote!,
+                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF0F172A), height: 1.4),
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
+            const SizedBox(height: 16),
             const Text(
               'Si usas iPhone (Safari), Apple requiere estos 3 sencillos pasos para agregarla a tu pantalla de inicio:',
               style: TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.4),
