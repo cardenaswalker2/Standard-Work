@@ -19,6 +19,7 @@ public class Track60UserPrincipal {
 
     public String getSpringRole() {
         return switch (rol == null ? "" : rol.toLowerCase()) {
+            case "ultra_admin" -> "ROLE_ULTRA_ADMIN";
             case "superadmin" -> "ROLE_SUPER_ADMIN";
             case "admin_planta" -> "ROLE_ADMIN";
             case "supervisor" -> "ROLE_SUPERVISOR";
@@ -30,8 +31,12 @@ public class Track60UserPrincipal {
         return List.of(new SimpleGrantedAuthority(getSpringRole()));
     }
 
+    public boolean isUltraAdmin() {
+        return "ultra_admin".equalsIgnoreCase(rol);
+    }
+
     public boolean isSuperAdmin() {
-        return "superadmin".equalsIgnoreCase(rol);
+        return "superadmin".equalsIgnoreCase(rol) || isUltraAdmin();
     }
 
     public boolean isPlantAdmin() {

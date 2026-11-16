@@ -80,6 +80,45 @@ public class UserController {
         return ApiResponse.ok(AuthService.toDto(userRepository.save(user)), "Estado actualizado");
     }
 
+    @PatchMapping("/{id}/reset-pin")
+    public ApiResponse<UserDto> resetPin(@PathVariable String id, @RequestBody ResetPinRequest req) {
+        scope.requireSuperAdmin();
+        if (req.getPin() == null || req.getPin().trim().length() < 4) {
+            throw ApiException.badRequest("El PIN debe tener al menos 4 dígitos");
+        }
+        UserDocument user = userRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Usuario no encontrado"));
+        user.setPinHash(passwordEncoder.encode(req.getPin().trim()));
+        return ApiResponse.ok(AuthService.toDto(userRepository.save(user)), "PIN actualizado");
+    }
+
+    @PatchMapping("/{id}/role")
+    public ApiResponse<UserDto> updateRoleAndPlant(@PathVariable String id, @RequestBody UpdateRoleRequest req) {
+        if (!scope.currentUser().isUltraAdmin()) {
+            throw ApiException.forbidden("Solo el Ultra Admin puede reasignar roles globales");
+        }
+        UserDocument user = userRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Usuario no encontrado"));
+        if (req.getRol() != null && !req.getRol().isBlank()) {
+            user.setRol(req.getRol().trim());
+        }
+        if (req.getPlantId() != null && !req.getPlantId().isBlank()) {
+            user.setPlantId(req.getPlantId().trim());
+        }
+        return ApiResponse.ok(AuthService.toDto(userRepository.save(user)), "Rol y planta actualizados");
+    }
+
+    @Data
+    public static class ResetPinRequest {
+        private String pin;
+    }
+
+    @Data
+    public static class UpdateRoleRequest {
+        private String rol;
+        private String plantId;
+    }
+
     @Data
     public static class CreateUserRequest {
         private String cedula;

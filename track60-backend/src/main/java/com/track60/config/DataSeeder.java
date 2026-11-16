@@ -103,6 +103,23 @@ public class DataSeeder implements CommandLineRunner {
             ));
             log.info("Usuarios base sembrados con PIN cifrado BCrypt");
         }
+
+        if (!userRepository.existsById("ULTRA")) {
+            userRepository.save(UserDocument.builder()
+                    .id("ULTRA")
+                    .cedula("0000000000")
+                    .nombre("Owner · Ultra Admin")
+                    .cargo("Arquitecto y Propietario del Sistema")
+                    .area("Control Maestro")
+                    .iniciales("UA")
+                    .email("owner@track60.darnel.com")
+                    .activo(true)
+                    .rol("ultra_admin")
+                    .plantId("ALL")
+                    .pinHash(passwordEncoder.encode("147728"))
+                    .build());
+            log.info("Usuario Ultra Admin sembrado con PIN cifrado BCrypt");
+        }
     }
 }
 
