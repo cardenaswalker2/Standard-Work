@@ -1819,7 +1819,13 @@ class StandardWorkProvider with ChangeNotifier {
       'activo': activo,
       if (newPin != null && newPin.trim().isNotEmpty) 'pin': newPin.trim(),
     };
-    await ApiClient.instance.put('/users/$userId', body);
+    try {
+      await ApiClient.instance.put('/users/$userId', body);
+    } on ApiExceptionClient catch (e) {
+      if (e.statusCode != 404) rethrow;
+      // Si el usuario solo existía en caché local, lo creamos en la nube.
+      await ApiClient.instance.post('/users', body);
+    }
     final idx = _allUsers.indexWhere((u) => u.id == userId);
     if (idx != -1) {
       final updated = _allUsers[idx].copyWith(
@@ -1854,7 +1860,7 @@ class StandardWorkProvider with ChangeNotifier {
         ? '${parts.first[0]}${parts[1][0]}'.toUpperCase()
         : (cleanName.isNotEmpty ? cleanName.substring(0, cleanName.length >= 2 ? 2 : 1).toUpperCase() : 'US');
 
-    await ApiClient.instance.post('/users', {
+    final created = await ApiClient.instance.post('/users', {
       'cedula': cedula.trim(),
       'nombre': cleanName,
       'cargo': cargo.trim(),
@@ -1865,12 +1871,35 @@ class StandardWorkProvider with ChangeNotifier {
       'plantId': plantId.trim(),
       if (pin != null && pin.trim().isNotEmpty) 'pin': pin.trim(),
     });
+    if (created is Map) {
+      final map = Map<String, dynamic>.from(created);
+      final newUser = UserProfile(
+        id: map['id']?.toString() ?? 'USR-${DateTime.now().millisecondsSinceEpoch}',
+        cedula: map['cedula']?.toString() ?? cedula.trim(),
+        nombre: map['nombre']?.toString() ?? cleanName,
+        cargo: map['cargo']?.toString() ?? cargo.trim(),
+        area: map['area']?.toString() ?? area.trim(),
+        iniciales: map['iniciales']?.toString() ?? initials,
+        email: map['email']?.toString() ?? email.trim(),
+        activo: map['activo'] != false,
+        rol: map['rol']?.toString() ?? rol.trim(),
+        plantId: map['plantId']?.toString() ?? plantId.trim(),
+        pin: pin?.trim() ?? '',
+      );
+      await _db.insertUser(newUser);
+    }
     await refreshData();
   }
 
   Future<void> deleteUserFromCloud(String userId) async {
-    await ApiClient.instance.delete('/users/$userId');
+    try {
+      await ApiClient.instance.delete('/users/$userId');
+    } on ApiExceptionClient catch (e) {
+      // Si no existe en MongoDB (404, usuario fantasma de caché local), igual se elimina localmente.
+      if (e.statusCode != 404) rethrow;
+    }
     await _db.deleteUser(userId);
+    _allUsers.removeWhere((u) => u.id == userId);
     await refreshData();
   }
 
