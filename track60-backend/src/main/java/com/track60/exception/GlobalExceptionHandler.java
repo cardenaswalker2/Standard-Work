@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Error interno no controlado: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("INTERNAL_ERROR", "Error interno del servidor"));
+                .body(ApiResponse.error("INTERNAL_ERROR", "Error interno del servidor: " + ex.getClass().getSimpleName()));
     }
 }
 
