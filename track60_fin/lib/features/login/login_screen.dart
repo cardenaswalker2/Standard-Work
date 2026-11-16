@@ -421,7 +421,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () => IosPwaInstallGuideModal.show(context),
                         icon: const Icon(Icons.phone_iphone_rounded, size: 18, color: Color(0xFF002F6C)),
                         label: const Text(
-                          '¿Usas iPhone? Instalar como App (PWA)',
+                          'Instalar como App (PWA)',
                           style: TextStyle(color: Color(0xFF002F6C), fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../utils/pwa_install_helper.dart';
 
-class IosPwaInstallGuideModal extends StatelessWidget {
+class IosPwaInstallGuideModal extends StatefulWidget {
   const IosPwaInstallGuideModal({super.key});
 
   static void show(BuildContext context) {
@@ -13,7 +14,15 @@ class IosPwaInstallGuideModal extends StatelessWidget {
   }
 
   @override
+  State<IosPwaInstallGuideModal> createState() => _IosPwaInstallGuideModalState();
+}
+
+class _IosPwaInstallGuideModalState extends State<IosPwaInstallGuideModal> {
+  bool _installing = false;
+
+  @override
   Widget build(BuildContext context) {
+    final canInstall = PwaInstallHelper.canInstallDirectly();
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -54,11 +63,11 @@ class IosPwaInstallGuideModal extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Instalar en iPhone (PWA)',
+                        'Instalar como App (PWA)',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF002F6C)),
                       ),
                       Text(
-                        'Ejecución como App independiente sin App Store',
+                        'Ejecución como App independiente en tu dispositivo',
                         style: TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ],
@@ -66,9 +75,58 @@ class IosPwaInstallGuideModal extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            if (canInstall) ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF007AFF).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.25)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Instalación directa disponible en este navegador',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF002F6C)),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Pulsa el botón para abrir el aviso oficial de instalación en tu pantalla de inicio o escritorio.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF007AFF),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: _installing
+                            ? null
+                            : () async {
+                                setState(() => _installing = true);
+                                final ok = await PwaInstallHelper.promptInstall();
+                                if (mounted) {
+                                  setState(() => _installing = false);
+                                  if (ok) Navigator.pop(context);
+                                }
+                              },
+                        icon: const Icon(Icons.download_for_offline_rounded, size: 19),
+                        label: Text(_installing ? 'Abriendo instalador...' : 'Instalar App TRACK60 Ahora'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             const Text(
-              'Sigue estos 3 sencillos pasos desde Safari para tener la App en tu pantalla de inicio:',
+              'Si usas iPhone (Safari), Apple requiere estos 3 sencillos pasos para agregarla a tu pantalla de inicio:',
               style: TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.4),
             ),
             const SizedBox(height: 18),

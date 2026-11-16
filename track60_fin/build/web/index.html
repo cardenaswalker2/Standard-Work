@@ -66,6 +66,23 @@
     <div class="spinner"></div>
     <p style="margin-top: 16px; font-weight: 600; letter-spacing: 0.5px; font-size: 14px;">DARNEL STANDARD WORK</p>
   </div>
+  <script>
+    window.__track60DeferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.__track60DeferredPrompt = e;
+    });
+    window.track60CanInstall = function () {
+      return !!window.__track60DeferredPrompt;
+    };
+    window.track60PromptInstall = async function () {
+      if (!window.__track60DeferredPrompt) return false;
+      window.__track60DeferredPrompt.prompt();
+      var choice = await window.__track60DeferredPrompt.userChoice;
+      window.__track60DeferredPrompt = null;
+      return choice && choice.outcome === 'accepted';
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
