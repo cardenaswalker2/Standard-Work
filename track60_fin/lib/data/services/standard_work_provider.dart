@@ -307,7 +307,16 @@ class StandardWorkProvider with ChangeNotifier {
 
       if (targetUserId == null) {
         final cloudOk = await _loginViaCloudApi(cleanPin);
-        if (cloudOk) return true;
+        if (cloudOk) {
+          try {
+            await _loadUserData();
+          } catch (e) {
+            debugPrint('Aviso en _loadUserData durante loginWithPin (cloud): $e');
+          }
+          _isLoading = false;
+          notifyListeners();
+          return true;
+        }
       }
 
       final users = await _db.getAllUsers();
@@ -483,19 +492,67 @@ class StandardWorkProvider with ChangeNotifier {
   Future<void> _loadUserData() async {
     if (_currentUser == null) return;
 
+    List<UserProfile> loadedUsers = [];
     try {
-      _allUsers = await _db.getAllUsers();
+      loadedUsers = await _db.getAllUsers();
     } catch (e) {
-      debugPrint('Error cargando users: $e');
-      _allUsers = [_currentUser!];
+      debugPrint('Error cargando users locales: $e');
     }
+    try {
+      final token = await ApiClient.instance.getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        final cloudUsers = await ApiClient.instance.get('/users');
+        if (cloudUsers is List && cloudUsers.isNotEmpty) {
+          loadedUsers = cloudUsers.whereType<Map>().map((item) {
+            final m = Map<String, dynamic>.from(item);
+            return UserProfile(
+              id: m['id']?.toString() ?? '',
+              cedula: m['cedula']?.toString() ?? '',
+              nombre: m['nombre']?.toString() ?? '',
+              cargo: m['cargo']?.toString() ?? '',
+              area: m['area']?.toString() ?? '',
+              iniciales: m['iniciales']?.toString() ?? 'US',
+              email: m['email']?.toString() ?? '',
+              activo: m['activo'] != false,
+              rol: m['rol']?.toString() ?? 'operador',
+              plantId: m['plantId']?.toString() ?? 'PL-EXTRUSA',
+            );
+          }).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando users cloud: $e');
+    }
+    _allUsers = loadedUsers.isNotEmpty ? loadedUsers : [_currentUser!];
 
+    List<PlantModel> loadedPlants = [];
     try {
-      _allPlants = await _db.getAllPlants();
+      loadedPlants = await _db.getAllPlants();
     } catch (e) {
-      debugPrint('Error cargando plants: $e');
-      _allPlants = [];
+      debugPrint('Error cargando plants locales: $e');
     }
+    try {
+      final token = await ApiClient.instance.getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        final cloudPlants = await ApiClient.instance.get('/plants');
+        if (cloudPlants is List && cloudPlants.isNotEmpty) {
+          loadedPlants = cloudPlants.whereType<Map>().map((item) {
+            final m = Map<String, dynamic>.from(item);
+            return PlantModel(
+              id: m['id']?.toString() ?? '',
+              codigo: m['codigo']?.toString() ?? m['id']?.toString() ?? '',
+              nombre: m['nombre']?.toString() ?? '',
+              ubicacion: m['ubicacion']?.toString() ?? '',
+              adminId: m['adminId']?.toString() ?? '',
+              activa: m['activa'] != false,
+            );
+          }).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando plants cloud: $e');
+    }
+    _allPlants = loadedPlants;
 
     try {
       _activities = await _db.getAllActivities();
