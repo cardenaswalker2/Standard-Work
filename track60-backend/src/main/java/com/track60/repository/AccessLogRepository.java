@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface AccessLogRepository extends MongoRepository<AccessLogDocument, String> {
     List<AccessLogDocument> findTop200ByOrderByCreatedAtDesc();
+    void deleteBySuccessFalse();
 }
 

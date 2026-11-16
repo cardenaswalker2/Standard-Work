@@ -8,8 +8,10 @@ import com.track60.service.AccessLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,6 +32,16 @@ public class AccessLogController {
             throw ApiException.forbidden("Solo Ultra Admin puede consultar el registro de accesos e IPs");
         }
         return ApiResponse.ok(accessLogService.getRecentLogs());
+    }
+
+    @DeleteMapping
+    @Operation(summary = "Limpiar historial de accesos (solo Ultra Admin)")
+    public ApiResponse<Void> clear(@RequestParam(defaultValue = "false") boolean onlyFailed) {
+        if (!scope.currentUser().isUltraAdmin()) {
+            throw ApiException.forbidden("Solo Ultra Admin puede limpiar el registro de accesos");
+        }
+        accessLogService.clearLogs(onlyFailed);
+        return ApiResponse.ok(null, onlyFailed ? "Intentos fallidos eliminados" : "Historial de accesos limpiado");
     }
 }
 

@@ -15,6 +15,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -66,6 +67,7 @@ public class AccessLogService {
                             .os(agent.os)
                             .browser(agent.browser)
                             .userAgent(ua.length() > 300 ? ua.substring(0, 300) : ua)
+                            .createdAt(Instant.now())
                             .build();
                     accessLogRepository.save(entry);
                 } catch (Exception e) {
@@ -79,6 +81,14 @@ public class AccessLogService {
 
     public List<AccessLogDocument> getRecentLogs() {
         return accessLogRepository.findTop200ByOrderByCreatedAtDesc();
+    }
+
+    public void clearLogs(boolean onlyFailed) {
+        if (onlyFailed) {
+            accessLogRepository.deleteBySuccessFalse();
+        } else {
+            accessLogRepository.deleteAll();
+        }
     }
 
     private String maskIdentifier(String rawIdentifier, UserDocument user) {

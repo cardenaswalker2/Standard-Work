@@ -1000,10 +1000,23 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                       ],
                     ),
                   ),
-                  OutlinedButton.icon(
-                    onPressed: _loadingAccessLogs ? null : () => _loadAccessLogs(),
-                    icon: const Icon(Icons.refresh_rounded, size: 16),
-                    label: Text(_loadingAccessLogs ? 'Cargando...' : 'Actualizar'),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _loadingAccessLogs ? null : () => _loadAccessLogs(),
+                        icon: const Icon(Icons.refresh_rounded, size: 16),
+                        label: Text(_loadingAccessLogs ? 'Cargando...' : 'Actualizar'),
+                      ),
+                      if (_accessLogs.isNotEmpty)
+                        OutlinedButton.icon(
+                          onPressed: () => _showClearAccessLogsDialog(context, provider),
+                          icon: const Icon(Icons.cleaning_services_rounded, size: 16, color: _red),
+                          label: const Text('Limpiar', style: TextStyle(color: _red)),
+                          style: OutlinedButton.styleFrom(side: BorderSide(color: _red.withValues(alpha: 0.35))),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -1090,6 +1103,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                       _TagChip(label: log.success ? 'Exitoso' : 'Fallido', color: statusColor),
                       if (log.rol != null) _TagChip(label: _roleLabel(log.rol!), color: _roleColor(log.rol!)),
                       Text('ID: ${log.identifier}', style: const TextStyle(fontSize: 11, color: _muted)),
+                      _TagChip(label: _fmtDateTime12h(log.createdAt), color: _blue),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -1110,10 +1124,58 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Text(_fmtDateTime(log.createdAt), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _muted)),
+            IconButton(
+              tooltip: 'Copiar IP',
+              icon: const Icon(Icons.copy_rounded, size: 16, color: _muted),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: log.ipAddress));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('IP ${log.ipAddress} copiada')));
+              },
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  String _fmtDateTime12h(DateTime dt) {
+    final h12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+    final d = dt.day.toString().padLeft(2, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final hh = h12.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    final ss = dt.second.toString().padLeft(2, '0');
+    return '$d/$m/${dt.year} · $hh:$mm:$ss $ampm';
+  }
+
+  void _showClearAccessLogsDialog(BuildContext context, StandardWorkProvider provider) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Limpiar Radar de Accesos', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: const Text('¿Qué registros deseas eliminar de la base de datos en la nube?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          OutlinedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await provider.clearAccessLogs(onlyFailed: true);
+              await _loadAccessLogs();
+            },
+            child: const Text('Solo Fallidos'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _red, foregroundColor: Colors.white),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await provider.clearAccessLogs(onlyFailed: false);
+              await _loadAccessLogs();
+            },
+            child: const Text('Limpiar Todo'),
+          ),
+        ],
       ),
     );
   }

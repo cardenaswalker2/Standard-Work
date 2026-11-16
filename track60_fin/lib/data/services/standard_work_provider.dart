@@ -1796,6 +1796,10 @@ class StandardWorkProvider with ChangeNotifier {
     return [];
   }
 
+  Future<void> clearAccessLogs({bool onlyFailed = false}) async {
+    await ApiClient.instance.delete('/access-logs?onlyFailed=$onlyFailed');
+  }
+
   Future<void> updateFullUser({
     required String userId,
     required String cedula,
