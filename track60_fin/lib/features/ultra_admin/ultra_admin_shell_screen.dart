@@ -17,7 +17,7 @@ import '../superadmin/superadmin_shell_screen.dart';
 import '../supervisor/supervisor_shell_screen.dart';
 
 /// Consola ejecutiva privada para el Ultra Admin (PIN 147728).
-/// DiseÃ±o Apple HIG (macOS Bento Command Center / iOS) 100% responsivo.
+/// Diseño Apple HIG (macOS Bento Command Center / iOS) 100% responsivo.
 class UltraAdminShellScreen extends StatefulWidget {
   const UltraAdminShellScreen({super.key});
 
@@ -40,7 +40,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
   static const Color _purple = Color(0xFFAF52DE);
   static const Color _teal = Color(0xFF30B0C7);
 
-  int _sectionIndex = 0; // 0: Centro de Mando, 1: Usuarios, 2: Accesos & IP, 3: GalerÃ­a 5S, 4: Reportes, 5: AuditorÃ­a
+  int _sectionIndex = 0; // 0: Centro de Mando, 1: Usuarios, 2: Accesos & IP, 3: Galería 5S, 4: Reportes, 5: Auditoría
   bool _isLive = true;
   bool _maintenanceMode = false;
   bool _checkingHealth = false;
@@ -50,16 +50,16 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
   DateTime _lastCheck = DateTime.now();
   Timer? _liveTimer;
 
-  // Historial de latencia para grÃ¡fica en vivo (Ãºltimos 14 puntos)
+  // Historial de latencia para gráfica en vivo (últimos 14 puntos)
   final List<double> _latencyHistory = [120, 135, 118, 142, 128, 115, 130];
 
-  // Registro de accesos (IP, ubicaciÃ³n aproximada, dispositivo)
+  // Registro de accesos (IP, ubicación aproximada, dispositivo)
   List<AccessLogEntry> _accessLogs = [];
   bool _loadingAccessLogs = false;
   String? _accessLogsError;
   String _accessFilter = 'ALL'; // ALL | SUCCESS | FAILED
 
-  // Filtros de bÃºsqueda
+  // Filtros de búsqueda
   String _userSearch = '';
   String _userRoleFilter = 'ALL';
   String _userPlantFilter = 'ALL';
@@ -74,9 +74,9 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
     _NavItem('Centro de Mando', Icons.space_dashboard_rounded),
     _NavItem('Usuarios', Icons.manage_accounts_rounded),
     _NavItem('Accesos & IP', Icons.radar_rounded),
-    _NavItem('GalerÃ­a 5S', Icons.photo_library_rounded),
+    _NavItem('Galería 5S', Icons.photo_library_rounded),
     _NavItem('Reportes', Icons.analytics_rounded),
-    _NavItem('AuditorÃ­a', Icons.shield_rounded),
+    _NavItem('Auditoría', Icons.shield_rounded),
   ];
 
   @override
@@ -157,7 +157,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
         _checkingHealth = false;
         _latencyHistory.add(sw.elapsedMilliseconds.toDouble().clamp(50, 3000));
         if (_latencyHistory.length > 14) _latencyHistory.removeAt(0);
-        _pushError('Fallo de conexiÃ³n: $e');
+        _pushError('Fallo de conexión: $e');
       });
     }
   }
@@ -250,7 +250,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
     );
   }
 
-  // ==================== NAVEGACIÃ“N ESTILO MACOS / IOS ====================
+  // ==================== NAVEGACIÓN ESTILO MACOS / IOS ====================
 
   Widget _buildDesktopSidebar(StandardWorkProvider provider, UserProfile? user) {
     final failedCount = _accessLogs.where((l) => !l.success).length;
@@ -291,7 +291,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
           ),
           const Padding(
             padding: EdgeInsets.fromLTRB(20, 8, 20, 6),
-            child: Text('MÃ“DULOS DE CONTROL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _muted, letterSpacing: 0.6)),
+            child: Text('MÓDULOS DE CONTROL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _muted, letterSpacing: 0.6)),
           ),
           Expanded(
             child: ListView.builder(
@@ -371,7 +371,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                       _StatusDot(color: _backendHealthy ? _green : _red),
                       const SizedBox(width: 6),
                       Text(
-                        _backendHealthy ? 'Cloud Online (${_latencyMs}ms)' : 'Cloud Sin ConexiÃ³n',
+                        _backendHealthy ? 'Cloud Online (${_latencyMs}ms)' : 'Cloud Sin Conexión',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _ink),
                       ),
                     ],
@@ -450,7 +450,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                   style: TextStyle(fontSize: isDesktop ? 20 : 17, fontWeight: FontWeight.w800, color: _ink, letterSpacing: -0.4),
                 ),
                 Text(
-                  'Ãšltimo pulso ${_fmtTime(_lastCheck)} Â· ${provider.allPlants.length} plantas Â· ${provider.allUsers.length} usuarios',
+                  'Último pulso ${_fmtTime(_lastCheck)} · ${provider.allPlants.length} plantas · ${provider.allUsers.length} usuarios',
                   style: const TextStyle(fontSize: 11, color: _muted),
                 ),
               ],
@@ -476,7 +476,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
           const SizedBox(width: 8),
           _AppleIconButton(
             icon: Icons.logout_rounded,
-            tooltip: 'Cerrar sesiÃ³n',
+            tooltip: 'Cerrar sesión',
             color: _red,
             onTap: () {
               provider.logout();
@@ -502,7 +502,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Modo Mantenimiento Activo: OperaciÃ³n marcada en ventana de revisiÃ³n tÃ©cnica.',
+              'Modo Mantenimiento Activo: Operación marcada en ventana de revisión técnica.',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _ink),
             ),
           ),
@@ -572,7 +572,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                   width: width,
                   title: 'Evidencias Pendientes',
                   value: '$pending5S',
-                  subtitle: '${provider.photoStandards.length} estÃ¡ndares 5S activos',
+                  subtitle: '${provider.photoStandards.length} estándares 5S activos',
                   icon: Icons.camera_alt_rounded,
                   color: _orange,
                 ),
@@ -580,7 +580,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                   width: width,
                   title: 'Radar de Accesos',
                   value: '${_accessLogs.length}',
-                  subtitle: failedLogins > 0 ? '$failedLogins intentos fallidos' : 'Sin alertas de intrusiÃ³n',
+                  subtitle: failedLogins > 0 ? '$failedLogins intentos fallidos' : 'Sin alertas de intrusión',
                   icon: Icons.radar_rounded,
                   color: failedLogins > 0 ? _red : _purple,
                 ),
@@ -607,12 +607,12 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
         ],
 
         const SizedBox(height: 16),
-        // Acciones RÃ¡pidas Ejecutivas
+        // Acciones Rápidas Ejecutivas
         _AppleCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Acciones RÃ¡pidas de Gobierno', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _ink)),
+              const Text('Acciones Rápidas de Gobierno', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _ink)),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 10,
@@ -796,8 +796,8 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('GestiÃ³n Universal de Usuarios', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _ink)),
-                        Text('Edita cÃ©dula, nombre, PIN, rol, planta, cargo o elimina cuentas en tiempo real.', style: TextStyle(fontSize: 12, color: _muted)),
+                        Text('Gestión Universal de Usuarios', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _ink)),
+                        Text('Edita cédula, nombre, PIN, rol, planta, cargo o elimina cuentas en tiempo real.', style: TextStyle(fontSize: 12, color: _muted)),
                       ],
                     ),
                   ),
@@ -824,7 +824,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                     width: isDesktop ? 300 : double.infinity,
                     child: TextField(
                       onChanged: (v) => setState(() => _userSearch = v),
-                      decoration: _appleInputDecoration('Buscar por nombre, cÃ©dula, cargo o Ã¡rea...', Icons.search_rounded),
+                      decoration: _appleInputDecoration('Buscar por nombre, cédula, cargo o área...', Icons.search_rounded),
                     ),
                   ),
                   SizedBox(
@@ -902,7 +902,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'CÃ©dula: ${u.cedula}  Â·  ${_plantName(provider.allPlants, u.plantId)}  Â·  ${u.area.isNotEmpty ? u.area : u.cargo}',
+                    'Cédula: ${u.cedula}  ·  ${_plantName(provider.allPlants, u.plantId)}  ·  ${u.area.isNotEmpty ? u.area : u.cargo}',
                     style: const TextStyle(fontSize: 12, color: _muted),
                   ),
                 ],
@@ -975,10 +975,10 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                _BentoKpiCard(width: w, title: 'Registros Totales', value: '${_accessLogs.length}', subtitle: 'Ãšltimos 200 logins', icon: Icons.history_rounded, color: _blue),
-                _BentoKpiCard(width: w, title: 'Accesos Exitosos', value: '$okCount', subtitle: 'Sesiones vÃ¡lidas', icon: Icons.verified_user_rounded, color: _green),
-                _BentoKpiCard(width: w, title: 'Intentos Fallidos', value: '$failCount', subtitle: 'PIN o cÃ©dula errÃ³nea', icon: Icons.gpp_bad_rounded, color: _red),
-                _BentoKpiCard(width: w, title: 'IPs Ãšnicas', value: '$uniqueIps', subtitle: 'Redes detectadas', icon: Icons.public_rounded, color: _purple),
+                _BentoKpiCard(width: w, title: 'Registros Totales', value: '${_accessLogs.length}', subtitle: 'Últimos 200 logins', icon: Icons.history_rounded, color: _blue),
+                _BentoKpiCard(width: w, title: 'Accesos Exitosos', value: '$okCount', subtitle: 'Sesiones válidas', icon: Icons.verified_user_rounded, color: _green),
+                _BentoKpiCard(width: w, title: 'Intentos Fallidos', value: '$failCount', subtitle: 'PIN o cédula errónea', icon: Icons.gpp_bad_rounded, color: _red),
+                _BentoKpiCard(width: w, title: 'IPs Únicas', value: '$uniqueIps', subtitle: 'Redes detectadas', icon: Icons.public_rounded, color: _purple),
               ],
             );
           },
@@ -994,9 +994,9 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Radar de Seguridad: IPs, UbicaciÃ³n y Dispositivos', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _ink)),
+                        Text('Radar de Seguridad: IPs, Ubicación y Dispositivos', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _ink)),
                         Text(
-                          'La ubicaciÃ³n (ciudad, regiÃ³n, paÃ­s e ISP) se resuelve por IP pÃºblica. La direcciÃ³n exacta de calle requiere permiso GPS del navegador.',
+                          'La ubicación (ciudad, región, país e ISP) se resuelve por IP pública. La dirección exacta de calle requiere permiso GPS del navegador.',
                           style: TextStyle(fontSize: 11, color: _muted),
                         ),
                       ],
@@ -1019,7 +1019,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                     width: isDesktop ? 320 : double.infinity,
                     child: TextField(
                       onChanged: (v) => setState(() => _accessSearch = v),
-                      decoration: _appleInputDecoration('Buscar usuario, cÃ©dula, IP, ciudad o dispositivo...', Icons.search_rounded),
+                      decoration: _appleInputDecoration('Buscar usuario, cédula, IP, ciudad o dispositivo...', Icons.search_rounded),
                     ),
                   ),
                   SegmentedButton<String>(
@@ -1048,7 +1048,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
           )
         else if (filtered.isEmpty)
           const _AppleCard(
-            child: Text('AÃºn no hay registros de acceso que coincidan con el filtro.', style: TextStyle(fontSize: 13, color: _muted)),
+            child: Text('Aún no hay registros de acceso que coincidan con el filtro.', style: TextStyle(fontSize: 13, color: _muted)),
           )
         else
           ...filtered.map(_buildAccessLogCard),
@@ -1057,7 +1057,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
   }
 
   Widget _buildAccessLogCard(AccessLogEntry log) {
-    final isMobile = log.deviceType.contains('MÃ³vil') || log.deviceType.contains('TelÃ©fono');
+    final isMobile = log.deviceType.contains('Móvil') || log.deviceType.contains('Teléfono');
     final isTablet = log.deviceType.contains('Tablet');
     final deviceIcon = isMobile ? Icons.smartphone_rounded : (isTablet ? Icons.tablet_mac_rounded : Icons.computer_rounded);
     final statusColor = log.success ? _green : _red;
@@ -1102,7 +1102,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                       _InfoInline(icon: Icons.public_rounded, text: 'IP: ${log.ipAddress}'),
                       _InfoInline(icon: Icons.location_on_outlined, text: log.locationLabel),
                       if (log.isp.isNotEmpty) _InfoInline(icon: Icons.router_rounded, text: log.isp),
-                      _InfoInline(icon: Icons.devices_rounded, text: '${log.deviceType} Â· ${log.os} Â· ${log.browser}'),
+                      _InfoInline(icon: Icons.devices_rounded, text: '${log.deviceType} · ${log.os} · ${log.browser}'),
                     ],
                   ),
                   if (!log.success && log.failureReason != null) ...[
@@ -1120,7 +1120,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
     );
   }
 
-  // ==================== 3. GALERÃA 5S & EVIDENCIAS ====================
+  // ==================== 3. GALERÍA 5S & EVIDENCIAS ====================
 
   Widget _buildEvidenceGalleryTab(StandardWorkProvider provider) {
     final activities = provider.instances.where((a) {
@@ -1192,13 +1192,13 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                           const SizedBox(height: 8),
                           Text(inst.nombre, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _ink)),
                           const SizedBox(height: 4),
-                          Text('Ãrea: ${inst.area} Â· Prioridad: ${inst.prioridad}', style: const TextStyle(fontSize: 11, color: _muted)),
+                          Text('Área: ${inst.area} · Prioridad: ${inst.prioridad}', style: const TextStyle(fontSize: 11, color: _muted)),
                           const SizedBox(height: 10),
                           const Row(
                             children: [
                               Icon(Icons.compare_rounded, size: 14, color: _blue),
                               SizedBox(width: 4),
-                              Text('Comparar vs EstÃ¡ndar 5S', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _blue)),
+                              Text('Comparar vs Estándar 5S', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _blue)),
                             ],
                           ),
                         ],
@@ -1228,7 +1228,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Centro de ExportaciÃ³n & Respaldo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _ink)),
+              const Text('Centro de Exportación & Respaldo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _ink)),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 10,
@@ -1291,7 +1291,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(a.nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _ink)),
-                          Text('${_plantName(provider.allPlants, a.plantId)} Â· ${a.area} Â· ${a.state}', style: const TextStyle(fontSize: 11, color: _muted)),
+                          Text('${_plantName(provider.allPlants, a.plantId)} · ${a.area} · ${a.state}', style: const TextStyle(fontSize: 11, color: _muted)),
                         ],
                       ),
                     ),
@@ -1303,7 +1303,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
     );
   }
 
-  // ==================== 5. AUDITORÃA & ROLES ====================
+  // ==================== 5. AUDITORÍA & ROLES ====================
 
   Widget _buildAuditAndToolsTab(StandardWorkProvider provider) {
     return ListView(
@@ -1351,10 +1351,10 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('BitÃ¡cora de AuditorÃ­a (${provider.auditLogs.length})', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _ink)),
+              Text('Bitácora de Auditoría (${provider.auditLogs.length})', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _ink)),
               const SizedBox(height: 10),
               if (provider.auditLogs.isEmpty)
-                const Text('Sin eventos registrados aÃºn.', style: TextStyle(fontSize: 12, color: _muted))
+                const Text('Sin eventos registrados aún.', style: TextStyle(fontSize: 12, color: _muted))
               else
                 ...provider.auditLogs.take(30).map((log) => Padding(
                       padding: const EdgeInsets.only(bottom: 8),
@@ -1379,7 +1379,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
     );
   }
 
-  // ==================== DIÃLOGOS & EDITOR UNIVERSAL DE USUARIO ====================
+  // ==================== DIÁLOGOS & EDITOR UNIVERSAL DE USUARIO ====================
 
   void _showUserEditorDialog(BuildContext context, StandardWorkProvider provider, UserProfile? existing) {
     final isNew = existing == null;
@@ -1415,17 +1415,17 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                 children: [
                   TextField(controller: nombreCtrl, decoration: _appleInputDecoration('Nombre Completo *', Icons.person_outline_rounded)),
                   const SizedBox(height: 10),
-                  TextField(controller: cedulaCtrl, decoration: _appleInputDecoration('CÃ©dula / Identificador *', Icons.badge_outlined)),
+                  TextField(controller: cedulaCtrl, decoration: _appleInputDecoration('Cédula / Identificador *', Icons.badge_outlined)),
                   const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(child: TextField(controller: cargoCtrl, decoration: _appleInputDecoration('Cargo', Icons.work_outline_rounded))),
                       const SizedBox(width: 10),
-                      Expanded(child: TextField(controller: areaCtrl, decoration: _appleInputDecoration('Ãrea', Icons.grid_view_rounded))),
+                      Expanded(child: TextField(controller: areaCtrl, decoration: _appleInputDecoration('Área', Icons.grid_view_rounded))),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  TextField(controller: emailCtrl, decoration: _appleInputDecoration('Correo ElectrÃ³nico', Icons.email_outlined)),
+                  TextField(controller: emailCtrl, decoration: _appleInputDecoration('Correo Electrónico', Icons.email_outlined)),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
                     initialValue: ['ultra_admin', 'superadmin', 'admin_planta', 'supervisor', 'operador'].contains(selectedRol)
@@ -1458,14 +1458,14 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                         child: TextField(
                           controller: pinCtrl,
                           decoration: _appleInputDecoration(
-                            isNew ? 'PIN (opcional para operador)' : 'Nuevo PIN (dejar vacÃ­o para no cambiar)',
+                            isNew ? 'PIN (opcional para operador)' : 'Nuevo PIN (dejar vacío para no cambiar)',
                             Icons.lock_outline_rounded,
                           ),
                         ),
                       ),
                       const SizedBox(width: 6),
                       IconButton(
-                        tooltip: 'Generar PIN aleatorio de 6 dÃ­gitos',
+                        tooltip: 'Generar PIN aleatorio de 6 dígitos',
                         icon: const Icon(Icons.casino_rounded, color: _blue),
                         onPressed: () {
                           final rnd = 100000 + Random().nextInt(900000);
@@ -1505,7 +1505,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                   ? null
                   : () async {
                       if (nombreCtrl.text.trim().isEmpty || cedulaCtrl.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombre y cÃ©dula son obligatorios')));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombre y cédula son obligatorios')));
                         return;
                       }
                       setModalState(() => saving = true);
@@ -1561,7 +1561,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Usuario'),
-        content: Text('Â¿Seguro que deseas eliminar permanentemente a ${u.nombre} (CÃ©dula: ${u.cedula})?'),
+        content: Text('¿Seguro que deseas eliminar permanentemente a ${u.nombre} (Cédula: ${u.cedula})?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           ElevatedButton(
@@ -1608,7 +1608,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Ãrea: ${inst.area} Â· Estado: ${inst.state}', style: const TextStyle(fontSize: 12, color: _muted)),
+              Text('Área: ${inst.area} · Estado: ${inst.state}', style: const TextStyle(fontSize: 12, color: _muted)),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -1624,7 +1624,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
                     Text(
                       matchingStd.isNotEmpty
                           ? matchingStd.first.descripcion
-                          : (inst.criteriosCumplimiento.isNotEmpty ? inst.criteriosCumplimiento : 'Cumplir estÃ¡ndar visual de Ã¡rea.'),
+                          : (inst.criteriosCumplimiento.isNotEmpty ? inst.criteriosCumplimiento : 'Cumplir estándar visual de área.'),
                       style: const TextStyle(fontSize: 12, color: _ink),
                     ),
                   ],
@@ -1632,7 +1632,7 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
               ),
               if (inst.observaciones != null && inst.observaciones!.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                Text('ObservaciÃ³n registrada: ${inst.observaciones}', style: const TextStyle(fontSize: 12, color: _ink)),
+                Text('Observación registrada: ${inst.observaciones}', style: const TextStyle(fontSize: 12, color: _ink)),
               ],
             ],
           ),
@@ -1691,9 +1691,9 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: titleCtrl, decoration: _appleInputDecoration('TÃ­tulo', Icons.title_rounded)),
+            TextField(controller: titleCtrl, decoration: _appleInputDecoration('Título', Icons.title_rounded)),
             const SizedBox(height: 10),
-            TextField(controller: msgCtrl, maxLines: 3, decoration: _appleInputDecoration('Mensaje para toda la operaciÃ³n', Icons.campaign_rounded)),
+            TextField(controller: msgCtrl, maxLines: 3, decoration: _appleInputDecoration('Mensaje para toda la operación', Icons.campaign_rounded)),
           ],
         ),
         actions: [
