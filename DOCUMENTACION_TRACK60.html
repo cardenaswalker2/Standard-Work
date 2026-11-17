@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRACK60 · Documentación Técnica, Despliegue y Descargas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0B132B;
+      color: #E2E8F0;
+      line-height: 1.6;
+      padding: 32px 20px;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    .hero {
+      background: linear-gradient(135deg, #002F6C 0%, #0F172A 100%);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 36px 28px;
+      text-align: center;
+      margin-bottom: 28px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 28px; color: #FFFFFF; margin-bottom: 10px; }
+    .subtitle { color: #94A3B8; font-size: 15px; max-width: 680px; margin: 0 auto 24px; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 22px; border-radius: 12px; font-weight: 700;
+      text-decoration: none; font-size: 14px; transition: transform 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: #0284C7; color: #FFFFFF; }
+    .btn-success { background: #16A34A; color: #FFFFFF; }
+    .btn-outline { background: rgba(255,255,255,0.06); color: #E2E8F0; border: 1px solid #475569; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 24px; }
+    .card {
+      background: #1C2541;
+      border: 1px solid #3A506B;
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .card h2 { font-size: 17px; color: #38BDF8; margin-bottom: 12px; }
+    .card ul { padding-left: 18px; color: #CBD5E1; font-size: 14px; }
+    .card li { margin-bottom: 8px; }
+    code {
+      background: #0F172A;
+      color: #38BDF8;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .footer { text-align: center; color: #64748B; font-size: 12px; margin-top: 32px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div class="badge">GRUPO DARNEL · STANDARD WORK</div>
+      <h1>TRACK60 — Plataforma Operativa Multiplanta</h1>
+      <p class="subtitle">
+        Documentación oficial de arquitectura, despliegue en la nube, seguridad, acceso Web/PWA y descarga de la aplicación móvil Android.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://track60-1.onrender.com" target="_blank" rel="noopener noreferrer">
+          🌐 Abrir TRACK60 Web / iPhone PWA
+        </a>
+        <a class="btn btn-success" href="descargas/TRACK60_v2.0.0_release.apk" download="TRACK60_v2.0.0_release.apk">
+          📱 Descargar APK Android (Actualizada)
+        </a>
+        <a class="btn btn-outline" href="index.html">
+          🏠 Ir a Landing Principal
+        </a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>1. Arquitectura y URLs en Producción</h2>
+        <ul>
+          <li><strong>Frontend Web / PWA:</strong> <code>https://track60-1.onrender.com</code> (Render Static Site desde <code>track60_fin/build/web</code>).</li>
+          <li><strong>Backend API:</strong> <code>https://track60.onrender.com/api/v1</code> (Java 17 + Spring Boot 3.3.5 en Render Docker).</li>
+          <li><strong>Base de Datos:</strong> MongoDB Atlas (base de datos <code>track60</code>).</li>
+          <li><strong>Repositorio GitHub:</strong> <code>cardenaswalker2/TRACK60</code> (rama <code>main</code>).</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>2. Seguridad y Credenciales</h2>
+        <ul>
+          <li><strong>Autenticación:</strong> JWT + contraseñas/PINs cifrados con <strong>BCrypt</strong>.</li>
+          <li><strong>CORS:</strong> Restringido exclusivamente a <code>https://track60-1.onrender.com</code>.</li>
+          <li><strong>Variables en Render:</strong> <code>MONGODB_URI</code>, <code>JWT_SECRET</code>, <code>CORS_ALLOWED_ORIGINS</code>, <code>PORT</code>.</li>
+          <li><strong>Login limpio:</strong> Sin accesos de prueba, sin pistas de PIN y con campo enmascarado.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>3. Cómo Funciona la App</h2>
+        <ul>
+          <li><strong>Super Admin:</strong> Control global multiplanta, creación de administradores, modo <em>En Vivo</em> (auto-actualización cada 20s) y gráficas interactivas.</li>
+          <li><strong>Admin de Planta:</strong> Gestión aislada de su planta, creación de operadores (sincronizados a MongoDB Atlas) y seguimiento.</li>
+          <li><strong>Operador / Colaborador:</strong> Ingreso por Cédula desde Android o iPhone PWA, ejecución de tareas y evidencia fotográfica.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>4. Instalación en Celular</h2>
+        <ul>
+          <li><strong>Android:</strong> Descarga e instala <code>TRACK60_v2.0.0_release.apk</code> desde el botón verde arriba.</li>
+          <li><strong>iPhone / iPad (PWA):</strong> Abre <code>https://track60-1.onrender.com</code> en <strong>Safari</strong> → <strong>Compartir</strong> → <strong>Agregar a pantalla de inicio</strong>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">
+      TRACK60 · Grupo Darnel · Standard Work · Conexión cifrada SSL/TLS
+    </div>
+  </div>
+</body>
+</html>
+
