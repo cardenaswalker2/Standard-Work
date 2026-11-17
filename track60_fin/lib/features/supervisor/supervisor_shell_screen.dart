@@ -336,45 +336,64 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0284C7),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.security_rounded, color: Colors.white, size: 14),
-                                SizedBox(width: 6),
-                                Text(
-                                  'NIVEL 3 · SUPERVISIÓN DE PISO',
-                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8),
-                                ),
-                              ],
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0284C7),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.security_rounded, color: Colors.white, size: 13),
+                                  SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'NIVEL 3 · SUPERVISOR',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 4),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
                                 tooltip: 'Banco Fotos 5S',
-                                icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 20),
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(5),
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 19),
                                 onPressed: () => _showPhotoStandardsModal(context),
                               ),
                               IconButton(
                                 tooltip: 'Ronda 5S',
-                                icon: const Icon(Icons.checklist_rtl_rounded, color: Colors.white, size: 20),
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(5),
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                icon: const Icon(Icons.checklist_rtl_rounded, color: Colors.white, size: 19),
                                 onPressed: () => _showGemba5SModal(context),
                               ),
                               IconButton(
                                 tooltip: 'Guía',
-                                icon: const Icon(Icons.help_outline_rounded, color: Colors.white, size: 20),
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(5),
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                icon: const Icon(Icons.help_outline_rounded, color: Colors.white, size: 19),
                                 onPressed: () => HelpGuideModal.show(context),
                               ),
                               IconButton(
                                 tooltip: 'Exportar Excel',
-                                icon: const Icon(Icons.file_download_rounded, color: Colors.white, size: 20),
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(5),
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                icon: const Icon(Icons.file_download_rounded, color: Colors.white, size: 19),
                                 onPressed: () async {
                                   try {
                                     await ExcelService.instance.exportAndShare();
@@ -387,7 +406,10 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
                               ),
                               IconButton(
                                 tooltip: 'Cerrar Sesión',
-                                icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(5),
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 19),
                                 onPressed: () {
                                   provider.logout();
                                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));

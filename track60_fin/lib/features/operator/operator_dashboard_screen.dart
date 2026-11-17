@@ -214,29 +214,39 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0284C7),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.engineering_rounded, color: Colors.white, size: 14),
-                                SizedBox(width: 6),
-                                Text(
-                                  'NIVEL 4 · OPERACIÓN EN PLANTA',
-                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8),
-                                ),
-                              ],
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0284C7),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.engineering_rounded, color: Colors.white, size: 13),
+                                  SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'NIVEL 4 · OPERACIÓN',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 6),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
                                 tooltip: 'Temporizador',
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                                 icon: const Icon(Icons.timer_outlined, color: Colors.white, size: 20),
                                 onPressed: () {
                                   final inst = provider.tasksForSelectedDay.isNotEmpty
@@ -253,6 +263,9 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                               ),
                               IconButton(
                                 tooltip: 'Lección en un Punto (OPL)',
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                                 icon: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 20),
                                 onPressed: () {
                                   final inst = provider.tasksForSelectedDay.isNotEmpty
@@ -269,11 +282,17 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                               ),
                               IconButton(
                                 tooltip: 'Guía',
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                                 icon: const Icon(Icons.help_outline_rounded, color: Colors.white, size: 20),
                                 onPressed: () => HelpGuideModal.show(context),
                               ),
                               IconButton(
                                 tooltip: 'Cerrar Sesión',
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                                 icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
                                 onPressed: () {
                                   provider.logout();
