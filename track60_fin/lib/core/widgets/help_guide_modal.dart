@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../data/models/app_models.dart';
+import '../../data/services/standard_work_provider.dart';
+import '../../features/operator/operator_dashboard_screen.dart';
+import '../../features/plant_admin/plant_admin_shell_screen.dart';
+import '../../features/superadmin/superadmin_shell_screen.dart';
+import '../../features/supervisor/supervisor_shell_screen.dart';
+import '../../features/ultra_admin/ultra_admin_shell_screen.dart';
 import 'ios_pwa_install_guide_modal.dart';
 
 class HelpGuideModal extends StatefulWidget {
@@ -30,11 +38,148 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
   static const Color _purple = Color(0xFFAF52DE);
 
   int _selectedTab = 0; // 0: Inicio, 1: Operador, 2: Supervisor, 3: Admin
+  bool _initializedTab = false;
 
-  static const _tabs = ['Inicio', 'Operador', 'Supervisor', 'Admin'];
+  // Estado de desbloqueo por PIN cuando se consulta desde el Login
+  final TextEditingController _pinCtrl = TextEditingController();
+  bool _verifyingPin = false;
+  String? _pinError;
+  UserProfile? _unlockedUser;
+
+  @override
+  void dispose() {
+    _pinCtrl.dispose();
+    super.dispose();
+  }
+
+  void _initTabForUser(UserProfile? currentUser) {
+    if (_initializedTab) return;
+    _initializedTab = true;
+    if (currentUser == null) {
+      _selectedTab = 0;
+    } else if (currentUser.isUltraAdmin || currentUser.isSuperAdmin || currentUser.isPlantAdmin) {
+      _selectedTab = 3;
+    } else if (currentUser.isSupervisor) {
+      _selectedTab = 2;
+    } else {
+      _selectedTab = 1;
+    }
+  }
+
+  List<_HelpTabMeta> _visibleTabs(UserProfile? currentUser) {
+    if (currentUser == null) {
+      return const [
+        _HelpTabMeta(0, 'Inicio', false),
+        _HelpTabMeta(1, 'Operador', false),
+        _HelpTabMeta(2, 'Supervisor', true),
+        _HelpTabMeta(3, 'Admin', true),
+      ];
+    }
+    if (currentUser.isUltraAdmin || currentUser.isSuperAdmin || currentUser.isPlantAdmin) {
+      return const [
+        _HelpTabMeta(3, 'Mi Panel Admin', false),
+        _HelpTabMeta(0, 'Acceso & App', false),
+      ];
+    }
+    if (currentUser.isSupervisor) {
+      return const [
+        _HelpTabMeta(2, 'Mi Panel Supervisor', false),
+        _HelpTabMeta(0, 'Acceso & App', false),
+      ];
+    }
+    return const [
+      _HelpTabMeta(1, 'Mi Panel Operador', false),
+      _HelpTabMeta(0, 'Acceso & App', false),
+    ];
+  }
+
+  bool _isLockedTab(int tabId, UserProfile? currentUser) {
+    if (currentUser != null) return false; // Ya está autenticado y solo ve lo suyo
+    if (tabId == 0 || tabId == 1) return false;
+    if (_unlockedUser == null) return true;
+    if (tabId == 2) {
+      return !(_unlockedUser!.isSupervisor ||
+          _unlockedUser!.isPlantAdmin ||
+          _unlockedUser!.isSuperAdmin ||
+          _unlockedUser!.isUltraAdmin);
+    }
+    if (tabId == 3) {
+      return !(_unlockedUser!.isPlantAdmin || _unlockedUser!.isSuperAdmin || _unlockedUser!.isUltraAdmin);
+    }
+    return true;
+  }
+
+  Future<void> _verifyPinForTab(int tabId) async {
+    final pin = _pinCtrl.text.trim();
+    if (pin.length < 4) {
+      setState(() => _pinError = 'Ingresa tu PIN corporativo (mínimo 4 dígitos).');
+      return;
+    }
+    setState(() {
+      _verifyingPin = true;
+      _pinError = null;
+    });
+
+    final provider = context.read<StandardWorkProvider>();
+    final ok = await provider.loginWithPin(pin);
+    if (!mounted) return;
+
+    if (!ok || provider.currentUser == null) {
+      setState(() {
+        _verifyingPin = false;
+        _pinError = 'PIN incorrecto o sin permisos para esta sección.';
+      });
+      return;
+    }
+
+    final u = provider.currentUser!;
+    final hasAccess = tabId == 2
+        ? (u.isSupervisor || u.isPlantAdmin || u.isSuperAdmin || u.isUltraAdmin)
+        : (u.isPlantAdmin || u.isSuperAdmin || u.isUltraAdmin);
+
+    if (!hasAccess) {
+      provider.logout();
+      setState(() {
+        _verifyingPin = false;
+        _pinError = 'Tu PIN no corresponde al nivel ${tabId == 2 ? "Supervisor" : "Admin"}.';
+      });
+      return;
+    }
+
+    setState(() {
+      _verifyingPin = false;
+      _unlockedUser = u;
+      _pinError = null;
+      _pinCtrl.clear();
+    });
+  }
+
+  void _enterPanelForUser(BuildContext context, UserProfile user) {
+    Widget next;
+    if (user.isUltraAdmin) {
+      next = const UltraAdminShellScreen();
+    } else if (user.isSuperAdmin) {
+      next = const SuperAdminShellScreen();
+    } else if (user.isPlantAdmin) {
+      next = const PlantAdminShellScreen();
+    } else if (user.isSupervisor) {
+      next = const SupervisorShellScreen();
+    } else {
+      next = const OperatorDashboardScreen();
+    }
+    Navigator.pop(context);
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => next));
+  }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<StandardWorkProvider>();
+    // Si ya había sesión iniciada antes de abrir el modal, es currentUser; si desbloqueó desde login, es _unlockedUser
+    final loggedInUser = _unlockedUser == null ? provider.currentUser : null;
+    _initTabForUser(loggedInUser);
+    final tabs = _visibleTabs(loggedInUser);
+    final effectiveUser = loggedInUser ?? _unlockedUser;
+
     return Container(
       decoration: const BoxDecoration(
         color: _bg,
@@ -71,41 +216,52 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
                       child: const Icon(Icons.support_agent_rounded, color: Colors.white, size: 22),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Centro de Ayuda TRACK60',
                             style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _ink, letterSpacing: -0.3),
                           ),
                           Text(
-                            'Guía interactiva por rol, colores y preguntas frecuentes',
-                            style: TextStyle(fontSize: 11, color: _muted),
+                            effectiveUser != null
+                                ? 'Guía personalizada para ${effectiveUser.nombre}'
+                                : 'Guía operativa y acceso seguro por PIN',
+                            style: const TextStyle(fontSize: 11, color: _muted),
                           ),
                         ],
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        if (_unlockedUser != null) {
+                          // Si desbloqueó desde el login y cierra sin entrar, limpiamos sesión temporal
+                          provider.logout();
+                        }
+                        Navigator.pop(context);
+                      },
                       icon: const Icon(Icons.close_rounded, color: _muted),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
-                // Selector Segmentado estilo iOS
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(color: _bg, borderRadius: BorderRadius.circular(12)),
                   child: Row(
-                    children: List.generate(_tabs.length, (i) {
-                      final active = _selectedTab == i;
+                    children: tabs.map((t) {
+                      final active = _selectedTab == t.id;
+                      final locked = _isLockedTab(t.id, loggedInUser);
                       return Expanded(
                         child: GestureDetector(
-                          onTap: () => setState(() => _selectedTab = i),
+                          onTap: () => setState(() {
+                            _selectedTab = t.id;
+                            _pinError = null;
+                          }),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 160),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                             decoration: BoxDecoration(
                               color: active ? Colors.white : Colors.transparent,
                               borderRadius: BorderRadius.circular(9),
@@ -113,19 +269,31 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
                                   ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 5, offset: const Offset(0, 2))]
                                   : null,
                             ),
-                            child: Text(
-                              _tabs[i],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                                color: active ? _blue : _muted,
-                              ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (locked) ...[
+                                  Icon(Icons.lock_outline_rounded, size: 12, color: active ? _blue : _muted),
+                                  const SizedBox(width: 3),
+                                ],
+                                Flexible(
+                                  child: Text(
+                                    t.label,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                                      color: active ? _blue : _muted,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       );
-                    }),
+                    }).toList(),
                   ),
                 ),
               ],
@@ -138,16 +306,22 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
               padding: const EdgeInsets.all(18),
               shrinkWrap: true,
               children: [
-                if (_selectedTab == 0) ..._buildInicioSection(context),
-                if (_selectedTab == 1) ..._buildOperadorSection(),
-                if (_selectedTab == 2) ..._buildSupervisorSection(),
-                if (_selectedTab == 3) ..._buildAdminSection(),
-                const SizedBox(height: 16),
-                _buildVisualLegend(),
-                const SizedBox(height: 16),
-                _buildFaqSection(context),
-                const SizedBox(height: 16),
-                _buildFooter(context),
+                if (_isLockedTab(_selectedTab, loggedInUser))
+                  _buildPinGateCard(_selectedTab)
+                else ...[
+                  if (_selectedTab == 0) ..._buildInicioSection(context),
+                  if (_selectedTab == 1) ..._buildOperadorSection(effectiveUser),
+                  if (_selectedTab == 2) ..._buildSupervisorSection(context, effectiveUser),
+                  if (_selectedTab == 3) ..._buildAdminSection(context, effectiveUser),
+                  if (_selectedTab != 0) ...[
+                    const SizedBox(height: 14),
+                    _buildVisualLegend(),
+                  ],
+                  const SizedBox(height: 14),
+                  _buildFaqSection(),
+                ],
+                const SizedBox(height: 14),
+                _buildFooter(),
               ],
             ),
           ),
@@ -156,19 +330,133 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
     );
   }
 
+  Widget _buildPinGateCard(int tabId) {
+    final roleLabel = tabId == 2 ? 'Supervisor' : 'Administrador / Dirección';
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _navy.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.lock_person_rounded, color: _navy, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Área Privada · $roleLabel', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _ink)),
+                    const Text('Por seguridad, esta guía requiere tu PIN corporativo.', style: TextStyle(fontSize: 12, color: _muted)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _pinCtrl,
+            keyboardType: TextInputType.number,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _verifyPinForTab(tabId),
+            decoration: InputDecoration(
+              labelText: 'Ingresa tu PIN de $roleLabel',
+              hintText: '••••••',
+              prefixIcon: const Icon(Icons.lock_outline_rounded, color: _blue),
+              filled: true,
+              fillColor: _bg,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+          if (_pinError != null) ...[
+            const SizedBox(height: 10),
+            Text(_pinError!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _red)),
+          ],
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 44,
+            child: ElevatedButton.icon(
+              onPressed: _verifyingPin ? null : () => _verifyPinForTab(tabId),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _navy,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: _verifyingPin
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.verified_user_rounded, size: 18),
+              label: Text(_verifyingPin ? 'Verificando PIN...' : 'Desbloquear Guía Privada'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeCard({
+    required String greeting,
+    required String subtitle,
+    required Color accent,
+    UserProfile? enterUser,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [accent, _navy]),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(greeting, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white)),
+          const SizedBox(height: 4),
+          Text(subtitle, style: TextStyle(fontSize: 12.5, color: Colors.white.withValues(alpha: 0.88), height: 1.4)),
+          if (enterUser != null) ...[
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () => _enterPanelForUser(context, enterUser),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: _navy,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+              ),
+              icon: const Icon(Icons.login_rounded, size: 17),
+              label: const Text('Ingresar a mi Panel ahora', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   List<Widget> _buildInicioSection(BuildContext context) {
     return [
-      _GuideCard(
+      const _GuideCard(
         icon: Icons.badge_rounded,
         color: _blue,
         title: '1. Ingreso para Colaboradores (Cédula)',
         desc: 'En la pantalla inicial selecciona "Colaborador (Cédula)" e ingresa tu número de cédula sin espacios ni puntos.',
       ),
-      _GuideCard(
+      const _GuideCard(
         icon: Icons.shield_rounded,
         color: _navy,
         title: '2. Ingreso Directivo & Supervisión (PIN)',
-        desc: 'Cambia al selector "Directivo (PIN)" e ingresa tu PIN corporativo (4 a 6 dígitos) asignado para acceder a tu tablero.',
+        desc: 'Cambia al selector "Directivo (PIN)" e ingresa tu PIN corporativo asignado para acceder a tu tablero privado.',
       ),
       _GuideCard(
         icon: Icons.install_mobile_rounded,
@@ -186,71 +474,91 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
     ];
   }
 
-  List<Widget> _buildOperadorSection() {
-    return const [
-      _GuideCard(
+  List<Widget> _buildOperadorSection(UserProfile? user) {
+    final firstName = user?.nombre.split(' ').first ?? 'Colaborador';
+    return [
+      _buildWelcomeCard(
+        greeting: '¡Hola, $firstName!',
+        subtitle: 'Esto es lo que te vas a encontrar en tu panel de Operación: tu jornada del día, tus tareas asignadas y herramientas rápidas para reportar tu trabajo.',
+        accent: _blue,
+      ),
+      const _GuideCard(
         icon: Icons.wb_sunny_rounded,
         color: _blue,
         title: 'Mi Jornada y Semáforo de Avance',
-        desc: 'Cambia entre Lunes y Viernes en la parte superior para ver tu anillo de progreso y tareas pendientes del día.',
+        desc: 'Cambia entre Lunes y Viernes arriba para ver tu anillo de progreso y cuántas actividades llevas cumplidas hoy.',
       ),
-      _GuideCard(
+      const _GuideCard(
         icon: Icons.checklist_rounded,
         color: _green,
         title: 'Subtareas, Fotos 5S y Mediciones',
-        desc: 'Toca cualquier tarjeta roja para abrir las subtareas. Toma la foto en vivo o registra la medición antes de finalizar.',
+        desc: 'Toca cualquier tarjeta roja para abrir las subtareas, tomar la foto en vivo o registrar la medición antes de finalizar.',
       ),
-      _GuideCard(
+      const _GuideCard(
         icon: Icons.timer_outlined,
         color: _orange,
         title: 'Temporizador, OPL y Reprogramación',
-        desc: 'Usa el cronómetro y las lecciones OPL arriba. Solo las actividades flexibles permiten solicitar reprogramación.',
+        desc: 'Usa el cronómetro y las lecciones OPL en la barra superior. Solo las actividades flexibles permiten solicitar reprogramación.',
       ),
     ];
   }
 
-  List<Widget> _buildSupervisorSection() {
-    return const [
-      _GuideCard(
+  List<Widget> _buildSupervisorSection(BuildContext context, UserProfile? user) {
+    final firstName = user?.nombre.split(' ').first ?? 'Supervisor';
+    return [
+      _buildWelcomeCard(
+        greeting: '¡Hola, $firstName!',
+        subtitle: 'Esto es lo que te vas a encontrar en tu panel de Supervisor: resumen de tu equipo en planta, revisión de evidencias y tu pestaña propia "Mis Actividades".',
+        accent: const Color(0xFF0284C7),
+        enterUser: _unlockedUser,
+      ),
+      const _GuideCard(
         icon: Icons.task_alt_rounded,
         color: _blue,
         title: 'Mis Actividades (Pestaña Propia)',
-        desc: 'En la pestaña "Mis Actividades" ves las rutinas asignadas directamente a ti por el Admin de Planta para ejecutarlas y cumplirlas.',
+        desc: 'Ejecuta y marca cumplidas las rutinas que el Administrador de Planta te asignó directamente (borde rojo pendiente, verde cumplida).',
       ),
-      _GuideCard(
+      const _GuideCard(
         icon: Icons.verified_user_rounded,
         color: _green,
-        title: 'Auditoría de Piso y Banco 5S',
-        desc: 'Revisa las evidencias de tu equipo en "Seguimiento", aprueba o rechaza con observación técnica y registra fotos modelo 5S arriba.',
+        title: 'Auditoría de Piso y Banco Fotos 5S',
+        desc: 'Aprueba o rechaza con observación técnica las evidencias de tu equipo en "Seguimiento" y carga fotos modelo 5S desde la cabecera.',
       ),
-      _GuideCard(
+      const _GuideCard(
         icon: Icons.checklist_rtl_rounded,
         color: _purple,
-        title: 'Ronda Gemba 5S y Excel',
-        desc: 'Evalúa el orden y limpieza de tu línea en la Ronda 5S o exporta el reporte consolidado desde los íconos superiores.',
+        title: 'Ronda Gemba 5S y Reporte Excel',
+        desc: 'Realiza inspecciones 5S por línea y descarga el reporte consolidado desde los íconos superiores.',
       ),
     ];
   }
 
-  List<Widget> _buildAdminSection() {
-    return const [
-      _GuideCard(
-        icon: Icons.apartment_rounded,
-        color: _navy,
-        title: 'Gobierno Multiplanta (Super Admin)',
-        desc: 'Supervisa el cumplimiento real de todas las sedes, entra en "En Vivo" como observador y despacha rutinas o reuniones con hora fija.',
+  List<Widget> _buildAdminSection(BuildContext context, UserProfile? user) {
+    final firstName = user?.nombre.split(' ').first ?? 'Administrador';
+    return [
+      _buildWelcomeCard(
+        greeting: '¡Hola, $firstName!',
+        subtitle: 'Esto es lo que te vas a encontrar en tu panel de Gestión: control de personal, asignación de rutinas, seguimiento en tiempo real y analítica de cumplimiento.',
+        accent: _navy,
+        enterUser: _unlockedUser,
       ),
-      _GuideCard(
+      const _GuideCard(
         icon: Icons.manage_accounts_rounded,
         color: _blue,
-        title: 'Gestión de Equipo (Admin de Planta)',
-        desc: 'Crea, edita cédula/datos o cambia PIN de supervisores y operadores de tu planta, y asigna actividades a ambos roles.',
+        title: 'Gestión de Usuarios, Cédulas y PINs',
+        desc: 'Crea cuentas, edita datos o restablece PINs directamente en la nube y asigna rutinas tanto a Operadores como a Supervisores.',
       ),
-      _GuideCard(
+      const _GuideCard(
+        icon: Icons.apartment_rounded,
+        color: _navy,
+        title: 'Despacho de Rutinas, Reuniones y Modo En Vivo',
+        desc: 'Programa actividades fijas con reunión a hora específica, inspecciona cada sede en tiempo real y monitorea el cumplimiento por planta.',
+      ),
+      const _GuideCard(
         icon: Icons.table_chart_rounded,
         color: _orange,
         title: 'PROPLANES y Solicitudes (>10 Tareas)',
-        desc: 'Administra planes de acción obligatorios y solicita ampliación de cupo diario cuando tu planta supere las 10 rutinas.',
+        desc: 'Da seguimiento a planes de acción obligatorios y solicita o aprueba ampliación de cupo diario en planta.',
       ),
     ];
   }
@@ -263,18 +571,18 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _border),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Leyenda Visual de Actividades', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _ink)),
-          const SizedBox(height: 10),
+          Text('Leyenda Visual de Actividades', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _ink)),
+          SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               _LegendBadge(label: 'Borde Rojo · Sin Completar', color: _red, filled: true),
               _LegendBadge(label: 'Borde Verde · Cumplida', color: _green, filled: true),
-              _LegendBadge(label: 'Estándar Fijo (Inmutable)', color: const Color(0xFF475569)),
+              _LegendBadge(label: 'Estándar Fijo (Inmutable)', color: Color(0xFF475569)),
               _LegendBadge(label: 'Reunión Programada', color: _blue),
               _LegendBadge(label: 'Plan de Acción Obligatorio', color: _orange),
             ],
@@ -284,7 +592,7 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
     );
   }
 
-  Widget _buildFaqSection(BuildContext context) {
+  Widget _buildFaqSection() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -336,7 +644,7 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildFooter() {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -361,6 +669,13 @@ class _HelpGuideModalState extends State<HelpGuideModal> {
       ),
     );
   }
+}
+
+class _HelpTabMeta {
+  final int id;
+  final String label;
+  final bool requiresPin;
+  const _HelpTabMeta(this.id, this.label, this.requiresPin);
 }
 
 class _GuideCard extends StatelessWidget {
