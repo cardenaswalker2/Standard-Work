@@ -183,7 +183,7 @@ class _PlantAdminDashboardTab extends StatelessWidget {
 
     final totalTasks = instances.length;
     final reportedTasks = instances.where((i) => i.done).length;
-    final complianceRate = totalTasks > 0 ? ((reportedTasks / totalTasks) * 100).toStringAsFixed(1) : '94.5';
+    final complianceRate = totalTasks > 0 ? ((reportedTasks / totalTasks) * 100).toStringAsFixed(1) : '0.0';
 
     // Métricas dinámicas reales
     final todayTasks = provider.tasksForSelectedDay;
@@ -215,31 +215,17 @@ class _PlantAdminDashboardTab extends StatelessWidget {
       'Disciplina': totalTasks > 0 ? ((reportedTasks / totalTasks) * 100).clamp(70.0, 98.0) : 91.0,
     };
 
+    double areaPct(String keyword) {
+      final list = instances.where((i) => i.area.toLowerCase().contains(keyword)).toList();
+      if (list.isEmpty) return 0.0;
+      return (list.where((i) => i.done).length / list.length) * 100.0;
+    }
+
     final areaEfficiencies = [
-      instances.where((i) => i.area.toLowerCase().contains('extrus')).isNotEmpty
-          ? (instances.where((i) => i.area.toLowerCase().contains('extrus') && i.done).length /
-                  instances.where((i) => i.area.toLowerCase().contains('extrus')).length *
-                  100)
-              .clamp(80.0, 99.0)
-          : 96.0,
-      instances.where((i) => i.area.toLowerCase().contains('calidad')).isNotEmpty
-          ? (instances.where((i) => i.area.toLowerCase().contains('calidad') && i.done).length /
-                  instances.where((i) => i.area.toLowerCase().contains('calidad')).length *
-                  100)
-              .clamp(80.0, 99.0)
-          : 93.0,
-      instances.where((i) => i.area.toLowerCase().contains('log')).isNotEmpty
-          ? (instances.where((i) => i.area.toLowerCase().contains('log') && i.done).length /
-                  instances.where((i) => i.area.toLowerCase().contains('log')).length *
-                  100)
-              .clamp(80.0, 99.0)
-          : 89.0,
-      instances.where((i) => i.area.toLowerCase().contains('manten')).isNotEmpty
-          ? (instances.where((i) => i.area.toLowerCase().contains('manten') && i.done).length /
-                  instances.where((i) => i.area.toLowerCase().contains('manten')).length *
-                  100)
-              .clamp(80.0, 99.0)
-          : 95.0,
+      areaPct('extrus'),
+      areaPct('calidad'),
+      areaPct('log'),
+      areaPct('manten'),
     ];
 
     return SingleChildScrollView(
@@ -735,61 +721,95 @@ class _PlantAdminTeamTab extends StatelessWidget {
   }
 
   void _showEditUserModal(BuildContext context, UserProfile user) {
+    final cedulaCtrl = TextEditingController(text: user.cedula);
     final nombreCtrl = TextEditingController(text: user.nombre);
     final cargoCtrl = TextEditingController(text: user.cargo);
     final areaCtrl = TextEditingController(text: user.area);
     final emailCtrl = TextEditingController(text: user.email);
-    final pinCtrl = TextEditingController(text: user.pin);
+    final pinCtrl = TextEditingController();
+    bool saving = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Editar ${user.nombre}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre Completo')),
-              const SizedBox(height: 8),
-              TextField(controller: cargoCtrl, decoration: const InputDecoration(labelText: 'Cargo')),
-              const SizedBox(height: 8),
-              TextField(controller: areaCtrl, decoration: const InputDecoration(labelText: 'Área Operativa')),
-              const SizedBox(height: 8),
-              TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
-              if (user.isSupervisor) ...[
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text('Editar ${user.nombre}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre Completo')),
                 const SizedBox(height: 8),
-                TextField(controller: pinCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'PIN de Supervisor')),
+                TextField(controller: cedulaCtrl, decoration: const InputDecoration(labelText: 'Cédula')),
+                const SizedBox(height: 8),
+                TextField(controller: cargoCtrl, decoration: const InputDecoration(labelText: 'Cargo')),
+                const SizedBox(height: 8),
+                TextField(controller: areaCtrl, decoration: const InputDecoration(labelText: 'Área Operativa')),
+                const SizedBox(height: 8),
+                TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
+                if (user.isSupervisor) ...[
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: pinCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Nuevo PIN de Supervisor',
+                      hintText: 'Dejar vacío para mantener el actual (mín. 4 dígitos)',
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
+          actions: [
+            TextButton(onPressed: saving ? null : () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final newPin = pinCtrl.text.trim();
+                      if (user.isSupervisor && newPin.isNotEmpty && newPin.length < 4) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(backgroundColor: Color(0xFFDC2626), content: Text('El PIN debe tener al menos 4 dígitos')),
+                        );
+                        return;
+                      }
+                      setModalState(() => saving = true);
+                      try {
+                        final provider = Provider.of<StandardWorkProvider>(context, listen: false);
+                        await provider.updateFullUser(
+                          userId: user.id,
+                          cedula: cedulaCtrl.text.trim(),
+                          nombre: nombreCtrl.text.trim(),
+                          cargo: cargoCtrl.text.trim(),
+                          area: areaCtrl.text.trim(),
+                          email: emailCtrl.text.trim(),
+                          rol: user.rol,
+                          plantId: user.plantId,
+                          activo: user.activo,
+                          newPin: newPin.isNotEmpty ? newPin : null,
+                        );
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(backgroundColor: Color(0xFF16A34A), content: Text('Usuario actualizado en la nube')),
+                          );
+                        }
+                      } catch (e) {
+                        setModalState(() => saving = false);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(backgroundColor: const Color(0xFFDC2626), content: Text('Error al actualizar: $e')),
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C)),
+              child: Text(saving ? 'Guardando...' : 'Actualizar', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final provider = Provider.of<StandardWorkProvider>(context, listen: false);
-              final updated = UserProfile(
-                id: user.id,
-                cedula: user.cedula,
-                nombre: nombreCtrl.text.trim(),
-                cargo: cargoCtrl.text.trim(),
-                area: areaCtrl.text.trim(),
-                iniciales: user.iniciales,
-                email: emailCtrl.text.trim(),
-                activo: user.activo,
-                fechaRegistro: user.fechaRegistro,
-                rol: user.rol,
-                plantId: user.plantId,
-                pin: pinCtrl.text.trim(),
-              );
-              await provider.updateUser(updated);
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C)),
-            child: const Text('Actualizar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
     );
   }
@@ -805,9 +825,22 @@ class _PlantAdminTeamTab extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
-              final provider = Provider.of<StandardWorkProvider>(context, listen: false);
-              await provider.deleteUser(user.id);
-              if (ctx.mounted) Navigator.pop(ctx);
+              Navigator.pop(ctx);
+              try {
+                final provider = Provider.of<StandardWorkProvider>(context, listen: false);
+                await provider.deleteUserFromCloud(user.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Usuario eliminado de la nube')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(backgroundColor: const Color(0xFFDC2626), content: Text('Error al eliminar: $e')),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
             child: const Text('Eliminar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -937,7 +970,7 @@ class _PlantAdminTeamTab extends StatelessWidget {
                         children: [
                           Text(u.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                           Text('${u.cargo} · Cédula: ${u.cedula}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                          if (u.isSupervisor) Text('PIN Supervisor: ${u.pin}', style: const TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
+                          if (u.isSupervisor) const Text('Supervisor · Acceso por PIN', style: TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -980,14 +1013,6 @@ class _PlantAdminTeamTab extends StatelessWidget {
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FloatingActionButton.extended(
-            heroTag: 'fab_relevo',
-            onPressed: () => _showRelevoDialog(context, provider, operators),
-            backgroundColor: const Color(0xFF16A34A),
-            icon: const Icon(Icons.swap_horiz_rounded, color: Colors.white),
-            label: const Text('Relevo Operativo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 10),
           FloatingActionButton.extended(
             heroTag: 'fab_supervisor',
             onPressed: () => _showCreateUserModal(context, true),

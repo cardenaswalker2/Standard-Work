@@ -110,12 +110,17 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ApiResponse<UserDto> updateUser(@PathVariable String id, @RequestBody UpdateUserRequest req) {
+        scope.requireAdminOrSuperAdmin();
         var current = scope.currentUser();
-        if (!current.isUltraAdmin() && !current.isSuperAdmin()) {
-            throw ApiException.forbidden("Solo Ultra Admin o Super Admin pueden editar usuarios completos");
-        }
         UserDocument user = userRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Usuario no encontrado"));
+
+        if (!current.isSuperAdmin()) {
+            scope.requirePlantAccess(user.getPlantId());
+            if ("ultra_admin".equalsIgnoreCase(user.getRol()) || "superadmin".equalsIgnoreCase(user.getRol())) {
+                throw ApiException.forbidden("No puedes editar cuentas corporativas");
+            }
+        }
 
         if (req.getCedula() != null && !req.getCedula().isBlank()) {
             String newCedula = req.getCedula().trim();
@@ -143,9 +148,12 @@ public class UserController {
             if ("ultra_admin".equalsIgnoreCase(req.getRol()) && !current.isUltraAdmin()) {
                 throw ApiException.forbidden("Solo Ultra Admin puede asignar el rol Ultra Admin");
             }
+            if ("superadmin".equalsIgnoreCase(req.getRol()) && !current.isSuperAdmin()) {
+                throw ApiException.forbidden("Solo Super Admin puede asignar el rol Super Admin");
+            }
             user.setRol(req.getRol().trim());
         }
-        if (req.getPlantId() != null && !req.getPlantId().isBlank()) {
+        if (req.getPlantId() != null && !req.getPlantId().isBlank() && current.isSuperAdmin()) {
             user.setPlantId(req.getPlantId().trim());
         }
         if (req.getActivo() != null) {
@@ -163,15 +171,20 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteUser(@PathVariable String id) {
+        scope.requireAdminOrSuperAdmin();
         var current = scope.currentUser();
-        if (!current.isUltraAdmin()) {
-            throw ApiException.forbidden("Solo Ultra Admin puede eliminar usuarios");
-        }
         if (id.equals(current.getUserId())) {
-            throw ApiException.badRequest("No puedes eliminar tu propia cuenta Ultra Admin");
+            throw ApiException.badRequest("No puedes eliminar tu propia cuenta");
         }
-        if (!userRepository.existsById(id)) {
-            throw ApiException.notFound("Usuario no encontrado");
+        UserDocument user = userRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Usuario no encontrado"));
+        if (!current.isSuperAdmin()) {
+            scope.requirePlantAccess(user.getPlantId());
+            if ("ultra_admin".equalsIgnoreCase(user.getRol()) || "superadmin".equalsIgnoreCase(user.getRol())) {
+                throw ApiException.forbidden("No puedes eliminar cuentas corporativas");
+            }
+        } else if (!current.isUltraAdmin() && "ultra_admin".equalsIgnoreCase(user.getRol())) {
+            throw ApiException.forbidden("Solo Ultra Admin puede eliminar cuentas Ultra Admin");
         }
         userRepository.deleteById(id);
         return ApiResponse.ok(null, "Usuario eliminado");
