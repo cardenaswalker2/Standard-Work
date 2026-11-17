@@ -1040,14 +1040,14 @@ class _PlantAdminCorporateAssignmentTab extends StatelessWidget {
 
   void _showAssignModal(BuildContext context, ActivityModel act, StandardWorkProvider provider) {
     final plantUsers = provider.usersForCurrentPlant;
-    final operators = plantUsers.where((u) => u.isOperator).toList();
+    final assignees = plantUsers.where((u) => u.isOperator || u.isSupervisor).toList();
 
-    // Opciones: colaboradores de la planta + usuarios genéricos de turno
+    // Opciones: supervisores, colaboradores de la planta + usuarios genéricos de turno
     final List<Map<String, String>> assignOptions = [
+      ...assignees.map((o) => {'id': o.id, 'name': '${o.isSupervisor ? "🛡" : "👤"} ${o.nombre} (${o.isSupervisor ? "Supervisor" : o.cargo})'}),
       {'id': 'GEN_TAB_01', 'name': '📱 Tableta Línea Extrusión 01 (Genérico Turno)'},
       {'id': 'GEN_TAB_02', 'name': '📱 Tableta Termoformado 02 (Genérico Turno)'},
       {'id': 'GEN_LIDER', 'name': '👷 Líder Operativo de Turno (Genérico)'},
-      ...operators.map((o) => {'id': o.id, 'name': '👤 ${o.nombre} (${o.cargo})'}),
     ];
 
     String selectedTarget = assignOptions.first['id']!;
@@ -1494,7 +1494,7 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<StandardWorkProvider>(context);
-    final operators = provider.usersForCurrentPlant.where((u) => u.isOperator).toList();
+    final operators = provider.usersForCurrentPlant.where((u) => u.isOperator || u.isSupervisor).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -1651,12 +1651,17 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
           DropdownButtonFormField<String>(
             initialValue: _selectedOperatorId,
             decoration: InputDecoration(
-              labelText: 'Colaborador Responsable *',
+              labelText: 'Responsable (Colaborador o Supervisor) *',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               filled: true,
               fillColor: Colors.white,
             ),
-            items: operators.map((o) => DropdownMenuItem(value: o.id, child: Text('${o.nombre} (${o.cargo})'))).toList(),
+            items: operators
+                .map((o) => DropdownMenuItem(
+                      value: o.id,
+                      child: Text('${o.nombre} (${o.isSupervisor ? "Supervisor" : o.cargo})'),
+                    ))
+                .toList(),
             onChanged: (val) => setState(() => _selectedOperatorId = val),
           ),
           const SizedBox(height: 12),

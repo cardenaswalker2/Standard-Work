@@ -301,7 +301,7 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
     final user = provider.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF5F5F7),
       body: Column(
         children: [
           // HEADER EMPRESARIAL
@@ -413,13 +413,14 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
             ],
           ),
 
-          // PANTALLAS (EXACTAMENTE 2)
+          // PANTALLAS (3: EQUIPO, SEGUIMIENTO Y MIS ACTIVIDADES)
           Expanded(
             child: IndexedStack(
               index: _currentScreenIndex,
               children: [
                 _buildResumenEquipo(context, provider),
                 _buildSeguimientoScreen(context, provider),
+                _buildMisActividades(context, provider),
               ],
             ),
           ),
@@ -428,22 +429,264 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentScreenIndex,
         onTap: (index) => setState(() => _currentScreenIndex = index),
-        selectedItemColor: const Color(0xFF002F6C),
-        unselectedItemColor: Colors.grey.shade500,
+        selectedItemColor: const Color(0xFF007AFF),
+        unselectedItemColor: const Color(0xFF86868B),
+        backgroundColor: Colors.white,
         selectedFontSize: 12,
         unselectedFontSize: 11,
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.dashboard_rounded),
-            label: 'Resumen de mi equipo',
+            label: 'Mi Equipo',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.assignment_turned_in_rounded),
             label: 'Seguimiento',
           ),
+          BottomNavigationBarItem(
+            icon: Badge(
+              isLabelVisible: provider.instances
+                  .where((i) => i.userId == user?.id && i.day == provider.selectedDay && !i.done)
+                  .isNotEmpty,
+              label: Text(
+                '${provider.instances.where((i) => i.userId == user?.id && i.day == provider.selectedDay && !i.done).length}',
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+              ),
+              child: const Icon(Icons.task_alt_rounded),
+            ),
+            label: 'Mis Actividades',
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMisActividades(BuildContext context, StandardWorkProvider provider) {
+    final user = provider.currentUser;
+    final myTasks = provider.instances
+        .where((i) => i.userId == user?.id && i.day == provider.selectedDay)
+        .toList();
+    final doneCount = myTasks.where((t) => t.done).length;
+    final pct = myTasks.isEmpty ? 0.0 : doneCount / myTasks.length;
+
+    const days = [
+      {'day': 1, 'name': 'Lunes'},
+      {'day': 2, 'name': 'Martes'},
+      {'day': 3, 'name': 'Miércoles'},
+      {'day': 4, 'name': 'Jueves'},
+      {'day': 5, 'name': 'Viernes'},
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Selector de día estilo Apple
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: days.map((d) {
+              final isSel = provider.selectedDay == d['day'];
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(
+                    d['name'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                      color: isSel ? Colors.white : const Color(0xFF1D1D1F),
+                    ),
+                  ),
+                  selected: isSel,
+                  selectedColor: const Color(0xFF007AFF),
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: isSel ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  onSelected: (_) => provider.setSelectedDay(d['day'] as int),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Tarjeta Apple de Progreso del Supervisor
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE5E5EA)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 68,
+                height: 68,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: pct,
+                      strokeWidth: 8,
+                      backgroundColor: const Color(0xFFF5F5F7),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        pct >= 1.0 ? const Color(0xFF34C759) : const Color(0xFF007AFF),
+                      ),
+                    ),
+                    Text(
+                      '${(pct * 100).round()}%',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1D1D1F)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Mis Actividades Asignadas', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$doneCount de ${myTasks.length} actividades cumplidas hoy',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF86868B)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      myTasks.isEmpty
+                          ? 'Sin actividades asignadas para este día.'
+                          : (pct >= 1.0 ? '¡Excelente! Completaste tu jornada.' : 'Toca una tarjeta roja para ejecutar y completar.'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: pct >= 1.0 && myTasks.isNotEmpty ? const Color(0xFF34C759) : const Color(0xFF007AFF),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        if (myTasks.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
+            ),
+            child: const Column(
+              children: [
+                Icon(Icons.task_alt_rounded, size: 42, color: Color(0xFF86868B)),
+                SizedBox(height: 8),
+                Text('No tienes actividades asignadas este día', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                SizedBox(height: 4),
+                Text('Cuando el Admin de Planta te asigne actividades, aparecerán aquí.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Color(0xFF86868B))),
+              ],
+            ),
+          )
+        else
+          ...myTasks.map((item) {
+            final isDone = item.done;
+            final borderColor = isDone ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
+            final bgTint = isDone ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () {
+                    if (item.esRegistro) {
+                      MeetingRecordDialog.show(context: context, instance: item);
+                    } else {
+                      ActivityExecutionModal.show(context: context, instance: item);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: bgTint.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: borderColor, width: 1.7),
+                      boxShadow: [
+                        BoxShadow(color: borderColor.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4)),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.nombre,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: borderColor.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                isDone ? 'Cumplida' : 'Sin Completar',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: borderColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${item.timeStart} - ${item.timeEnd} · Área: ${item.area}',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF86868B), fontWeight: FontWeight.w500),
+                        ),
+                        if (item.descripcion.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(item.descripcion, style: const TextStyle(fontSize: 12, color: Color(0xFF3A3A3C))),
+                        ],
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                if (item.esRegistro) {
+                                  MeetingRecordDialog.show(context: context, instance: item);
+                                } else {
+                                  ActivityExecutionModal.show(context: context, instance: item);
+                                }
+                              },
+                              icon: Icon(isDone ? Icons.visibility_rounded : Icons.play_arrow_rounded, size: 16),
+                              label: Text(isDone ? 'Ver Registro' : (item.esRegistro ? 'Diligenciar Reunión' : 'Ejecutar & Completar')),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isDone ? const Color(0xFF34C759) : const Color(0xFF007AFF),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+      ],
     );
   }
 

@@ -179,7 +179,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
     final user = provider.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF5F5F7),
       body: Column(
         children: [
           // HERO HEADER CORPORATIVO
@@ -315,8 +315,9 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentScreenIndex,
         onTap: (index) => setState(() => _currentScreenIndex = index),
-        selectedItemColor: const Color(0xFF002F6C),
-        unselectedItemColor: Colors.grey.shade500,
+        selectedItemColor: const Color(0xFF007AFF),
+        unselectedItemColor: const Color(0xFF86868B),
+        backgroundColor: Colors.white,
         selectedFontSize: 12,
         unselectedFontSize: 11,
         type: BottomNavigationBarType.fixed,
@@ -381,15 +382,15 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
         ),
         const SizedBox(height: 14),
 
-        // TARJETA DE PROGRESO DE LA JORNADA
+        // TARJETA DE PROGRESO DE LA JORNADA (ESTILO APPLE)
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE5E5EA)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4)),
             ],
           ),
           child: Row(
@@ -657,22 +658,36 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                   itemCount: filtered.length,
                   itemBuilder: (ctx, i) {
                     final item = filtered[i];
+                    final isDone = item.done;
+                    final borderColor = isDone ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
+                    final bgTint = isDone ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2);
 
-                    return Card(
+                    return Container(
                       margin: const EdgeInsets.only(bottom: 14),
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Colors.grey.shade200)),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: () {
-                          if (item.esRegistro) {
-                            MeetingRecordDialog.show(context: context, instance: item);
-                          } else {
-                            ActivityExecutionModal.show(context: context, instance: item);
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(color: borderColor.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: Material(
+                        color: bgTint.withValues(alpha: 0.42),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          side: BorderSide(color: borderColor, width: 1.7),
+                        ),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: () {
+                            if (item.esRegistro) {
+                              MeetingRecordDialog.show(context: context, instance: item);
+                            } else {
+                              ActivityExecutionModal.show(context: context, instance: item);
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(15),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -727,9 +742,11 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                               const SizedBox(height: 10),
                             ],
 
-                            // BOTONES DE ACCIÓN
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                            // BOTONES DE ACCIÓN (RESPONSIVOS SIN DESBORDE)
+                            Wrap(
+                              alignment: WrapAlignment.end,
+                              spacing: 8,
+                              runSpacing: 6,
                               children: [
                                 if (!item.fija && !item.done)
                                   TextButton.icon(
@@ -742,22 +759,32 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                                     onPressed: () => MeetingRecordDialog.show(context: context, instance: item),
                                     icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white),
                                     label: const Text('Diligenciar Registro', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0284C7)),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF007AFF),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+                                    ),
                                   ),
                                 ] else if (item.subtasksTotal > 0) ...[
                                   OutlinedButton.icon(
                                     onPressed: () => _openSubtasksModal(context, item),
                                     icon: const Icon(Icons.checklist_rounded, size: 16),
                                     label: const Text('Checklist & Fotos', style: TextStyle(fontSize: 11)),
+                                    style: OutlinedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+                                    ),
                                   ),
                                 ],
-                                const SizedBox(width: 8),
                                 if (!item.done && !item.esRegistro)
                                   ElevatedButton.icon(
                                     onPressed: () => ActivityExecutionModal.show(context: context, instance: item),
                                     icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white),
                                     label: const Text('Diligenciar & Finalizar', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF34C759),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+                                    ),
                                   ),
                               ],
                             ),
@@ -765,7 +792,8 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                         ),
                       ),
                     ),
-                  );
+                  ),
+                );
                   },
                 ),
         ),
