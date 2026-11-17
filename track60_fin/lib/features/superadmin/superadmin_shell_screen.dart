@@ -343,58 +343,68 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
     final plants = provider.allPlants;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF002F6C).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF002F6C).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.remove_red_eye_rounded, color: Color(0xFF002F6C)),
                   ),
-                  child: const Icon(Icons.remove_red_eye_rounded, color: Color(0xFF002F6C)),
-                ),
-                const SizedBox(width: 10),
-                const Text('Auditoría Sorpresa / Observador en Vivo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Selecciona la sede industrial para entrar en tiempo real como observador de Dirección General:',
-              style: TextStyle(fontSize: 12, color: Color(0xFF475569)),
-            ),
-            const SizedBox(height: 14),
-            ...plants.map((p) => Card(
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Auditoría Sorpresa / Observador en Vivo',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Selecciona la sede industrial para entrar en tiempo real a inspeccionar su operación:',
+                style: TextStyle(fontSize: 12, color: Color(0xFF475569)),
+              ),
+              const SizedBox(height: 14),
+              ...plants.map((p) {
+                final pInst = provider.instances.where((i) => i.plantId == p.id).toList();
+                final pDone = pInst.where((i) => i.done).length;
+                final pRate = pInst.isEmpty ? 0 : ((pDone / pInst.length) * 100).round();
+                final loc = p.ubicacion.trim().isNotEmpty ? ' · ${p.ubicacion}' : '';
+                return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: ListTile(
                     leading: const Icon(Icons.factory_rounded, color: Color(0xFF002F6C)),
                     title: Text(p.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    subtitle: Text('${p.codigo} · ${p.ubicacion}'),
+                    subtitle: Text('${p.codigo}$loc · $pDone/${pInst.length} tareas ($pRate%)'),
                     trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF0284C7)),
                     onTap: () {
                       provider.setObservingPlant(p.id);
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: const Color(0xFF002F6C),
-                          content: Text('👁 Modo Observador activo: ${p.nombre}'),
-                        ),
-                      );
+                      _inspectPlant(context, p, provider.allUsers);
                     },
                   ),
-                )),
-          ],
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
@@ -1721,48 +1731,82 @@ class _SuperAdminPlantAdminsTab extends StatelessWidget {
   void _showEditAdminDialog(BuildContext context, UserProfile admin, StandardWorkProvider provider) {
     final nombreCtrl = TextEditingController(text: admin.nombre);
     final cargoCtrl = TextEditingController(text: admin.cargo);
-    final pinCtrl = TextEditingController(text: admin.pin);
+    final pinCtrl = TextEditingController();
+    bool saving = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Editar ${admin.nombre}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre Completo')),
-            const SizedBox(height: 8),
-            TextField(controller: cargoCtrl, decoration: const InputDecoration(labelText: 'Cargo')),
-            const SizedBox(height: 8),
-            TextField(controller: pinCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'PIN de Acceso')),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text('Editar ${admin.nombre}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre Completo')),
+              const SizedBox(height: 8),
+              TextField(controller: cargoCtrl, decoration: const InputDecoration(labelText: 'Cargo')),
+              const SizedBox(height: 8),
+              TextField(
+                controller: pinCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Nuevo PIN de Acceso',
+                  hintText: 'Dejar vacío para mantener el actual (mín. 4 dígitos)',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: saving ? null : () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final newPin = pinCtrl.text.trim();
+                      if (newPin.isNotEmpty && newPin.length < 4) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(backgroundColor: Color(0xFFDC2626), content: Text('El PIN debe tener al menos 4 dígitos')),
+                        );
+                        return;
+                      }
+                      setModalState(() => saving = true);
+                      try {
+                        await provider.updateFullUser(
+                          userId: admin.id,
+                          cedula: admin.cedula,
+                          nombre: nombreCtrl.text.trim(),
+                          cargo: cargoCtrl.text.trim(),
+                          area: admin.area,
+                          email: admin.email,
+                          rol: admin.rol,
+                          plantId: admin.plantId,
+                          activo: admin.activo,
+                          newPin: newPin.isNotEmpty ? newPin : null,
+                        );
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: const Color(0xFF16A34A),
+                              content: Text(newPin.isNotEmpty ? 'Datos y nuevo PIN guardados en la nube' : 'Datos actualizados en la nube'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setModalState(() => saving = false);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(backgroundColor: const Color(0xFFDC2626), content: Text('Error al guardar: $e')),
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C)),
+              child: Text(saving ? 'Guardando...' : 'Guardar Cambios', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final updated = UserProfile(
-                id: admin.id,
-                cedula: admin.cedula,
-                nombre: nombreCtrl.text.trim(),
-                cargo: cargoCtrl.text.trim(),
-                area: admin.area,
-                iniciales: admin.iniciales,
-                email: admin.email,
-                activo: admin.activo,
-                fechaRegistro: admin.fechaRegistro,
-                rol: admin.rol,
-                plantId: admin.plantId,
-                pin: pinCtrl.text.trim(),
-              );
-              await provider.updateUser(updated);
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C)),
-            child: const Text('Guardar Cambios', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
     );
   }
@@ -1778,8 +1822,13 @@ class _SuperAdminPlantAdminsTab extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
-              await provider.deleteUser(admin.id);
-              if (ctx.mounted) Navigator.pop(ctx);
+              Navigator.pop(ctx);
+              await provider.deleteUserFromCloud(admin.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Administrador eliminado de la nube')),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
             child: const Text('Eliminar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -2363,22 +2412,26 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
           const SizedBox(height: 14),
 
           // PLANTA OBJETIVO
-          DropdownButtonFormField<String>(
-            value: _targetPlanta,
-            decoration: InputDecoration(
-              labelText: 'Alcance Geográfico / Plantas',
-              prefixIcon: const Icon(Icons.apartment_rounded, color: Color(0xFF002F6C)),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            items: const [
-              DropdownMenuItem(value: 'ALL', child: Text('Todas las Plantas (Despacho Universal)')),
-              DropdownMenuItem(value: 'PL-EXTRUSA', child: Text('Planta Extrusa')),
-              DropdownMenuItem(value: 'PL-TERMO', child: Text('Planta Termoformado')),
-              DropdownMenuItem(value: 'PL-INYEC', child: Text('Planta Inyección')),
-            ],
-            onChanged: (val) => setState(() => _targetPlanta = val ?? 'ALL'),
+          Builder(
+            builder: (context) {
+              final allPlants = context.watch<StandardWorkProvider>().allPlants;
+              final validValue = (['ALL', ...allPlants.map((p) => p.id)].contains(_targetPlanta)) ? _targetPlanta : 'ALL';
+              return DropdownButtonFormField<String>(
+                value: validValue,
+                decoration: InputDecoration(
+                  labelText: 'Alcance Geográfico / Plantas',
+                  prefixIcon: const Icon(Icons.apartment_rounded, color: Color(0xFF002F6C)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                items: [
+                  const DropdownMenuItem(value: 'ALL', child: Text('Todas las Plantas (Despacho Universal)')),
+                  ...allPlants.map((p) => DropdownMenuItem(value: p.id, child: Text(p.nombre))),
+                ],
+                onChanged: (val) => setState(() => _targetPlanta = val ?? 'ALL'),
+              );
+            },
           ),
           const SizedBox(height: 14),
 
