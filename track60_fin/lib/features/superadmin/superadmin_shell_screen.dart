@@ -2305,6 +2305,7 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
   String _reunionLugar = 'Sala de Planta';
   bool _planAccionObligatorio = false;
   String _targetPlanta = 'ALL';
+  String _targetUserId = 'ALL';
   final Set<int> _selectedDays = {1, 2, 3, 4, 5}; // Lun-Vie por defecto
 
   final List<ActivitySubtaskModel> _subtasks = [
@@ -2541,7 +2542,8 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
     final sortedDays = (_selectedDays.toList()..sort()).join(',');
 
     final baseDesc = _descCtrl.text.trim();
-    final fullDesc = _incluyeReunion
+    final isMeetingMode = _tipoActividad == 'registro';
+    final fullDesc = isMeetingMode
         ? '${baseDesc.isNotEmpty ? "$baseDesc\n" : ""}[REUNIÓN PROGRAMADA: ${_reunionHoraCtrl.text.trim()} · $_reunionLugar]'
         : baseDesc;
 
@@ -2555,11 +2557,12 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
       fija: _fija,
       dias: sortedDays,
       prioridad: _prioridad,
-      subtasks: _subtasks,
+      subtasks: isMeetingMode ? [] : _subtasks,
       tipoActividad: _tipoActividad,
       requierePlanAccion: _planAccionObligatorio,
       planAccionObligatorio: _planAccionObligatorio,
       targetPlantIds: _targetPlanta == 'ALL' ? null : [_targetPlanta],
+      targetUserIds: _targetUserId == 'ALL' ? null : [_targetUserId],
     );
 
     if (mounted) {
@@ -2645,7 +2648,10 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _tipoActividad = 'ejecucion'),
+                    onTap: () => setState(() {
+                      _tipoActividad = 'ejecucion';
+                      _incluyeReunion = false;
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
@@ -2672,7 +2678,10 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                 ),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _tipoActividad = 'registro'),
+                    onTap: () => setState(() {
+                      _tipoActividad = 'registro';
+                      _incluyeReunion = true;
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
@@ -2702,33 +2711,34 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
           ),
           const SizedBox(height: 12),
 
-          // OPCIÓN DE REUNIÓN PROGRAMADA A X HORA (ESPECIALMENTE PARA RUTINAS FIJAS)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _incluyeReunion ? const Color(0xFFEFF6FF) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _incluyeReunion ? const Color(0xFF0284C7) : const Color(0xFFE2E8F0)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  title: const Text(
-                    '¿Esta actividad incluye Reunión / Comité?',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+          // SOLO EN MODO REGISTRO / REUNIÓN SE MUESTRA EL BLOQUE DE REUNIÓN Y MINUTA
+          if (_tipoActividad == 'registro') ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF93C5FD)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.groups_rounded, size: 18, color: Color(0xFF007AFF)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Configuración de Reunión / Minuta',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
+                    ],
                   ),
-                  subtitle: const Text(
-                    'Ideal para rutinas fijas con hora de reunión establecida',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'El responsable registrará participantes, acuerdos y notas de comité en lugar de subtareas operativas.',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
                   ),
-                  value: _incluyeReunion,
-                  onChanged: (v) => setState(() => _incluyeReunion = v),
-                ),
-                if (_incluyeReunion) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -2748,7 +2758,7 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       const SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: _reunionLugar,
+                          initialValue: _reunionLugar,
                           decoration: InputDecoration(
                             labelText: 'Lugar / Modalidad',
                             isDense: true,
@@ -2779,30 +2789,64 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                         .toList(),
                   ),
                 ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
+          ],
 
-          // PLANTA OBJETIVO
+          // PLANTA Y PERSONA OBJETIVO
           Builder(
             builder: (context) {
-              final allPlants = context.watch<StandardWorkProvider>().allPlants;
-              final validValue = (['ALL', ...allPlants.map((p) => p.id)].contains(_targetPlanta)) ? _targetPlanta : 'ALL';
-              return DropdownButtonFormField<String>(
-                value: validValue,
-                decoration: InputDecoration(
-                  labelText: 'Alcance Geográfico / Plantas',
-                  prefixIcon: const Icon(Icons.apartment_rounded, color: Color(0xFF002F6C)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                items: [
-                  const DropdownMenuItem(value: 'ALL', child: Text('Todas las Plantas (Despacho Universal)')),
-                  ...allPlants.map((p) => DropdownMenuItem(value: p.id, child: Text(p.nombre))),
+              final provider = context.watch<StandardWorkProvider>();
+              final allPlants = provider.allPlants;
+              final validPlant = (['ALL', ...allPlants.map((p) => p.id)].contains(_targetPlanta)) ? _targetPlanta : 'ALL';
+              final selectableUsers = provider.allUsers.where((u) {
+                if (!u.isOperator && !u.isSupervisor) return false;
+                if (validPlant != 'ALL' && u.plantId != validPlant) return false;
+                return true;
+              }).toList();
+              final validUser = (['ALL', ...selectableUsers.map((u) => u.id)].contains(_targetUserId)) ? _targetUserId : 'ALL';
+
+              return Column(
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: validPlant,
+                    decoration: InputDecoration(
+                      labelText: 'Alcance Geográfico / Plantas',
+                      prefixIcon: const Icon(Icons.apartment_rounded, color: Color(0xFF002F6C)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: 'ALL', child: Text('Todas las Plantas (Despacho Universal)')),
+                      ...allPlants.map((p) => DropdownMenuItem(value: p.id, child: Text(p.nombre))),
+                    ],
+                    onChanged: (val) => setState(() {
+                      _targetPlanta = val ?? 'ALL';
+                      _targetUserId = 'ALL';
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: validUser,
+                    decoration: InputDecoration(
+                      labelText: 'Asignar a Persona o Equipo',
+                      prefixIcon: const Icon(Icons.person_pin_rounded, color: Color(0xFF007AFF)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: 'ALL', child: Text('Todos los Operadores de la Planta / Alcance')),
+                      ...selectableUsers.map((u) => DropdownMenuItem(
+                            value: u.id,
+                            child: Text('${u.nombre} (${u.isSupervisor ? 'Supervisor' : 'Operador'} · ${u.plantId})'),
+                          )),
+                    ],
+                    onChanged: (val) => setState(() => _targetUserId = val ?? 'ALL'),
+                  ),
                 ],
-                onChanged: (val) => setState(() => _targetPlanta = val ?? 'ALL'),
               );
             },
           ),
@@ -3012,7 +3056,8 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
           ),
           const SizedBox(height: 20),
 
-          // SUBTAREAS Y REQUISITOS DINÁMICOS
+          // SUBTAREAS Y REQUISITOS DINÁMICOS (SOLO PARA ACTIVIDAD DE EJECUCIÓN)
+          if (_tipoActividad == 'ejecucion') ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -3136,6 +3181,7 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
               },
             ),
           const SizedBox(height: 24),
+          ],
 
           // BOTÓN DE DESPACHO
           SizedBox(

@@ -925,6 +925,7 @@ class StandardWorkProvider with ChangeNotifier {
     String instrucciones = '',
     String criteriosCumplimiento = '',
     List<String>? targetPlantIds,
+    List<String>? targetUserIds,
   }) async {
     if (_currentUser == null || !_currentUser!.isSuperAdmin) return;
 
@@ -960,9 +961,12 @@ class StandardWorkProvider with ChangeNotifier {
       await _db.insertSubtask(s.copyWith(activityId: actId, orden: i + 1));
     }
 
-    // 3. Crear instancias para los operadores de las plantas objetivo
+    // 3. Crear instancias para los destinatarios objetivo (persona específica o equipo operativo de planta)
     final allUsers = await _db.getAllUsers();
     final operators = allUsers.where((u) {
+      if (targetUserIds != null && targetUserIds.isNotEmpty) {
+        return targetUserIds.contains(u.id);
+      }
       if (!u.isOperator) return false;
       if (targetPlantIds != null && targetPlantIds.isNotEmpty && !targetPlantIds.contains('ALL')) {
         return targetPlantIds.contains(u.plantId);

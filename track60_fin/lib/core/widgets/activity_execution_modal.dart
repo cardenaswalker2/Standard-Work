@@ -379,37 +379,115 @@ class _ActivityExecutionModalState extends State<ActivityExecutionModal> {
                     const SizedBox(height: 16),
                   ],
 
-                  // 4. CHECKLIST DE SUBTAREAS SI TIENE
-                  if (inst.subtasksTotal > 0) ...[
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  // 4. ACCESOS DIRECTOS VISIBLES: CHECKLIST DE SUBTAREAS + PLAN DE ACCIÓN
+                  if (inst.subtasksTotal > 0 || inst.requierePlanAccion || inst.planAccionObligatorio || relatedPlan != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => ActivitySubtasksModal(
-                            instance: inst,
-                            onComplete: (data) async {
-                              for (final entry in data.entries) {
-                                await provider.reportSubtaskExecution(
-                                  instanceId: inst.id!,
-                                  subtaskId: entry.key,
-                                  photoPath: entry.value['photo'] as String?,
-                                  comment: entry.value['comment'] as String?,
-                                  measuredValue: entry.value['measurement'] as double?,
-                                );
-                              }
-                              setState(() {});
-                            },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Pasos y Compromisos de la Actividad',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.checklist_rounded, size: 18),
-                      label: Text('Ver Checklist de Subtareas (${inst.subtasksReported}/${inst.subtasksTotal} completadas)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(
+                            inst.subtasksTotal > 0 && inst.subtasksReported < inst.subtasksTotal
+                                ? 'Completa las subtareas antes de finalizar para que no se te olvide ningún paso.'
+                                : 'Revisa tus subtareas o registra el plan de acción asociado.',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              if (inst.subtasksTotal > 0)
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 46,
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: inst.subtasksReported >= inst.subtasksTotal
+                                            ? const Color(0xFF34C759)
+                                            : const Color(0xFF007AFF),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      ),
+                                      onPressed: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (_) => ActivitySubtasksModal(
+                                            instance: inst,
+                                            onComplete: (data) async {
+                                              for (final entry in data.entries) {
+                                                await provider.reportSubtaskExecution(
+                                                  instanceId: inst.id!,
+                                                  subtaskId: entry.key,
+                                                  photoPath: entry.value['photo'] as String?,
+                                                  comment: entry.value['comment'] as String?,
+                                                  measuredValue: entry.value['measurement'] as double?,
+                                                );
+                                              }
+                                              setState(() {});
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.checklist_rounded, size: 18, color: Colors.white),
+                                      label: Text(
+                                        'Subtareas (${inst.subtasksReported}/${inst.subtasksTotal})',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (inst.subtasksTotal > 0) const SizedBox(width: 10),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 46,
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      backgroundColor: isPlanFulfilled ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
+                                      side: BorderSide(
+                                        color: isPlanFulfilled ? const Color(0xFF34C759) : const Color(0xFFF59E0B),
+                                        width: 1.4,
+                                      ),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    ),
+                                    onPressed: () async {
+                                      final ok = await ActionPlanDialog.show(context: context, instance: inst);
+                                      if (ok == true) setState(() {});
+                                    },
+                                    icon: Icon(
+                                      isPlanFulfilled ? Icons.check_circle_rounded : Icons.flag_rounded,
+                                      size: 18,
+                                      color: isPlanFulfilled ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                                    ),
+                                    label: Text(
+                                      relatedPlan == null ? 'Plan de Acción' : 'Ver Plan (${(relatedPlan.porcentajeAvance * 100).toInt()}%)',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: isPlanFulfilled ? const Color(0xFF166534) : const Color(0xFFB45309),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],
