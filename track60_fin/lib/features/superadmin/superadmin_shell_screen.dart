@@ -630,68 +630,51 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
       'Disciplina': totalInstances > 0 ? ((completedInstances / totalInstances) * 100).clamp(70.0, 98.0) : 91.0,
     };
 
-    final plantRates = [
-      instances.where((i) => i.plantId.contains('EXTRUSA')).isNotEmpty
-          ? (instances.where((i) => i.plantId.contains('EXTRUSA') && i.done).length /
-                  instances.where((i) => i.plantId.contains('EXTRUSA')).length *
-                  100)
-              .clamp(80.0, 99.0)
-          : 94.2,
-      instances.where((i) => i.plantId.contains('TERMO')).isNotEmpty
-          ? (instances.where((i) => i.plantId.contains('TERMO') && i.done).length /
-                  instances.where((i) => i.plantId.contains('TERMO')).length *
-                  100)
-              .clamp(80.0, 99.0)
-          : 91.8,
-      instances.where((i) => i.plantId.contains('INYEC')).isNotEmpty
-          ? (instances.where((i) => i.plantId.contains('INYEC') && i.done).length /
-                  instances.where((i) => i.plantId.contains('INYEC')).length *
-                  100)
-              .clamp(80.0, 99.0)
-          : 88.5,
-    ];
+    final plantStats = plants.map((p) {
+      final pInst = instances.where((i) => i.plantId == p.id).toList();
+      final pDone = pInst.where((i) => i.done).length;
+      final pOverdue = pInst.where((i) => !i.done && i.day < provider.selectedDay).length;
+      final pPending = (pInst.length - pDone - pOverdue).clamp(0, 9999);
+      final pRate = pInst.isEmpty ? 0.0 : (pDone / pInst.length) * 100.0;
+      final pOps = operators.where((o) => o.plantId == p.id).length;
+      final pSups = users.where((u) => u.plantId == p.id && u.isSupervisor).length;
+      return (
+        plant: p,
+        total: pInst.length,
+        done: pDone,
+        pending: pPending,
+        overdue: pOverdue,
+        rate: pRate,
+        ops: pOps,
+        sups: pSups,
+      );
+    }).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // BARRA SUPERIOR DE ACCIONES RÁPIDAS
+          // BARRA SUPERIOR DE ACCIONES RÁPIDAS (Sin botón de Alerta EHS)
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Semáforo de Operación en Vivo',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              const Expanded(
+                child: Text(
+                  'Semáforo de Operación en Vivo',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                ),
               ),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () => _showLiveInspectionDialog(context, provider),
-                    icon: const Icon(Icons.remove_red_eye_rounded, size: 14, color: Color(0xFF002F6C)),
-                    label: const Text('En Vivo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF002F6C))),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: () => _showEmergencyDialog(context, provider),
-                    icon: const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.white),
-                    label: Text(
-                      provider.emergencyAlertActive ? 'Parada Activa' : 'Alerta EHS',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: provider.emergencyAlertActive ? const Color(0xFFDC2626) : const Color(0xFFEA580C),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => _showLiveInspectionDialog(context, provider),
+                icon: const Icon(Icons.remove_red_eye_rounded, size: 14, color: Color(0xFF002F6C)),
+                label: const Text('En Vivo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF002F6C))),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: Colors.white,
+                ),
               ),
             ],
           ),
@@ -789,62 +772,121 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 const Text('Estándar de calidad, seguridad y mantenimiento de turnos', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                 const SizedBox(height: 20),
                 SizedBox(
-                  height: 160,
-                  child: BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.spaceAround,
-                      maxY: 100,
-                      barTouchData: BarTouchData(
-                        enabled: true,
-                        touchTooltipData: BarTouchTooltipData(
-                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            String plantName = group.x == 0 ? 'Extrusa' : (group.x == 1 ? 'Termo' : 'Inyección');
-                            return BarTooltipItem(
-                              '$plantName: ${rod.toY.toStringAsFixed(1)}%',
-                              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                            );
-                          },
-                        ),
-                      ),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (val, meta) {
-                              switch (val.toInt()) {
-                                case 0:
-                                  return const Text('Extrusa', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold));
-                                case 1:
-                                  return const Text('Termo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold));
-                                case 2:
-                                  return const Text('Inyección', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold));
-                                default:
-                                  return const Text('');
-                              }
-                            },
+                  height: 175,
+                  child: plantStats.isEmpty
+                      ? const Center(child: Text('Sin plantas registradas', style: TextStyle(color: Colors.grey)))
+                      : BarChart(
+                          BarChartData(
+                            alignment: BarChartAlignment.spaceAround,
+                            maxY: 100,
+                            barTouchData: BarTouchData(
+                              enabled: true,
+                              touchTooltipData: BarTouchTooltipData(
+                                getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                  final st = plantStats[group.x.toInt()];
+                                  return BarTooltipItem(
+                                    '${st.plant.nombre}\n${st.rate.toStringAsFixed(1)}% (${st.done}/${st.total} tareas)',
+                                    const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                  );
+                                },
+                              ),
+                            ),
+                            titlesData: FlTitlesData(
+                              show: true,
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 28,
+                                  getTitlesWidget: (val, meta) {
+                                    final idx = val.toInt();
+                                    if (idx < 0 || idx >= plantStats.length) return const Text('');
+                                    final code = plantStats[idx].plant.codigo.isNotEmpty
+                                        ? plantStats[idx].plant.codigo
+                                        : plantStats[idx].plant.nombre.replaceAll('Planta ', '');
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Text(code, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                    );
+                                  },
+                                ),
+                              ),
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 30,
+                                  getTitlesWidget: (val, meta) => Text('${val.toInt()}%', style: const TextStyle(fontSize: 9, color: Colors.grey)),
+                                ),
+                              ),
+                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            ),
+                            gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
+                            borderData: FlBorderData(show: false),
+                            barGroups: List.generate(plantStats.length, (i) {
+                              final st = plantStats[i];
+                              final barColor = st.rate >= 90
+                                  ? const Color(0xFF16A34A)
+                                  : (st.rate >= 60 ? const Color(0xFF0284C7) : const Color(0xFFEA580C));
+                              return BarChartGroupData(
+                                x: i,
+                                barRods: [
+                                  BarChartRodData(
+                                    toY: st.rate.clamp(2.0, 100.0),
+                                    color: barColor,
+                                    width: 22,
+                                    borderRadius: BorderRadius.circular(6),
+                                    backDrawRodData: BackgroundBarChartRodData(
+                                      show: true,
+                                      toY: 100,
+                                      color: const Color(0xFFF1F5F9),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }),
                           ),
                         ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 28,
-                            getTitlesWidget: (val, meta) => Text('${val.toInt()}%', style: const TextStyle(fontSize: 9, color: Colors.grey)),
-                          ),
-                        ),
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      ),
-                      gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
-                      borderData: FlBorderData(show: false),
-                      barGroups: [
-                        BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: plantRates[0], color: const Color(0xFF002F6C), width: 22, borderRadius: BorderRadius.circular(6))]),
-                        BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: plantRates[1], color: const Color(0xFF0284C7), width: 22, borderRadius: BorderRadius.circular(6))]),
-                        BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: plantRates[2], color: const Color(0xFF16A34A), width: 22, borderRadius: BorderRadius.circular(6))]),
-                      ],
-                    ),
-                  ),
                 ),
+                if (plantStats.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  ...plantStats.map((st) {
+                    final badgeColor = st.rate >= 90
+                        ? const Color(0xFF16A34A)
+                        : (st.rate >= 60 ? const Color(0xFF0284C7) : const Color(0xFFDC2626));
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              st.plant.nombre,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                            ),
+                          ),
+                          Text(
+                            '${st.done}/${st.total} tareas · ${st.pending} pend · ${st.ops} op',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              '${st.rate.toStringAsFixed(0)}%',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: badgeColor),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
               ],
             ),
           ),
@@ -1072,12 +1114,16 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
             itemCount: plants.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
-              final plant = plants[index];
-              final plantOps = operators.where((o) => o.plantId == plant.id).length;
+              final st = plantStats[index];
+              final plant = st.plant;
+              final plantOps = st.ops;
               final plantAdmin = users.firstWhere(
                 (u) => u.id == plant.adminId,
                 orElse: () => users.first,
               );
+              final pctColor = st.rate >= 90
+                  ? const Color(0xFF16A34A)
+                  : (st.rate >= 60 ? const Color(0xFF0284C7) : const Color(0xFFEA580C));
 
               return Card(
                 elevation: 2,
@@ -1091,55 +1137,83 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF002F6C).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.domain_rounded, color: Color(0xFF002F6C)),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      plant.nombre,
-                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      '${plant.codigo} · ${plant.ubicacion}',
-                                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                            Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF002F6C).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.domain_rounded, color: Color(0xFF002F6C)),
                             ),
-                            const Row(
-                              children: [
-                                Text('Inspeccionar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
-                                SizedBox(width: 4),
-                                Icon(Icons.chevron_right, size: 18, color: Color(0xFF0284C7)),
-                              ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    plant.nombre,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${plant.codigo} · ${plant.ubicacion}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0284C7).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Inspeccionar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
+                                  SizedBox(width: 2),
+                                  Icon(Icons.chevron_right, size: 16, color: Color(0xFF0284C7)),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        const Divider(height: 1),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: [
+                            _buildPlantStatPill('${st.rate.toStringAsFixed(0)}% Cumpl.', pctColor),
+                            _buildPlantStatPill('Tareas: ${st.done}/${st.total}', const Color(0xFF002F6C)),
+                            _buildPlantStatPill('Pendientes: ${st.pending}', const Color(0xFF0284C7)),
+                            if (st.overdue > 0) _buildPlantStatPill('Vencidas: ${st.overdue}', const Color(0xFFDC2626)),
+                            _buildPlantStatPill('Sup: ${st.sups} · Op: $plantOps', const Color(0xFF475569)),
+                          ],
+                        ),
                         const SizedBox(height: 12),
+                        const Divider(height: 1),
+                        const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Admin: ${plantAdmin.nombre}',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                            Expanded(
+                              child: Text(
+                                'Admin: ${plantAdmin.nombre}',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
-                              '$plantOps Colaboradores asignados',
+                              '$plantOps Colaboradores',
                               style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                             ),
                           ],
@@ -1152,6 +1226,20 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlantStatPill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color),
       ),
     );
   }
@@ -1776,6 +1864,9 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
   String _prioridad = 'Alta';
   bool _fija = true;
   String _tipoActividad = 'ejecucion'; // 'ejecucion' o 'registro'
+  bool _incluyeReunion = false;
+  final _reunionHoraCtrl = TextEditingController(text: '08:00 AM');
+  String _reunionLugar = 'Sala de Planta';
   bool _planAccionObligatorio = false;
   String _targetPlanta = 'ALL';
   final Set<int> _selectedDays = {1, 2, 3, 4, 5}; // Lun-Vie por defecto
@@ -2013,9 +2104,14 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
     final sortedDays = (_selectedDays.toList()..sort()).join(',');
 
+    final baseDesc = _descCtrl.text.trim();
+    final fullDesc = _incluyeReunion
+        ? '${baseDesc.isNotEmpty ? "$baseDesc\n" : ""}[REUNIÓN PROGRAMADA: ${_reunionHoraCtrl.text.trim()} · $_reunionLugar]'
+        : baseDesc;
+
     await provider.dispatchCorporateActivity(
       nombre: _nombreCtrl.text.trim(),
-      descripcion: _descCtrl.text.trim(),
+      descripcion: fullDesc,
       area: _area,
       category: _categoria,
       timeStart: _horaIniCtrl.text.trim(),
@@ -2181,6 +2277,88 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+
+          // OPCIÓN DE REUNIÓN PROGRAMADA A X HORA (ESPECIALMENTE PARA RUTINAS FIJAS)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _incluyeReunion ? const Color(0xFFEFF6FF) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _incluyeReunion ? const Color(0xFF0284C7) : const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: const Text(
+                    '¿Esta actividad incluye Reunión / Comité?',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  ),
+                  subtitle: const Text(
+                    'Ideal para rutinas fijas con hora de reunión establecida',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                  value: _incluyeReunion,
+                  onChanged: (v) => setState(() => _incluyeReunion = v),
+                ),
+                if (_incluyeReunion) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _reunionHoraCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Hora de la Reunión',
+                            hintText: 'Ej. 08:00 AM',
+                            prefixIcon: const Icon(Icons.schedule_rounded, size: 18, color: Color(0xFF0284C7)),
+                            isDense: true,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _reunionLugar,
+                          decoration: InputDecoration(
+                            labelText: 'Lugar / Modalidad',
+                            isDense: true,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'Sala de Planta', child: Text('Sala de Planta')),
+                            DropdownMenuItem(value: 'Piso / Gemba', child: Text('Piso / Gemba')),
+                            DropdownMenuItem(value: 'Virtual / Teams', child: Text('Virtual / Teams')),
+                          ],
+                          onChanged: (v) => setState(() => _reunionLugar = v ?? 'Sala de Planta'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: ['07:00 AM', '08:00 AM', '10:00 AM', '02:00 PM', '04:00 PM']
+                        .map((h) => ActionChip(
+                              label: Text(h, style: const TextStyle(fontSize: 11)),
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () => setState(() => _reunionHoraCtrl.text = h),
+                            ))
+                        .toList(),
+                  ),
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 14),
 
