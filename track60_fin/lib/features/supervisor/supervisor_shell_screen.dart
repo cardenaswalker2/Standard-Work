@@ -21,12 +21,13 @@ class SupervisorShellScreen extends StatefulWidget {
 }
 
 class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
-  // Exactamente 3 secciones principales requeridas:
-  // 0: Mi día a día (Trabajo personal del Supervisor)
-  // 1: Seguimiento de personas (Equipo y colaboradores)
-  // 2: Planes de acción (ProPlanes del proceso)
+  // 5 secciones principales del Supervisor:
+  // 0: Mis Actividades (Trabajo personal del Supervisor - primera al entrar)
+  // 1: Mi Equipo (Resumen y cumplimiento)
+  // 2: Seguimiento (Revisión de actividades del equipo)
+  // 3: Planes (Planes de acción en pantalla dedicada)
+  // 4: Indicadores (Métricas personales y de equipo)
   int _currentScreenIndex = 0;
-  int _seguimientoSubtab = 0;
 
   List<SubtaskExecutionModel> _allExecutions = [];
   bool _loading = true;
@@ -435,14 +436,16 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
             ],
           ),
 
-          // PANTALLAS (3: EQUIPO, SEGUIMIENTO Y MIS ACTIVIDADES)
+          // PANTALLAS (0: MIS ACTIVIDADES, 1: MI EQUIPO, 2: SEGUIMIENTO, 3: PLANES, 4: INDICADORES)
           Expanded(
             child: IndexedStack(
               index: _currentScreenIndex,
               children: [
-                _buildResumenEquipo(context, provider),
-                _buildSeguimientoScreen(context, provider),
                 _buildMisActividades(context, provider),
+                _buildResumenEquipo(context, provider),
+                _buildSeguimientoActividades(context, provider),
+                _buildSeguimientoPlanes(context, provider),
+                _buildSupervisorIndicadores(context, provider),
               ],
             ),
           ),
@@ -454,18 +457,10 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
         selectedItemColor: const Color(0xFF007AFF),
         unselectedItemColor: const Color(0xFF86868B),
         backgroundColor: Colors.white,
-        selectedFontSize: 12,
-        unselectedFontSize: 11,
+        selectedFontSize: 11,
+        unselectedFontSize: 10,
         type: BottomNavigationBarType.fixed,
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_rounded),
-            label: 'Mi Equipo',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_turned_in_rounded),
-            label: 'Seguimiento',
-          ),
           BottomNavigationBarItem(
             icon: Badge(
               isLabelVisible: provider.instances
@@ -478,6 +473,29 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
               child: const Icon(Icons.task_alt_rounded),
             ),
             label: 'Mis Actividades',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_rounded),
+            label: 'Mi Equipo',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.assignment_turned_in_rounded),
+            label: 'Seguimiento',
+          ),
+          BottomNavigationBarItem(
+            icon: Badge(
+              isLabelVisible: provider.proPlans.where((p) => p.estado != 'Cumplido').isNotEmpty,
+              label: Text(
+                '${provider.proPlans.where((p) => p.estado != 'Cumplido').length}',
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+              ),
+              child: const Icon(Icons.fact_check_rounded),
+            ),
+            label: 'Planes',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.insights_rounded),
+            label: 'Indicadores',
           ),
         ],
       ),
@@ -831,8 +849,7 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
             icon: Icons.rate_review_rounded,
             actionLabel: 'Revisar',
             onAction: () => setState(() {
-              _currentScreenIndex = 1;
-              _seguimientoSubtab = 0;
+              _currentScreenIndex = 2;
               _selectedActivityFilter = 'Reportadas';
             }),
           ),
@@ -845,8 +862,7 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
             icon: Icons.warning_amber_rounded,
             actionLabel: 'Ver Planes',
             onAction: () => setState(() {
-              _currentScreenIndex = 1;
-              _seguimientoSubtab = 1;
+              _currentScreenIndex = 3;
             }),
           ),
 
@@ -858,8 +874,7 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
             icon: Icons.alarm_off_rounded,
             actionLabel: 'Inspeccionar',
             onAction: () => setState(() {
-              _currentScreenIndex = 1;
-              _seguimientoSubtab = 0;
+              _currentScreenIndex = 2;
             }),
           ),
 
@@ -924,76 +939,7 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
     );
   }
 
-  // ========================================================
-  // PANTALLA 2: SEGUIMIENTO (ACTIVIDADES | PLANES DE ACCIÓN)
-  // ========================================================
-  Widget _buildSeguimientoScreen(BuildContext context, StandardWorkProvider provider) {
-    return Column(
-      children: [
-        // CONTROL SEGMENTADO
-        Container(
-          margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE2E8F0),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _seguimientoSubtab = 0),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _seguimientoSubtab == 0 ? const Color(0xFF002F6C) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '📋 Actividades del Equipo',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _seguimientoSubtab == 0 ? Colors.white : const Color(0xFF475569),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _seguimientoSubtab = 1),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _seguimientoSubtab == 1 ? const Color(0xFF002F6C) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '🎯 Planes de Acción',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _seguimientoSubtab == 1 ? Colors.white : const Color(0xFF475569),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // CONTENIDO
-        Expanded(
-          child: _seguimientoSubtab == 0
-              ? _buildSeguimientoActividades(context, provider)
-              : _buildSeguimientoPlanes(context, provider),
-        ),
-      ],
-    );
-  }
+  // Nota: Seguimiento y Planes de Acción ahora son pestañas independientes en el BottomNavigationBar.
 
   Widget _buildSeguimientoActividades(BuildContext context, StandardWorkProvider provider) {
     final instances = provider.instances;
@@ -1415,6 +1361,201 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
       child: Text(text, style: TextStyle(fontSize: 10, color: fg, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  // ========================================================
+  // PANTALLA 5: INDICADORES DEL SUPERVISOR Y EQUIPO
+  // ========================================================
+  Widget _buildSupervisorIndicadores(BuildContext context, StandardWorkProvider provider) {
+    final user = provider.currentUser;
+    final myAll = provider.instances.where((i) => i.userId == user?.id).toList();
+    final myDone = myAll.where((i) => i.done).length;
+    final myPending = myAll.length - myDone;
+    final myPct = myAll.isEmpty ? 0 : ((myDone / myAll.length) * 100).round();
+
+    final plantOps = provider.usersForCurrentPlant.where((u) => u.isOperator).map((u) => u.id).toSet();
+    final teamAll = provider.instances.where((i) => plantOps.contains(i.userId)).toList();
+    final teamDone = teamAll.where((i) => i.done).length;
+    final teamPending = teamAll.length - teamDone;
+    final teamPct = teamAll.isEmpty ? 0 : ((teamDone / teamAll.length) * 100).round();
+
+    final plansAll = provider.proPlans;
+    final plansClosed = plansAll.where((p) => p.estado == 'Cumplido').length;
+    final plansOpen = plansAll.length - plansClosed;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      children: [
+        const Text(
+          'Indicadores de Desempeño',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.4),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Resumen semanal de tus actividades y del equipo de planta',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSupervisorMetricCard(
+                title: 'Mi Cumplimiento',
+                value: '$myPct%',
+                subtitle: '$myDone hechas · $myPending pend.',
+                progress: myAll.isEmpty ? 0 : myDone / myAll.length,
+                color: myPct >= 80 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
+                icon: Icons.verified_rounded,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSupervisorMetricCard(
+                title: 'Equipo de Piso',
+                value: '$teamPct%',
+                subtitle: '$teamDone hechas · $teamPending pend.',
+                progress: teamAll.isEmpty ? 0 : teamDone / teamAll.length,
+                color: const Color(0xFF007AFF),
+                icon: Icons.groups_rounded,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSupervisorMetricCard(
+                title: 'Planes Cerrados',
+                value: '$plansClosed',
+                subtitle: '$plansOpen en curso',
+                progress: plansAll.isEmpty ? 0 : plansClosed / plansAll.length,
+                color: const Color(0xFFAF52DE),
+                icon: Icons.fact_check_rounded,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSupervisorMetricCard(
+                title: 'Evidencias Hoy',
+                value: '${_allExecutions.where((e) => !e.aprobada).length}',
+                subtitle: 'Por revisar en Seguimiento',
+                progress: _allExecutions.isEmpty
+                    ? 0
+                    : _allExecutions.where((e) => e.aprobada).length / _allExecutions.length,
+                color: const Color(0xFFFF9500),
+                icon: Icons.photo_camera_rounded,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE5E5EA)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Desglose por Día (Mis Actividades)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+              const SizedBox(height: 12),
+              for (final d in const [
+                {'k': 1, 'n': 'Lunes'},
+                {'k': 2, 'n': 'Martes'},
+                {'k': 3, 'n': 'Miércoles'},
+                {'k': 4, 'n': 'Jueves'},
+                {'k': 5, 'n': 'Viernes'},
+              ])
+                Builder(builder: (_) {
+                  final dTasks = myAll.where((t) => t.day == d['k']).toList();
+                  final dDone = dTasks.where((t) => t.done).length;
+                  final dPct = dTasks.isEmpty ? 0.0 : dDone / dTasks.length;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(d['n'] as String, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1D1D1F))),
+                            Text('$dDone / ${dTasks.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: dPct,
+                            minHeight: 8,
+                            backgroundColor: const Color(0xFFF2F2F7),
+                            color: dPct >= 1.0 && dTasks.isNotEmpty ? const Color(0xFF34C759) : const Color(0xFF007AFF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSupervisorMetricCard({
+    required String title,
+    required String value,
+    required String subtitle,
+    required double progress,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, size: 17, color: color),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF3A3A3C))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: color, letterSpacing: -0.6)),
+          const SizedBox(height: 2),
+          Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF86868B))),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              minHeight: 5,
+              backgroundColor: const Color(0xFFF2F2F7),
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

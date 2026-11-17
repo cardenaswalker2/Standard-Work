@@ -23,11 +23,12 @@ class OperatorDashboardScreen extends StatefulWidget {
 }
 
 class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
-  // Exactamente 2 destinos principales
-  int _currentScreenIndex = 0; // 0: Mi jornada, 1: Mi trabajo
-
-  // Subpestaña en Mi trabajo
-  int _trabajoSubtab = 0; // 0: Actividades, 1: Planes de acción
+  // 4 destinos principales del Operador:
+  // 0: Mi Día (Actividades para cumplir - primera al entrar)
+  // 1: Mi Jornada (Resumen y agenda)
+  // 2: Planes (Planes de acción en pantalla dedicada)
+  // 3: Indicadores (Métricas personales)
+  int _currentScreenIndex = 0;
 
   String _selectedActivityFilter = 'Todas'; // 'Todas', 'Pendientes', 'Completadas'
   String _searchQuery = '';
@@ -319,13 +320,15 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
             ],
           ),
 
-          // PANTALLAS (EXACTAMENTE 2)
+          // PANTALLAS (0: MI DÍA, 1: MI JORNADA, 2: PLANES, 3: INDICADORES)
           Expanded(
             child: IndexedStack(
               index: _currentScreenIndex,
               children: [
+                _buildMiTrabajoActividades(context, provider),
                 _buildMiJornadaScreen(context, provider),
-                _buildMiTrabajoScreen(context, provider),
+                _buildMiTrabajoPlanes(context, provider),
+                _buildOperatorIndicadores(context, provider),
               ],
             ),
           ),
@@ -340,14 +343,36 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
         selectedFontSize: 12,
         unselectedFontSize: 11,
         type: BottomNavigationBarType.fixed,
-        items: const [
+        items: [
           BottomNavigationBarItem(
+            icon: Badge(
+              isLabelVisible: provider.tasksForSelectedDay.where((t) => !t.done).isNotEmpty,
+              label: Text(
+                '${provider.tasksForSelectedDay.where((t) => !t.done).length}',
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+              ),
+              child: const Icon(Icons.task_alt_rounded),
+            ),
+            label: 'Mi Día',
+          ),
+          const BottomNavigationBarItem(
             icon: Icon(Icons.wb_sunny_rounded),
-            label: 'Mi jornada',
+            label: 'Mi Jornada',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.handyman_rounded),
-            label: 'Mi trabajo',
+            icon: Badge(
+              isLabelVisible: provider.proPlans.where((p) => (p.responsable == provider.currentUser?.nombre || p.creadoPor == provider.currentUser?.id) && p.estado != 'Cumplido').isNotEmpty,
+              label: Text(
+                '${provider.proPlans.where((p) => (p.responsable == provider.currentUser?.nombre || p.creadoPor == provider.currentUser?.id) && p.estado != 'Cumplido').length}',
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+              ),
+              child: const Icon(Icons.fact_check_rounded),
+            ),
+            label: 'Planes',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.insights_rounded),
+            label: 'Indicadores',
           ),
         ],
       ),
@@ -482,8 +507,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                 icon: Icons.play_arrow_rounded,
                 color: const Color(0xFF002F6C),
                 onTap: () => setState(() {
-                  _currentScreenIndex = 1;
-                  _trabajoSubtab = 0;
+                  _currentScreenIndex = 0;
                   _selectedActivityFilter = 'Pendientes';
                 }),
               ),
@@ -495,8 +519,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                 icon: Icons.assignment_turned_in_rounded,
                 color: const Color(0xFFD97706),
                 onTap: () => setState(() {
-                  _currentScreenIndex = 1;
-                  _trabajoSubtab = 1;
+                  _currentScreenIndex = 2;
                 }),
               ),
             ),
@@ -535,8 +558,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                   subtitle: Text('${t.timeStart} - ${t.timeEnd} · ${t.area}', style: const TextStyle(fontSize: 11)),
                   trailing: const Icon(Icons.chevron_right, size: 20),
                   onTap: () => setState(() {
-                    _currentScreenIndex = 1;
-                    _trabajoSubtab = 0;
+                    _currentScreenIndex = 0;
                   }),
                 ),
               )),
@@ -544,76 +566,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
     );
   }
 
-  // ========================================================
-  // PANTALLA 2: MI TRABAJO (ACTIVIDADES | PLANES DE ACCIÓN)
-  // ========================================================
-  Widget _buildMiTrabajoScreen(BuildContext context, StandardWorkProvider provider) {
-    return Column(
-      children: [
-        // CONTROL SEGMENTADO
-        Container(
-          margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE2E8F0),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _trabajoSubtab = 0),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _trabajoSubtab == 0 ? const Color(0xFF002F6C) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '📋 Mis Actividades',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _trabajoSubtab == 0 ? Colors.white : const Color(0xFF475569),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _trabajoSubtab = 1),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _trabajoSubtab == 1 ? const Color(0xFF002F6C) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '🎯 Mis Planes de Acción',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _trabajoSubtab == 1 ? Colors.white : const Color(0xFF475569),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // CONTENIDO
-        Expanded(
-          child: _trabajoSubtab == 0
-              ? _buildMiTrabajoActividades(context, provider)
-              : _buildMiTrabajoPlanes(context, provider),
-        ),
-      ],
-    );
-  }
+  // Nota: Mi Día y Planes ahora son pestañas independientes en el BottomNavigationBar.
 
   Widget _buildMiTrabajoActividades(BuildContext context, StandardWorkProvider provider) {
     final allTasks = provider.tasksForSelectedDay;
@@ -980,6 +933,201 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
       child: Text(text, style: TextStyle(fontSize: 10, color: fg, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  // ========================================================
+  // PANTALLA 4: INDICADORES DEL OPERADOR
+  // ========================================================
+  Widget _buildOperatorIndicadores(BuildContext context, StandardWorkProvider provider) {
+    final user = provider.currentUser;
+    final todayTasks = provider.tasksForSelectedDay;
+    final todayDone = todayTasks.where((t) => t.done).length;
+    final todayPct = todayTasks.isEmpty ? 0 : ((todayDone / todayTasks.length) * 100).round();
+
+    final weekTasks = provider.instances.where((i) => i.userId == user?.id).toList();
+    final weekDone = weekTasks.where((i) => i.done).length;
+    final weekPending = weekTasks.length - weekDone;
+    final weekPct = weekTasks.isEmpty ? 0 : ((weekDone / weekTasks.length) * 100).round();
+
+    final fixedDone = weekTasks.where((i) => i.fija && i.done).length;
+    final fixedTotal = weekTasks.where((i) => i.fija).length;
+    final flexDone = weekTasks.where((i) => !i.fija && i.done).length;
+    final flexTotal = weekTasks.where((i) => !i.fija).length;
+
+    final myPlans = provider.proPlans.where((p) => p.responsable == user?.nombre || p.creadoPor == user?.id).toList();
+    final myPlansClosed = myPlans.where((p) => p.estado == 'Cumplido').length;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      children: [
+        const Text(
+          'Mis Indicadores',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.4),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Seguimiento personal de tu cumplimiento diario y semanal',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildOpIndicatorCard(
+                title: 'Hoy (${provider.selectedDay})',
+                value: '$todayPct%',
+                subtitle: '$todayDone de ${todayTasks.length} hechas',
+                progress: todayTasks.isEmpty ? 0 : todayDone / todayTasks.length,
+                color: todayPct >= 80 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
+                icon: Icons.today_rounded,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildOpIndicatorCard(
+                title: 'Semana Total',
+                value: '$weekPct%',
+                subtitle: '$weekDone hechas · $weekPending pend.',
+                progress: weekTasks.isEmpty ? 0 : weekDone / weekTasks.length,
+                color: const Color(0xFF007AFF),
+                icon: Icons.calendar_view_week_rounded,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildOpIndicatorCard(
+                title: 'Fijas / Flexibles',
+                value: '$fixedDone/$fixedTotal',
+                subtitle: 'Flexibles: $flexDone/$flexTotal',
+                progress: fixedTotal == 0 ? 0 : fixedDone / fixedTotal,
+                color: const Color(0xFF5856D6),
+                icon: Icons.lock_clock_rounded,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildOpIndicatorCard(
+                title: 'Planes de Acción',
+                value: '$myPlansClosed/${myPlans.length}',
+                subtitle: '${myPlans.length - myPlansClosed} pendientes',
+                progress: myPlans.isEmpty ? 0 : myPlansClosed / myPlans.length,
+                color: const Color(0xFFFF9500),
+                icon: Icons.fact_check_rounded,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE5E5EA)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Avance por Día de la Semana', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+              const SizedBox(height: 12),
+              for (final d in const [
+                {'k': 1, 'n': 'Lunes'},
+                {'k': 2, 'n': 'Martes'},
+                {'k': 3, 'n': 'Miércoles'},
+                {'k': 4, 'n': 'Jueves'},
+                {'k': 5, 'n': 'Viernes'},
+              ])
+                Builder(builder: (_) {
+                  final dTasks = weekTasks.where((t) => t.day == d['k']).toList();
+                  final dDone = dTasks.where((t) => t.done).length;
+                  final dPct = dTasks.isEmpty ? 0.0 : dDone / dTasks.length;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(d['n'] as String, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1D1D1F))),
+                            Text('$dDone / ${dTasks.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: dPct,
+                            minHeight: 8,
+                            backgroundColor: const Color(0xFFF2F2F7),
+                            color: dPct >= 1.0 && dTasks.isNotEmpty ? const Color(0xFF34C759) : const Color(0xFF007AFF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOpIndicatorCard({
+    required String title,
+    required String value,
+    required String subtitle,
+    required double progress,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, size: 17, color: color),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF3A3A3C))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: color, letterSpacing: -0.5)),
+          const SizedBox(height: 2),
+          Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF86868B))),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              minHeight: 5,
+              backgroundColor: const Color(0xFFF2F2F7),
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

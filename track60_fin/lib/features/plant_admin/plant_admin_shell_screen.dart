@@ -1229,6 +1229,8 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
   String _tipoActividad = 'ejecucion'; // 'ejecucion' o 'registro'
   bool _planAccionObligatorio = false;
   String? _selectedOperatorId;
+  String _activitySearch = '';
+  int _dayFilter = 0; // 0 = Todos, 1..5 = L..V
 
   final List<ActivitySubtaskModel> _subtasks = [];
 
@@ -1417,19 +1419,19 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
     );
   }
 
-  void _saveActivity() async {
+  Future<bool> _saveActivity() async {
     if (_selectedOperatorId == null || _nombreCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecciona el colaborador e ingresa el nombre de la actividad')),
       );
-      return;
+      return false;
     }
 
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecciona al menos un día para programar la actividad')),
       );
-      return;
+      return false;
     }
 
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
@@ -1437,7 +1439,7 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
     // Validar límite de capacidad de creación de planta (Base 2 para Admin de Planta + adicionales autorizadas)
     if (!provider.canCreateMorePlantActivities) {
       _showExtraTaskRequestModal(context, provider);
-      return;
+      return false;
     }
 
     // Validar si el operador ya tiene 10 o más tareas en alguno de los días seleccionados
@@ -1452,14 +1454,14 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
 
     if (exceedsTen) {
       _showExtraTaskRequestModal(context, provider);
-      return;
+      return false;
     }
 
     if (_tipoActividad == 'ejecucion' && _subtasks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('En actividad de ejecución, agrega al menos una subtarea')),
       );
-      return;
+      return false;
     }
 
     await provider.createPlantActivity(
@@ -1482,364 +1484,538 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Color(0xFF16A34A),
-          content: Text('¡Actividad creada y asignada al colaborador con éxito!'),
+          content: Text('¡Actividad creada y asignada con éxito!'),
         ),
       );
       _nombreCtrl.clear();
       _descCtrl.clear();
       setState(() => _subtasks.clear());
+      return true;
     }
+    return false;
+  }
+
+  void _openCreateActivityModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) {
+          final provider = Provider.of<StandardWorkProvider>(sheetCtx);
+          final operators = provider.usersForCurrentPlant.where((u) => u.isOperator || u.isSupervisor).toList();
+
+          return Container(
+            height: MediaQuery.of(sheetCtx).size.height * 0.90,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(999)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 10, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Nueva Actividad Estándar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                            Text('Define horario, responsable y pasos obligatorios', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.of(sheetCtx).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Plantillas Operativas:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                            TextButton.icon(
+                              onPressed: () {
+                                TemplatesModal.show(
+                                  context: sheetCtx,
+                                  onSelectTemplate: (tmpl) {
+                                    setState(() {
+                                      _nombreCtrl.text = tmpl.nombre;
+                                      _descCtrl.text = tmpl.descripcion;
+                                      _areaCtrl.text = tmpl.area;
+                                      _catCtrl.text = tmpl.category;
+                                      _fija = tmpl.fija;
+                                      _tipoActividad = tmpl.tipoActividad;
+                                      _planAccionObligatorio = tmpl.planAccionObligatorio;
+                                      _subtasks.clear();
+                                      _subtasks.addAll(tmpl.subtasks.map((s) => s.copyWith(activityId: 0)));
+                                    });
+                                    setSheetState(() {});
+                                  },
+                                );
+                              },
+                              icon: const Icon(Icons.auto_stories_rounded, size: 16, color: Color(0xFF002F6C)),
+                              label: const Text('Explorar Plantillas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF002F6C))),
+                            ),
+                          ],
+                        ),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              ActionChip(
+                                avatar: const Icon(Icons.bolt_rounded, size: 15, color: Color(0xFF002F6C)),
+                                label: const Text('Plantilla 5S Extrusión', style: TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  _loadTemplate('5s_extrusion');
+                                  setSheetState(() {});
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              ActionChip(
+                                avatar: const Icon(Icons.speed_rounded, size: 15, color: Color(0xFF0284C7)),
+                                label: const Text('Plantilla Calidad Termo', style: TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  _loadTemplate('calidad_termoformado');
+                                  setSheetState(() {});
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('Modalidad de la Actividad:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            ChoiceChip(
+                              label: const Text('🛠️ Ejecución', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                              selected: _tipoActividad == 'ejecucion',
+                              selectedColor: const Color(0xFF002F6C),
+                              labelStyle: TextStyle(color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF002F6C)),
+                              onSelected: (val) {
+                                if (val) {
+                                  setState(() => _tipoActividad = 'ejecucion');
+                                  setSheetState(() {});
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: const Text('📝 Registro / Reunión', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                              selected: _tipoActividad == 'registro',
+                              selectedColor: const Color(0xFF0284C7),
+                              labelStyle: TextStyle(color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF0284C7)),
+                              onSelected: (val) {
+                                if (val) {
+                                  setState(() => _tipoActividad = 'registro');
+                                  setSheetState(() {});
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: operators.any((u) => u.id == _selectedOperatorId) ? _selectedOperatorId : null,
+                          decoration: InputDecoration(
+                            labelText: 'Responsable (Operador o Supervisor) *',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          items: operators.map((u) => DropdownMenuItem(
+                            value: u.id,
+                            child: Text('${u.nombre} (${u.isSupervisor ? 'Supervisor' : 'Operador'})', overflow: TextOverflow.ellipsis),
+                          )).toList(),
+                          onChanged: (v) {
+                            setState(() => _selectedOperatorId = v);
+                            setSheetState(() {});
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _nombreCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Nombre de la Actividad *',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _descCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Descripción / Instrucción',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _horaIniCtrl,
+                                decoration: InputDecoration(labelText: 'Inicio', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: _horaFinCtrl,
+                                decoration: InputDecoration(labelText: 'Fin', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('Días de Programación Operativa:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          children: [
+                            {'d': 1, 'name': 'Lun'},
+                            {'d': 2, 'name': 'Mar'},
+                            {'d': 3, 'name': 'Mié'},
+                            {'d': 4, 'name': 'Jue'},
+                            {'d': 5, 'name': 'Vie'},
+                          ].map((item) {
+                            final day = item['d'] as int;
+                            final name = item['name'] as String;
+                            final isSel = _selectedDays.contains(day);
+                            return FilterChip(
+                              label: Text(name, style: TextStyle(fontSize: 11, fontWeight: isSel ? FontWeight.bold : FontWeight.normal)),
+                              selected: isSel,
+                              selectedColor: const Color(0xFF002F6C),
+                              labelStyle: TextStyle(color: isSel ? Colors.white : Colors.black87),
+                              onSelected: (val) {
+                                setState(() {
+                                  if (val) {
+                                    _selectedDays.add(day);
+                                  } else if (_selectedDays.length > 1) {
+                                    _selectedDays.remove(day);
+                                  }
+                                });
+                                setSheetState(() {});
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 8),
+                        SwitchListTile(
+                          title: const Text('Actividad Fija (Inmutable)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          subtitle: const Text('No permite reprogramaciones'),
+                          value: _fija,
+                          activeThumbColor: const Color(0xFFDC2626),
+                          onChanged: (val) {
+                            setState(() => _fija = val);
+                            setSheetState(() {});
+                          },
+                        ),
+                        SwitchListTile(
+                          title: const Text('¿Requiere Plan de Acción Obligatorio?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          subtitle: const Text('No se podrá completar sin registrar el plan', style: TextStyle(fontSize: 11)),
+                          value: _planAccionObligatorio,
+                          activeThumbColor: const Color(0xFFDC2626),
+                          onChanged: (val) {
+                            setState(() => _planAccionObligatorio = val);
+                            setSheetState(() {});
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        if (_tipoActividad == 'registro')
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFBAE6FD)),
+                            ),
+                            child: const Text(
+                              'Modalidad Registro: El responsable documentará notas de reunión y acuerdos desde "Registrar Información / Minuta".',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF0369A1)),
+                            ),
+                          )
+                        else ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Subtareas de Ejecución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              TextButton.icon(
+                                onPressed: () {
+                                  _addSubtaskDialog();
+                                  Future.delayed(const Duration(milliseconds: 250), () {
+                                    if (sheetCtx.mounted) setSheetState(() {});
+                                  });
+                                },
+                                icon: const Icon(Icons.add, size: 16),
+                                label: const Text('Agregar Paso'),
+                              ),
+                            ],
+                          ),
+                          if (_subtasks.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Center(child: Text('Sin subtareas definidas aún.', style: TextStyle(fontSize: 12, color: Colors.grey.shade500))),
+                            )
+                          else
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _subtasks.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 6),
+                              itemBuilder: (_, i) {
+                                final s = _subtasks[i];
+                                return ListTile(
+                                  tileColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade300)),
+                                  leading: CircleAvatar(radius: 12, child: Text('${s.orden}', style: const TextStyle(fontSize: 10))),
+                                  title: Text(s.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                    onPressed: () {
+                                      setState(() => _subtasks.removeAt(i));
+                                      setSheetState(() {});
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                        ],
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final ok = await _saveActivity();
+                              if (ok && sheetCtx.mounted) {
+                                Navigator.of(sheetCtx).pop();
+                              }
+                            },
+                            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+                            label: const Text('Guardar y Programar Actividad', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF007AFF),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<StandardWorkProvider>(context);
-    final operators = provider.usersForCurrentPlant.where((u) => u.isOperator || u.isSupervisor).toList();
+    final plantUsers = provider.usersForCurrentPlant;
+    final userMap = {for (final u in plantUsers) u.id: u};
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Diseñador de Actividad Estándar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          const Text('Define la actividad y los pasos obligatorios para el colaborador', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-          const SizedBox(height: 12),
+    final plantActivities = provider.instances.where((inst) {
+      if (!userMap.containsKey(inst.userId)) return false;
+      if (_dayFilter != 0 && inst.day != _dayFilter) return false;
+      if (_activitySearch.isNotEmpty) {
+        final q = _activitySearch.toLowerCase();
+        final ownerName = (userMap[inst.userId]?.nombre ?? '').toLowerCase();
+        if (!inst.nombre.toLowerCase().contains(q) &&
+            !inst.area.toLowerCase().contains(q) &&
+            !ownerName.contains(q)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
 
-          // Banner de Capacidad Autorizada (Base 2 para Planta)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: provider.canCreateMorePlantActivities ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: provider.canCreateMorePlantActivities ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  provider.canCreateMorePlantActivities ? Icons.verified_user_rounded : Icons.warning_amber_rounded,
-                  color: provider.canCreateMorePlantActivities ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
-                  size: 24,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Capacidad de Creación de Planta: ${provider.localActivitiesCountForPlant} de ${provider.allowedCreationCapacityForPlant} actividades locales',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: provider.canCreateMorePlantActivities ? const Color(0xFF166534) : const Color(0xFF991B1B),
-                        ),
-                      ),
-                      Text(
-                        provider.canCreateMorePlantActivities
-                            ? 'Tienes cupo disponible para diseñar rutinas estándar locales en esta planta.'
-                            : 'Has alcanzado el límite máximo autorizado. Solicita ampliación a Javier Julio.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: provider.canCreateMorePlantActivities ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!provider.canCreateMorePlantActivities)
-                  ElevatedButton(
-                    onPressed: () => _showExtraTaskRequestModal(context, provider),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFDC2626),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      minimumSize: Size.zero,
-                    ),
-                    child: const Text('Ampliar', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Modalidad de Actividad: Ejecución vs Registro de Información / Reunión
-          const Text('Modalidad de la Actividad:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-          const SizedBox(height: 6),
-          Row(
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ChoiceChip(
-                label: const Text('🛠️ Actividad de Ejecución', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                selected: _tipoActividad == 'ejecucion',
-                selectedColor: const Color(0xFF002F6C),
-                labelStyle: TextStyle(color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF002F6C)),
-                onSelected: (val) {
-                  if (val) setState(() => _tipoActividad = 'ejecucion');
-                },
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('📝 Registro / Reunión', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                selected: _tipoActividad == 'registro',
-                selectedColor: const Color(0xFF0284C7),
-                labelStyle: TextStyle(color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF0284C7)),
-                onSelected: (val) {
-                  if (val) setState(() => _tipoActividad = 'registro');
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Banco de Plantillas y Modal de Plantillas Profesional
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Plantillas Operativas:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-              TextButton.icon(
-                onPressed: () {
-                  TemplatesModal.show(
-                    context: context,
-                    onSelectTemplate: (tmpl) {
-                      setState(() {
-                        _nombreCtrl.text = tmpl.nombre;
-                        _descCtrl.text = tmpl.descripcion;
-                        _areaCtrl.text = tmpl.area;
-                        _catCtrl.text = tmpl.category;
-                        _fija = tmpl.fija;
-                        _tipoActividad = tmpl.tipoActividad;
-                        _planAccionObligatorio = tmpl.planAccionObligatorio;
-                        _subtasks.clear();
-                        _subtasks.addAll(tmpl.subtasks.map((s) => s.copyWith(activityId: 0)));
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Plantilla "${tmpl.nombre}" aplicada al formulario'), backgroundColor: const Color(0xFF002F6C)),
-                      );
-                    },
-                  );
-                },
-                icon: const Icon(Icons.auto_stories_rounded, size: 16, color: Color(0xFF002F6C)),
-                label: const Text('Nueva Plantilla', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF002F6C))),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                ActionChip(
-                  avatar: const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFF002F6C)),
-                  label: const Text('Plantilla 5S Extrusión', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF002F6C))),
-                  backgroundColor: const Color(0xFFF1F5F9),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  onPressed: () => _loadTemplate('5s_extrusion'),
-                ),
-                const SizedBox(width: 8),
-                ActionChip(
-                  avatar: const Icon(Icons.speed_rounded, size: 16, color: Color(0xFF0284C7)),
-                  label: const Text('Plantilla Calidad Termo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
-                  backgroundColor: const Color(0xFFF0F9FF),
-                  side: const BorderSide(color: Color(0xFFBAE6FD)),
-                  onPressed: () => _loadTemplate('calidad_termoformado'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          DropdownButtonFormField<String>(
-            initialValue: _selectedOperatorId,
-            decoration: InputDecoration(
-              labelText: 'Responsable (Colaborador o Supervisor) *',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            items: operators
-                .map((o) => DropdownMenuItem(
-                      value: o.id,
-                      child: Text('${o.nombre} (${o.isSupervisor ? "Supervisor" : o.cargo})'),
-                    ))
-                .toList(),
-            onChanged: (val) => setState(() => _selectedOperatorId = val),
-          ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _nombreCtrl,
-            decoration: InputDecoration(
-              labelText: 'Nombre de la Actividad *',
-              hintText: 'Ej. Limpieza Técnica de Matriz de Extrusión',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _descCtrl,
-            decoration: InputDecoration(
-              labelText: 'Descripción / Instrucción',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _horaIniCtrl,
-                  decoration: InputDecoration(labelText: 'Inicio', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: _horaFinCtrl,
-                  decoration: InputDecoration(labelText: 'Fin', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Selector Explícito de Días
-          const Text('Días de Programación Operativa:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              {'d': 1, 'name': 'Lun'},
-              {'d': 2, 'name': 'Mar'},
-              {'d': 3, 'name': 'Mié'},
-              {'d': 4, 'name': 'Jue'},
-              {'d': 5, 'name': 'Vie'},
-            ].map((item) {
-              final day = item['d'] as int;
-              final name = item['name'] as String;
-              final isSel = _selectedDays.contains(day);
-              return FilterChip(
-                label: Text(name, style: TextStyle(fontSize: 11, fontWeight: isSel ? FontWeight.bold : FontWeight.normal)),
-                selected: isSel,
-                selectedColor: const Color(0xFF002F6C),
-                labelStyle: TextStyle(color: isSel ? Colors.white : Colors.black87),
-                onSelected: (val) {
-                  setState(() {
-                    if (val) {
-                      _selectedDays.add(day);
-                    } else if (_selectedDays.length > 1) {
-                      _selectedDays.remove(day);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-
-          SwitchListTile(
-            title: const Text('Actividad Fija (Inmutable)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: const Text('No permite reprogramaciones'),
-            value: _fija,
-            activeThumbColor: const Color(0xFFDC2626),
-            onChanged: (val) => setState(() => _fija = val),
-          ),
-          const SizedBox(height: 12),
-
-          SwitchListTile(
-            title: const Text('¿Requiere Plan de Acción Obligatorio?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            subtitle: const Text('El colaborador no podrá completar la actividad sin registrar el plan de acción', style: TextStyle(fontSize: 11)),
-            value: _planAccionObligatorio,
-            activeThumbColor: const Color(0xFFDC2626),
-            onChanged: (val) => setState(() => _planAccionObligatorio = val),
-          ),
-          const SizedBox(height: 16),
-
-          if (_tipoActividad == 'registro') ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFBAE6FD)),
-              ),
-              child: const Row(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.assignment_turned_in_rounded, color: Color(0xFF0284C7), size: 22),
-                  SizedBox(width: 10),
-                  Expanded(
+                  const Text(
+                    'Actividades de la Planta',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: provider.canCreateMorePlantActivities ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                     child: Text(
-                      'Modalidad Registro: El colaborador documentará notas de reunión, participantes, acuerdos y observaciones directamente desde el botón "Registrar Información / Minuta".',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF0369A1)),
+                      'Cupo local: ${provider.localActivitiesCountForPlant}/${provider.allowedCreationCapacityForPlant}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: provider.canCreateMorePlantActivities ? const Color(0xFF166534) : const Color(0xFF991B1B),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ] else ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Subtareas de Ejecución:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                TextButton.icon(
-                  onPressed: _addSubtaskDialog,
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Agregar Paso'),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (v) => setState(() => _activitySearch = v),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por actividad, área o responsable...',
+                  hintStyle: const TextStyle(fontSize: 13),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
                 ),
-              ],
-            ),
-
-            if (_subtasks.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: Text('Sin subtareas definidas aún.', style: TextStyle(fontSize: 12, color: Colors.grey.shade500))),
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _subtasks.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 6),
-                itemBuilder: (context, i) {
-                  final s = _subtasks[i];
-                  return ListTile(
-                    tileColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade300)),
-                    leading: CircleAvatar(radius: 12, child: Text('${s.orden}', style: const TextStyle(fontSize: 10))),
-                    title: Text(s.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (s.requiereFoto) const Icon(Icons.camera_alt, size: 16, color: Color(0xFF0284C7)),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                          onPressed: () => setState(() => _subtasks.removeAt(i)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
               ),
-          ],
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: _saveActivity,
-              icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-              label: const Text('Guardar y Programar en Estándar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C)),
+              const SizedBox(height: 10),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: const [
+                    {'d': 0, 'l': 'Todos los días'},
+                    {'d': 1, 'l': 'L'},
+                    {'d': 2, 'l': 'M'},
+                    {'d': 3, 'l': 'X'},
+                    {'d': 4, 'l': 'J'},
+                    {'d': 5, 'l': 'V'},
+                  ].map((item) {
+                    final d = item['d'] as int;
+                    final label = item['l'] as String;
+                    final sel = _dayFilter == d;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : const Color(0xFF1D1D1F))),
+                        selected: sel,
+                        selectedColor: const Color(0xFF007AFF),
+                        backgroundColor: Colors.white,
+                        onSelected: (_) => setState(() => _dayFilter = d),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: plantActivities.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.assignment_outlined, size: 44, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      Text('No hay actividades para mostrar', style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                  itemCount: plantActivities.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, idx) {
+                    final item = plantActivities[idx];
+                    final owner = userMap[item.userId];
+                    final borderColor = item.done ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
+                    return Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: borderColor.withValues(alpha: 0.55), width: 1.4),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3))],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 44,
+                            decoration: BoxDecoration(color: borderColor, borderRadius: BorderRadius.circular(999)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.nombre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${owner?.nombre ?? 'Sin asignar'} (${owner?.isSupervisor == true ? 'Supervisor' : 'Operador'}) · ${item.day} ${item.timeStart}-${item.timeEnd}',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: item.fija ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              item.fija ? 'FIJA' : 'FLEX',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: item.fija ? const Color(0xFFDC2626) : const Color(0xFF007AFF)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () => _openCreateActivityModal(context),
+                icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
+                label: const Text('Crear Actividad', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF007AFF),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
