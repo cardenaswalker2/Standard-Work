@@ -1903,6 +1903,285 @@ class _SuperAdminCorporateDispatchTab extends StatefulWidget {
 }
 
 class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDispatchTab> {
+  String _search = '';
+  String _plantFilter = 'ALL';
+
+  void _openCreateDispatchSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => Container(
+        height: MediaQuery.of(sheetCtx).size.height * 0.92,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(999)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 10, 6),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Despacho Universal Corporativo', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                        Text('Crea y asigna rutinas marco a una o todas las plantas', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.of(sheetCtx).pop(),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: _SuperAdminCorporateDispatchForm(
+                onDispatched: () {
+                  if (sheetCtx.mounted) Navigator.of(sheetCtx).pop();
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<StandardWorkProvider>(context);
+    final usersById = {for (final u in provider.allUsers) u.id: u};
+    final plants = provider.allPlants;
+
+    final filtered = provider.instances.where((inst) {
+      final owner = usersById[inst.userId];
+      if (_plantFilter != 'ALL' && owner?.plantId != _plantFilter) return false;
+      if (_search.isNotEmpty) {
+        final q = _search.toLowerCase();
+        final ownerName = (owner?.nombre ?? '').toLowerCase();
+        if (!inst.nombre.toLowerCase().contains(q) &&
+            !inst.area.toLowerCase().contains(q) &&
+            !ownerName.contains(q)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Actividades Corporativas',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${filtered.length} actividades',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF002F6C)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (v) => setState(() => _search = v),
+                decoration: InputDecoration(
+                  hintText: 'Buscar actividad, área o responsable...',
+                  hintStyle: const TextStyle(fontSize: 13),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text('Todas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _plantFilter == 'ALL' ? Colors.white : const Color(0xFF1D1D1F))),
+                        selected: _plantFilter == 'ALL',
+                        selectedColor: const Color(0xFF007AFF),
+                        backgroundColor: Colors.white,
+                        onSelected: (_) => setState(() => _plantFilter = 'ALL'),
+                      ),
+                    ),
+                    ...plants.map((p) {
+                      final sel = _plantFilter == p.id;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(p.nombre, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : const Color(0xFF1D1D1F))),
+                          selected: sel,
+                          selectedColor: const Color(0xFF007AFF),
+                          backgroundColor: Colors.white,
+                          onSelected: (_) => setState(() => _plantFilter = p.id),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.assignment_outlined, size: 44, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      Text('No hay actividades para mostrar', style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, idx) {
+                    final item = filtered[idx];
+                    final owner = usersById[item.userId];
+                    final borderColor = item.done ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
+                    return Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: borderColor.withValues(alpha: 0.55), width: 1.4),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3))],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 44,
+                            decoration: BoxDecoration(color: borderColor, borderRadius: BorderRadius.circular(999)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.nombre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${owner?.nombre ?? 'Sin asignar'} · ${owner?.plantId ?? '-'} · Día ${item.day} (${item.timeStart}-${item.timeEnd})',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: item.fija ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              item.fija ? 'FIJA' : 'FLEX',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: item.fija ? const Color(0xFFDC2626) : const Color(0xFF007AFF)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _openCreateDispatchSheet(context),
+                      icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
+                      label: const Text('Crear Actividad', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF007AFF),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        TemplatesModal.show(
+                          context: context,
+                          onSelectTemplate: (_) => _openCreateDispatchSheet(context),
+                        );
+                      },
+                      icon: const Icon(Icons.auto_stories_rounded, size: 18, color: Color(0xFF002F6C)),
+                      label: const Text('Plantillas', style: TextStyle(color: Color(0xFF002F6C), fontSize: 13, fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SuperAdminCorporateDispatchForm extends StatefulWidget {
+  final VoidCallback? onDispatched;
+  const _SuperAdminCorporateDispatchForm({this.onDispatched});
+
+  @override
+  State<_SuperAdminCorporateDispatchForm> createState() => _SuperAdminCorporateDispatchFormState();
+}
+
+class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDispatchForm> {
   final _nombreCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _horaIniCtrl = TextEditingController(text: '08:00');
@@ -2184,6 +2463,7 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
       );
       _nombreCtrl.clear();
       _descCtrl.clear();
+      widget.onDispatched?.call();
     }
   }
 
