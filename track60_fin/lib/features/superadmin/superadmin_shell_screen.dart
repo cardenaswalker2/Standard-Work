@@ -1980,195 +1980,303 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
       return true;
     }).toList();
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+    // Agrupar actividades repetidas por nombre + horario para evitar listas repetitivas
+    final Map<String, List<ActivityInstance>> groupedMap = {};
+    for (final inst in filtered) {
+      final key = '${inst.nombre}__${inst.timeStart}__${inst.timeEnd}';
+      groupedMap.putIfAbsent(key, () => []).add(inst);
+    }
+    final groups = groupedMap.values.toList();
+
+    return Container(
+      color: const Color(0xFFF2F2F7),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Actividades Corporativas',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      '${filtered.length} actividades',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF002F6C)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                onChanged: (v) => setState(() => _search = v),
-                decoration: InputDecoration(
-                  hintText: 'Buscar actividad, área o responsable...',
-                  hintStyle: const TextStyle(fontSize: 13),
-                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                  isDense: true,
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                ),
-              ),
-              const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: ChoiceChip(
-                        label: Text('Todas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _plantFilter == 'ALL' ? Colors.white : const Color(0xFF1D1D1F))),
-                        selected: _plantFilter == 'ALL',
-                        selectedColor: const Color(0xFF007AFF),
-                        backgroundColor: Colors.white,
-                        onSelected: (_) => setState(() => _plantFilter = 'ALL'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Actividades Corporativas',
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.3),
+                            ),
+                            Text(
+                              '${groups.length} rutinas únicas · ${filtered.length} asignaciones activas',
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFFE5E5EA)),
+                          ),
+                          child: Text(
+                            '${groups.length} rutinas',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF007AFF)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      onChanged: (v) => setState(() => _search = v),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por actividad, área o responsable...',
+                        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF8E8E93)),
+                        prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF8E8E93)),
+                        isDense: true,
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
                       ),
                     ),
-                    ...plants.map((p) {
-                      final sel = _plantFilter == p.id;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ChoiceChip(
-                          label: Text(p.nombre, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : const Color(0xFF1D1D1F))),
-                          selected: sel,
-                          selectedColor: const Color(0xFF007AFF),
-                          backgroundColor: Colors.white,
-                          onSelected: (_) => setState(() => _plantFilter = p.id),
-                        ),
-                      );
-                    }),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text('Todas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _plantFilter == 'ALL' ? Colors.white : const Color(0xFF1D1D1F))),
+                              selected: _plantFilter == 'ALL',
+                              selectedColor: const Color(0xFF007AFF),
+                              backgroundColor: Colors.white,
+                              side: BorderSide(color: _plantFilter == 'ALL' ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA)),
+                              onSelected: (_) => setState(() => _plantFilter = 'ALL'),
+                            ),
+                          ),
+                          ...plants.map((p) {
+                            final sel = _plantFilter == p.id;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(p.nombre, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : const Color(0xFF1D1D1F))),
+                                selected: sel,
+                                selectedColor: const Color(0xFF007AFF),
+                                backgroundColor: Colors.white,
+                                side: BorderSide(color: sel ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA)),
+                                onSelected: (_) => setState(() => _plantFilter = p.id),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
                   ],
+                ),
+              ),
+              Expanded(
+                child: groups.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.assignment_outlined, size: 44, color: Colors.grey.shade400),
+                            const SizedBox(height: 8),
+                            Text('No hay actividades para mostrar', style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      )
+                    : LayoutBuilder(
+                        builder: (ctx, constraints) {
+                          final isWide = constraints.maxWidth >= 720;
+                          if (isWide) {
+                            return GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                mainAxisExtent: 118,
+                              ),
+                              itemCount: groups.length,
+                              itemBuilder: (_, idx) => _buildCorporateGroupCard(groups[idx], usersById),
+                            );
+                          }
+                          return ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                            itemCount: groups.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            itemBuilder: (_, idx) => _buildCorporateGroupCard(groups[idx], usersById),
+                          );
+                        },
+                      ),
+              ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _openCreateDispatchSheet(context),
+                            icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
+                            label: const Text('Crear Actividad', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF007AFF),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              TemplatesModal.show(
+                                context: context,
+                                onSelectTemplate: (_) => _openCreateDispatchSheet(context),
+                              );
+                            },
+                            icon: const Icon(Icons.auto_stories_rounded, size: 18, color: Color(0xFF002F6C)),
+                            label: const Text('Plantillas', style: TextStyle(color: Color(0xFF002F6C), fontSize: 13, fontWeight: FontWeight.w700)),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFD1D5DB)),
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.assignment_outlined, size: 44, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text('No hay actividades para mostrar', style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, idx) {
-                    final item = filtered[idx];
-                    final owner = usersById[item.userId];
-                    final borderColor = item.done ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
-                    return Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: borderColor.withValues(alpha: 0.55), width: 1.4),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3))],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 44,
-                            decoration: BoxDecoration(color: borderColor, borderRadius: BorderRadius.circular(999)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item.nombre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${owner?.nombre ?? 'Sin asignar'} · ${owner?.plantId ?? '-'} · Día ${item.day} (${item.timeStart}-${item.timeEnd})',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: item.fija ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              item.fija ? 'FIJA' : 'FLEX',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: item.fija ? const Color(0xFFDC2626) : const Color(0xFF007AFF)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-        ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _openCreateDispatchSheet(context),
-                      icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
-                      label: const Text('Crear Actividad', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF007AFF),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
+      ),
+    );
+  }
+
+  Widget _buildCorporateGroupCard(List<ActivityInstance> group, Map<String, UserProfile> usersById) {
+    final first = group.first;
+    final doneCount = group.where((i) => i.done).length;
+    final pct = group.isEmpty ? 0.0 : doneCount / group.length;
+    final allDone = doneCount == group.length;
+    final accentColor = allDone ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
+
+    final plantNames = group
+        .map((i) => usersById[i.userId]?.plantId)
+        .whereType<String>()
+        .toSet()
+        .toList();
+    final ownerNames = group
+        .map((i) => usersById[i.userId]?.nombre)
+        .whereType<String>()
+        .toSet()
+        .toList();
+
+    final scopeLabel = plantNames.isEmpty
+        ? 'Corporativa'
+        : plantNames.length == 1
+            ? plantNames.first
+            : '${plantNames.length} plantas';
+    final peopleLabel = ownerNames.isEmpty
+        ? 'Sin asignar'
+        : ownerNames.length == 1
+            ? ownerNames.first
+            : '${ownerNames.first} +${ownerNames.length - 1}';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accentColor.withValues(alpha: 0.35), width: 1.3),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 36,
+                decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(999)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      first.nombre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F)),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        TemplatesModal.show(
-                          context: context,
-                          onSelectTemplate: (_) => _openCreateDispatchSheet(context),
-                        );
-                      },
-                      icon: const Icon(Icons.auto_stories_rounded, size: 18, color: Color(0xFF002F6C)),
-                      label: const Text('Plantillas', style: TextStyle(color: Color(0xFF002F6C), fontSize: 13, fontWeight: FontWeight.w700)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$scopeLabel · $peopleLabel · ${first.timeStart}-${first.timeEnd}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: first.fija ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  first.fija ? 'FIJA' : 'FLEX',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: first.fija ? const Color(0xFFDC2626) : const Color(0xFF007AFF)),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: pct,
+                    minHeight: 6,
+                    backgroundColor: const Color(0xFFF2F2F7),
+                    color: accentColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '$doneCount/${group.length} completadas',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: accentColor),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2476,49 +2584,6 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // BANNER HERO DIRECTIVO
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF002F6C), Color(0xFF0284C7)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF002F6C).withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.campaign_rounded, color: Colors.white, size: 36),
-                SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Despacho Universal Corporativo',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Javier Julio configura las rutinas marco para todas las plantas con control total de días, pasos y evidencias.',
-                        style: TextStyle(color: Colors.white70, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
           // PLANTILLAS RÁPIDAS Y GESTOR DE PLANTILLAS
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2567,45 +2632,73 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
           ),
           const SizedBox(height: 16),
 
-          // MODALIDAD DE ACTIVIDAD
+          // MODALIDAD DE ACTIVIDAD (ESTILO APPLE SEGMENTADO)
           const Text('Modalidad de la Actividad:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: ChoiceChip(
-                  label: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.engineering_rounded, size: 16),
-                      SizedBox(width: 6),
-                      Text('Actividad de Ejecución', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE5E5EA),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _tipoActividad = 'ejecucion'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _tipoActividad == 'ejecucion' ? const Color(0xFF007AFF) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.engineering_rounded, size: 16, color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF3A3A3C)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Actividad de Ejecución',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF3A3A3C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  selected: _tipoActividad == 'ejecucion',
-                  selectedColor: const Color(0xFF002F6C),
-                  labelStyle: TextStyle(color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF334155)),
-                  onSelected: (_) => setState(() => _tipoActividad = 'ejecucion'),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ChoiceChip(
-                  label: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.edit_note_rounded, size: 16),
-                      SizedBox(width: 6),
-                      Text('Registro / Reunión', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _tipoActividad = 'registro'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _tipoActividad == 'registro' ? const Color(0xFF007AFF) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.edit_note_rounded, size: 16, color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF3A3A3C)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Registro / Reunión',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF3A3A3C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  selected: _tipoActividad == 'registro',
-                  selectedColor: const Color(0xFF0284C7),
-                  labelStyle: TextStyle(color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF334155)),
-                  onSelected: (_) => setState(() => _tipoActividad = 'registro'),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 12),
 
