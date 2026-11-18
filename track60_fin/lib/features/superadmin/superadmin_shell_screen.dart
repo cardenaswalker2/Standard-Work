@@ -2200,15 +2200,20 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
             ? ownerNames.first
             : '${ownerNames.first} +${ownerNames.length - 1}';
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accentColor.withValues(alpha: 0.35), width: 1.3),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
-      ),
-      child: Column(
+        onTap: () => _openGroupDetailSheet(context, group, usersById),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accentColor.withValues(alpha: 0.35), width: 1.3),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+          ),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -2276,6 +2281,132 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
             ],
           ),
         ],
+      ),
+        ),
+      ),
+    );
+  }
+
+  void _openGroupDetailSheet(BuildContext context, List<ActivityInstance> group, Map<String, UserProfile> usersById) {
+    final first = group.first;
+    final doneCount = group.where((i) => i.done).length;
+    const dayLabels = {1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb'};
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => Container(
+        height: MediaQuery.of(sheetCtx).size.height * 0.82,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(999)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 10, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(first.nombre, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${first.area} · ${first.timeStart}-${first.timeEnd} · $doneCount/${group.length} completadas',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.of(sheetCtx).pop(),
+                  ),
+                ],
+              ),
+            ),
+            if (first.descripcion.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E5EA)),
+                  ),
+                  child: Text(first.descripcion, style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
+                ),
+              ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: group.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final inst = group[i];
+                  final owner = usersById[inst.userId];
+                  final statusColor = inst.done ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          inst.done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                          color: statusColor,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                owner?.nombre ?? 'Sin asignar',
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F)),
+                              ),
+                              Text(
+                                '${owner?.plantId ?? inst.plantId} · ${dayLabels[inst.day] ?? 'Día ${inst.day}'}',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            inst.done ? 'Completada' : 'Pendiente',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
