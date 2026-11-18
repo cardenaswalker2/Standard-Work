@@ -1990,10 +1990,12 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
 
     return Container(
       color: const Color(0xFFF2F2F7),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
-          child: Column(
+      child: Stack(
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1120),
+              child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
@@ -2097,7 +2099,7 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                           final isWide = constraints.maxWidth >= 720;
                           if (isWide) {
                             return GridView.builder(
-                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 125),
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 mainAxisSpacing: 12,
@@ -2109,7 +2111,7 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                             );
                           }
                           return ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 125),
                             itemCount: groups.length,
                             separatorBuilder: (_, __) => const SizedBox(height: 10),
                             itemBuilder: (_, idx) => _buildCorporateGroupCard(groups[idx], usersById),
@@ -2117,58 +2119,55 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                         },
                       ),
               ),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: SizedBox(
-                          height: 48,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _openCreateDispatchSheet(context),
-                            icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
-                            label: const Text('Crear Actividad', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF007AFF),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: SizedBox(
-                          height: 48,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              TemplatesModal.show(
-                                context: context,
-                                onSelectTemplate: (_) => _openCreateDispatchSheet(context),
-                              );
-                            },
-                            icon: const Icon(Icons.auto_stories_rounded, size: 18, color: Color(0xFF002F6C)),
-                            label: const Text('Plantillas', style: TextStyle(color: Color(0xFF002F6C), fontSize: 13, fontWeight: FontWeight.w700)),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFD1D5DB)),
-                              backgroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            ],
+          ),
+        ),
+      ),
+      Positioned(
+        right: 16,
+        bottom: 16,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              FloatingActionButton.extended(
+                heroTag: 'superadmin_templates_fab',
+                onPressed: () {
+                  TemplatesModal.show(
+                    context: context,
+                    onSelectTemplate: (_) => _openCreateDispatchSheet(context),
+                  );
+                },
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF002F6C),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
                 ),
+                icon: const Icon(Icons.auto_stories_rounded, size: 18),
+                label: const Text('Plantillas', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton.extended(
+                heroTag: 'superadmin_create_act_fab',
+                onPressed: () => _openCreateDispatchSheet(context),
+                backgroundColor: const Color(0xFF002F6C),
+                foregroundColor: Colors.white,
+                elevation: 6,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                icon: const Icon(Icons.add_task_rounded, size: 20),
+                label: const Text('+ Crear Actividad', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
               ),
             ],
           ),
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 
   Widget _buildCorporateGroupCard(List<ActivityInstance> group, Map<String, UserProfile> usersById) {
