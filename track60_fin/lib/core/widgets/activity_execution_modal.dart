@@ -64,6 +64,101 @@ class _ActivityExecutionModalState extends State<ActivityExecutionModal> {
     }
   }
 
+  void _showPhotoSourceSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 38,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(999)),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Adjuntar Evidencia Fotográfica',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Elige cómo deseas cargar la foto de soporte',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.of(sheetCtx).pop();
+                        _pickPhoto(ImageSource.camera);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(Icons.camera_alt_rounded, size: 30, color: Color(0xFF002F6C)),
+                            SizedBox(height: 8),
+                            Text('Tomar Foto', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
+                            SizedBox(height: 2),
+                            Text('Usar cámara', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.of(sheetCtx).pop();
+                        _pickPhoto(ImageSource.gallery);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F9FF),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFBAE6FD)),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(Icons.photo_library_rounded, size: 30, color: Color(0xFF0284C7)),
+                            SizedBox(height: 8),
+                            Text('Buscar Foto', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0284C7))),
+                            SizedBox(height: 2),
+                            Text('Abrir galería', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPhotoThumbnail() {
     if (_photoPath == null) return const SizedBox.shrink();
 
@@ -281,40 +376,57 @@ class _ActivityExecutionModalState extends State<ActivityExecutionModal> {
                           ],
                         ],
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.camera_alt_rounded, color: Color(0xFF002F6C)),
-                            tooltip: 'Tomar Foto',
-                            onPressed: () => _pickPhoto(ImageSource.camera),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.photo_library_rounded, color: Color(0xFF0284C7)),
-                            tooltip: 'Seleccionar de Galería',
-                            onPressed: () => _pickPhoto(ImageSource.gallery),
-                          ),
-                        ],
+                      TextButton.icon(
+                        onPressed: () => _showPhotoSourceSheet(context),
+                        icon: const Icon(Icons.add_a_photo_rounded, size: 16, color: Color(0xFF007AFF)),
+                        label: const Text('Adjuntar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
                       ),
                     ],
                   ),
                   if (_photoPath == null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: inst.reqFoto ? const Color(0xFFFFFBEB) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: inst.reqFoto ? const Color(0xFFFDE68A) : Colors.grey.shade300, style: BorderStyle.solid),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(Icons.add_a_photo_outlined, size: 28, color: inst.reqFoto ? const Color(0xFFB45309) : Colors.grey.shade400),
-                          const SizedBox(height: 6),
-                          Text(
-                            inst.reqFoto ? 'Fotografía requerida para poder completar' : 'Opcional: Adjunta evidencia de orden o calidad',
-                            style: TextStyle(fontSize: 11, color: inst.reqFoto ? const Color(0xFFB45309) : Colors.grey.shade600, fontWeight: inst.reqFoto ? FontWeight.bold : FontWeight.normal),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => _showPhotoSourceSheet(context),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: inst.reqFoto ? const Color(0xFFFFFBEB) : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: inst.reqFoto ? const Color(0xFFF59E0B) : const Color(0xFFCBD5E1),
+                              width: 1.3,
+                            ),
                           ),
-                        ],
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: inst.reqFoto ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.add_a_photo_rounded,
+                                  size: 24,
+                                  color: inst.reqFoto ? const Color(0xFFB45309) : const Color(0xFF007AFF),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                inst.reqFoto ? 'Toca aquí para tomar foto o buscar en galería *' : 'Toca aquí para tomar foto o buscar en galería',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: inst.reqFoto ? const Color(0xFFB45309) : const Color(0xFF334155),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     )
                   else
@@ -449,41 +561,43 @@ class _ActivityExecutionModalState extends State<ActivityExecutionModal> {
                                     ),
                                   ),
                                 ),
-                              if (inst.subtasksTotal > 0) const SizedBox(width: 10),
-                              Expanded(
-                                child: SizedBox(
-                                  height: 46,
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor: isPlanFulfilled ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
-                                      side: BorderSide(
-                                        color: isPlanFulfilled ? const Color(0xFF34C759) : const Color(0xFFF59E0B),
-                                        width: 1.4,
+                              if (inst.subtasksTotal > 0 && (inst.requierePlanAccion || inst.planAccionObligatorio || relatedPlan != null))
+                                const SizedBox(width: 10),
+                              if (inst.requierePlanAccion || inst.planAccionObligatorio || relatedPlan != null)
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 46,
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: isPlanFulfilled ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
+                                        side: BorderSide(
+                                          color: isPlanFulfilled ? const Color(0xFF34C759) : const Color(0xFFF59E0B),
+                                          width: 1.4,
+                                        ),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10),
                                       ),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                                    ),
-                                    onPressed: () async {
-                                      final ok = await ActionPlanDialog.show(context: context, instance: inst);
-                                      if (ok == true) setState(() {});
-                                    },
-                                    icon: Icon(
-                                      isPlanFulfilled ? Icons.check_circle_rounded : Icons.flag_rounded,
-                                      size: 18,
-                                      color: isPlanFulfilled ? const Color(0xFF16A34A) : const Color(0xFFD97706),
-                                    ),
-                                    label: Text(
-                                      relatedPlan == null ? 'Plan de Acción' : 'Ver Plan (${(relatedPlan.porcentajeAvance * 100).toInt()}%)',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: isPlanFulfilled ? const Color(0xFF166534) : const Color(0xFFB45309),
+                                      onPressed: () async {
+                                        final ok = await ActionPlanDialog.show(context: context, instance: inst);
+                                        if (ok == true) setState(() {});
+                                      },
+                                      icon: Icon(
+                                        isPlanFulfilled ? Icons.check_circle_rounded : Icons.flag_rounded,
+                                        size: 18,
+                                        color: isPlanFulfilled ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                                      ),
+                                      label: Text(
+                                        relatedPlan == null ? 'Plan de Acción' : 'Ver Plan (${(relatedPlan.porcentajeAvance * 100).toInt()}%)',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: isPlanFulfilled ? const Color(0xFF166534) : const Color(0xFFB45309),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                         ],

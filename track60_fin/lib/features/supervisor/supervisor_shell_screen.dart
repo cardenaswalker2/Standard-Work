@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../../data/services/standard_work_provider.dart';
 import '../../data/services/excel_service.dart';
@@ -1365,7 +1366,7 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
   }
 
   // ========================================================
-  // PANTALLA 5: INDICADORES DEL SUPERVISOR Y EQUIPO
+  // PANTALLA 5: INDICADORES EJECUTIVOS DEL SUPERVISOR Y EQUIPO
   // ========================================================
   Widget _buildSupervisorIndicadores(BuildContext context, StandardWorkProvider provider) {
     final user = provider.currentUser;
@@ -1374,8 +1375,9 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
     final myPending = myAll.length - myDone;
     final myPct = myAll.isEmpty ? 0 : ((myDone / myAll.length) * 100).round();
 
-    final plantOps = provider.usersForCurrentPlant.where((u) => u.isOperator).map((u) => u.id).toSet();
-    final teamAll = provider.instances.where((i) => plantOps.contains(i.userId)).toList();
+    final plantOps = provider.usersForCurrentPlant.where((u) => u.isOperator).toList();
+    final plantOpIds = plantOps.map((u) => u.id).toSet();
+    final teamAll = provider.instances.where((i) => plantOpIds.contains(i.userId)).toList();
     final teamDone = teamAll.where((i) => i.done).length;
     final teamPending = teamAll.length - teamDone;
     final teamPct = teamAll.isEmpty ? 0 : ((teamDone / teamAll.length) * 100).round();
@@ -1383,128 +1385,299 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
     final plansAll = provider.proPlans;
     final plansClosed = plansAll.where((p) => p.estado == 'Cumplido').length;
     final plansOpen = plansAll.length - plansClosed;
+    final pendingRev = _allExecutions.where((e) => !e.aprobada).length;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-      children: [
-        const Text(
-          'Indicadores de Desempeño',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.4),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Resumen semanal de tus actividades y del equipo de planta',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildSupervisorMetricCard(
-                title: 'Mi Cumplimiento',
-                value: '$myPct%',
-                subtitle: '$myDone hechas · $myPending pend.',
-                progress: myAll.isEmpty ? 0 : myDone / myAll.length,
-                color: myPct >= 80 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
-                icon: Icons.verified_rounded,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildSupervisorMetricCard(
-                title: 'Equipo de Piso',
-                value: '$teamPct%',
-                subtitle: '$teamDone hechas · $teamPending pend.',
-                progress: teamAll.isEmpty ? 0 : teamDone / teamAll.length,
-                color: const Color(0xFF007AFF),
-                icon: Icons.groups_rounded,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildSupervisorMetricCard(
-                title: 'Planes Cerrados',
-                value: '$plansClosed',
-                subtitle: '$plansOpen en curso',
-                progress: plansAll.isEmpty ? 0 : plansClosed / plansAll.length,
-                color: const Color(0xFFAF52DE),
-                icon: Icons.fact_check_rounded,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildSupervisorMetricCard(
-                title: 'Evidencias Hoy',
-                value: '${_allExecutions.where((e) => !e.aprobada).length}',
-                subtitle: 'Por revisar en Seguimiento',
-                progress: _allExecutions.isEmpty
-                    ? 0
-                    : _allExecutions.where((e) => e.aprobada).length / _allExecutions.length,
-                color: const Color(0xFFFF9500),
-                icon: Icons.photo_camera_rounded,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE5E5EA)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final heroColor = teamPct >= 80
+        ? const Color(0xFF34C759)
+        : (teamPct >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
+
+    return Container(
+      color: const Color(0xFFF2F2F7),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
             children: [
-              const Text('Desglose por Día (Mis Actividades)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-              const SizedBox(height: 12),
-              for (final d in const [
-                {'k': 1, 'n': 'Lunes'},
-                {'k': 2, 'n': 'Martes'},
-                {'k': 3, 'n': 'Miércoles'},
-                {'k': 4, 'n': 'Jueves'},
-                {'k': 5, 'n': 'Viernes'},
-              ])
-                Builder(builder: (_) {
-                  final dTasks = myAll.where((t) => t.day == d['k']).toList();
-                  final dDone = dTasks.where((t) => t.done).length;
-                  final dPct = dTasks.isEmpty ? 0.0 : dDone / dTasks.length;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(d['n'] as String, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1D1D1F))),
-                            Text('$dDone / ${dTasks.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
-                          ],
-                        ),
-                        const SizedBox(height: 5),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
-                          child: LinearProgressIndicator(
-                            value: dPct,
-                            minHeight: 8,
-                            backgroundColor: const Color(0xFFF2F2F7),
-                            color: dPct >= 1.0 && dTasks.isNotEmpty ? const Color(0xFF34C759) : const Color(0xFF007AFF),
+              // HERO RING: CUMPLIMIENTO GLOBAL EQUIPO + PERSONAL
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF002F6C), Color(0xFF005BB5)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [BoxShadow(color: const Color(0xFF002F6C).withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 6))],
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 112,
+                      height: 112,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          PieChart(
+                            PieChartData(
+                              startDegreeOffset: -90,
+                              sectionsSpace: 3,
+                              centerSpaceRadius: 36,
+                              sections: [
+                                PieChartSectionData(
+                                  value: teamDone.toDouble() == 0 && teamPending == 0 ? 1 : teamDone.toDouble(),
+                                  color: const Color(0xFF34C759),
+                                  radius: 14,
+                                  showTitle: false,
+                                ),
+                                PieChartSectionData(
+                                  value: teamPending.toDouble(),
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  radius: 12,
+                                  showTitle: false,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('$teamPct%', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+                              const Text('Equipo', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                }),
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: heroColor.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: Text(
+                              teamPct >= 80 ? 'Desempeño Óptimo' : (teamPct >= 50 ? 'En Progreso' : 'Requiere Seguimiento'),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Indicadores de Supervisión',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Equipo: $teamDone/${teamAll.length} · Tus tareas: $myDone/${myAll.length} ($myPct%)',
+                            style: const TextStyle(fontSize: 12, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 4 TARJETAS KPI
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSupervisorMetricCard(
+                      title: 'Mis Actividades',
+                      value: '$myPct%',
+                      subtitle: '$myDone hechas · $myPending pend.',
+                      progress: myAll.isEmpty ? 0 : myDone / myAll.length,
+                      color: myPct >= 80 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
+                      icon: Icons.verified_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSupervisorMetricCard(
+                      title: 'Equipo de Piso',
+                      value: '$teamPct%',
+                      subtitle: '$teamDone hechas · $teamPending pend.',
+                      progress: teamAll.isEmpty ? 0 : teamDone / teamAll.length,
+                      color: const Color(0xFF007AFF),
+                      icon: Icons.groups_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSupervisorMetricCard(
+                      title: 'Planes Cerrados',
+                      value: '$plansClosed/${plansAll.length}',
+                      subtitle: '$plansOpen en curso',
+                      progress: plansAll.isEmpty ? 0 : plansClosed / plansAll.length,
+                      color: const Color(0xFFAF52DE),
+                      icon: Icons.fact_check_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSupervisorMetricCard(
+                      title: 'Por Auditar',
+                      value: '$pendingRev',
+                      subtitle: '${_allExecutions.where((e) => e.aprobada).length} aprobadas',
+                      progress: _allExecutions.isEmpty
+                          ? 0
+                          : _allExecutions.where((e) => e.aprobada).length / _allExecutions.length,
+                      color: const Color(0xFFFF9500),
+                      icon: Icons.photo_camera_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // GRÁFICA DE BARRAS SEMANAL (L - V)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE5E5EA)),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Cumplimiento Diario del Equipo (Lun–Vie)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                    const SizedBox(height: 4),
+                    const Text('Porcentaje de actividades completadas por día', style: TextStyle(fontSize: 12, color: Color(0xFF86868B))),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 170,
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY: 100,
+                          gridData: FlGridData(
+                            show: true,
+                            drawVerticalLine: false,
+                            horizontalInterval: 25,
+                            getDrawingHorizontalLine: (_) => const FlLine(color: Color(0xFFF2F2F7), strokeWidth: 1),
+                          ),
+                          borderData: FlBorderData(show: false),
+                          titlesData: FlTitlesData(
+                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 32,
+                                interval: 25,
+                                getTitlesWidget: (v, _) => Text('${v.toInt()}%', style: const TextStyle(fontSize: 10, color: Color(0xFF8E8E93))),
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (v, _) {
+                                  const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
+                                  final idx = v.toInt();
+                                  if (idx < 0 || idx >= labels.length) return const SizedBox.shrink();
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Text(labels[idx], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          barGroups: List.generate(5, (idx) {
+                            final dayNum = idx + 1;
+                            final dList = teamAll.where((t) => t.day == dayNum).toList();
+                            final pct = dList.isEmpty ? 0.0 : (dList.where((t) => t.done).length / dList.length) * 100.0;
+                            final barColor = pct >= 80
+                                ? const Color(0xFF34C759)
+                                : (pct >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
+                            return BarChartGroupData(
+                              x: idx,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: pct,
+                                  width: 24,
+                                  color: barColor,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                                  backDrawRodData: BackgroundBarChartRodData(show: true, toY: 100, color: const Color(0xFFF2F2F7)),
+                                ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // RANKING POR COLABORADOR DE PLANTA
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE5E5EA)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Desempeño por Colaborador', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                    const SizedBox(height: 12),
+                    if (plantOps.isEmpty)
+                      const Text('No hay operadores asignados en esta planta.', style: TextStyle(fontSize: 12, color: Colors.grey))
+                    else
+                      ...plantOps.map((op) {
+                        final opTasks = teamAll.where((t) => t.userId == op.id).toList();
+                        final opDone = opTasks.where((t) => t.done).length;
+                        final opPct = opTasks.isEmpty ? 0.0 : opDone / opTasks.length;
+                        final opPctInt = (opPct * 100).round();
+                        final c = opPctInt >= 80
+                            ? const Color(0xFF34C759)
+                            : (opPctInt >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(op.nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                                  ),
+                                  Text('$opDone/${opTasks.length} ($opPctInt%)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: c)),
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(999),
+                                child: LinearProgressIndicator(value: opPct, minHeight: 7, backgroundColor: const Color(0xFFF2F2F7), color: c),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 

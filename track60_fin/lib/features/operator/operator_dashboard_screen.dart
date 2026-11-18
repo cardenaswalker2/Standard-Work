@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../../data/services/standard_work_provider.dart';
 import '../../data/services/excel_service.dart';
@@ -937,7 +938,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
   }
 
   // ========================================================
-  // PANTALLA 4: INDICADORES DEL OPERADOR
+  // PANTALLA 4: INDICADORES EJECUTIVOS DEL OPERADOR
   // ========================================================
   Widget _buildOperatorIndicadores(BuildContext context, StandardWorkProvider provider) {
     final user = provider.currentUser;
@@ -958,125 +959,291 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
     final myPlans = provider.proPlans.where((p) => p.responsable == user?.nombre || p.creadoPor == user?.id).toList();
     final myPlansClosed = myPlans.where((p) => p.estado == 'Cumplido').length;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-      children: [
-        const Text(
-          'Mis Indicadores',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.4),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Seguimiento personal de tu cumplimiento diario y semanal',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildOpIndicatorCard(
-                title: 'Hoy (${provider.selectedDay})',
-                value: '$todayPct%',
-                subtitle: '$todayDone de ${todayTasks.length} hechas',
-                progress: todayTasks.isEmpty ? 0 : todayDone / todayTasks.length,
-                color: todayPct >= 80 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
-                icon: Icons.today_rounded,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOpIndicatorCard(
-                title: 'Semana Total',
-                value: '$weekPct%',
-                subtitle: '$weekDone hechas · $weekPending pend.',
-                progress: weekTasks.isEmpty ? 0 : weekDone / weekTasks.length,
-                color: const Color(0xFF007AFF),
-                icon: Icons.calendar_view_week_rounded,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildOpIndicatorCard(
-                title: 'Fijas / Flexibles',
-                value: '$fixedDone/$fixedTotal',
-                subtitle: 'Flexibles: $flexDone/$flexTotal',
-                progress: fixedTotal == 0 ? 0 : fixedDone / fixedTotal,
-                color: const Color(0xFF5856D6),
-                icon: Icons.lock_clock_rounded,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOpIndicatorCard(
-                title: 'Planes de Acción',
-                value: '$myPlansClosed/${myPlans.length}',
-                subtitle: '${myPlans.length - myPlansClosed} pendientes',
-                progress: myPlans.isEmpty ? 0 : myPlansClosed / myPlans.length,
-                color: const Color(0xFFFF9500),
-                icon: Icons.fact_check_rounded,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE5E5EA)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    // Agrupar por categoría
+    final Map<String, List<ActivityInstance>> byCat = {};
+    for (final t in weekTasks) {
+      byCat.putIfAbsent(t.category.isEmpty ? 'General' : t.category, () => []).add(t);
+    }
+
+    return Container(
+      color: const Color(0xFFF2F2F7),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 960),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
             children: [
-              const Text('Avance por Día de la Semana', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-              const SizedBox(height: 12),
-              for (final d in const [
-                {'k': 1, 'n': 'Lunes'},
-                {'k': 2, 'n': 'Martes'},
-                {'k': 3, 'n': 'Miércoles'},
-                {'k': 4, 'n': 'Jueves'},
-                {'k': 5, 'n': 'Viernes'},
-              ])
-                Builder(builder: (_) {
-                  final dTasks = weekTasks.where((t) => t.day == d['k']).toList();
-                  final dDone = dTasks.where((t) => t.done).length;
-                  final dPct = dTasks.isEmpty ? 0.0 : dDone / dTasks.length;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(d['n'] as String, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1D1D1F))),
-                            Text('$dDone / ${dTasks.length}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
-                          ],
-                        ),
-                        const SizedBox(height: 5),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
-                          child: LinearProgressIndicator(
-                            value: dPct,
-                            minHeight: 8,
-                            backgroundColor: const Color(0xFFF2F2F7),
-                            color: dPct >= 1.0 && dTasks.isNotEmpty ? const Color(0xFF34C759) : const Color(0xFF007AFF),
+              // HERO RING SEMANAL ESTILO APPLE
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF002F6C), Color(0xFF0284C7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [BoxShadow(color: const Color(0xFF002F6C).withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 6))],
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 110,
+                      height: 110,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          PieChart(
+                            PieChartData(
+                              startDegreeOffset: -90,
+                              sectionsSpace: 3,
+                              centerSpaceRadius: 35,
+                              sections: [
+                                PieChartSectionData(
+                                  value: weekDone == 0 && weekPending == 0 ? 1 : weekDone.toDouble(),
+                                  color: const Color(0xFF34C759),
+                                  radius: 14,
+                                  showTitle: false,
+                                ),
+                                PieChartSectionData(
+                                  value: weekPending.toDouble(),
+                                  color: Colors.white.withValues(alpha: 0.22),
+                                  radius: 12,
+                                  showTitle: false,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('$weekPct%', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+                              const Text('Semana', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                }),
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              weekPct >= 85 ? 'Excelente Ritmo' : (weekPct >= 60 ? 'Buen Avance' : 'Tareas Pendientes'),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Mi Desempeño Operativo',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Completadas: $weekDone · Pendientes: $weekPending · Hoy: $todayDone/${todayTasks.length}',
+                            style: const TextStyle(fontSize: 12, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildOpIndicatorCard(
+                      title: 'Hoy (Día ${provider.selectedDay})',
+                      value: '$todayPct%',
+                      subtitle: '$todayDone de ${todayTasks.length} hechas',
+                      progress: todayTasks.isEmpty ? 0 : todayDone / todayTasks.length,
+                      color: todayPct >= 80 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
+                      icon: Icons.today_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildOpIndicatorCard(
+                      title: 'Fijas / Flexibles',
+                      value: '$fixedDone/$fixedTotal',
+                      subtitle: 'Flexibles: $flexDone/$flexTotal',
+                      progress: fixedTotal == 0 ? 0 : fixedDone / fixedTotal,
+                      color: const Color(0xFF5856D6),
+                      icon: Icons.lock_clock_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildOpIndicatorCard(
+                      title: 'Semana Total',
+                      value: '$weekDone/${weekTasks.length}',
+                      subtitle: '$weekPending por completar',
+                      progress: weekTasks.isEmpty ? 0 : weekDone / weekTasks.length,
+                      color: const Color(0xFF007AFF),
+                      icon: Icons.calendar_view_week_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildOpIndicatorCard(
+                      title: 'Mis Planes',
+                      value: '$myPlansClosed/${myPlans.length}',
+                      subtitle: '${myPlans.length - myPlansClosed} abiertos',
+                      progress: myPlans.isEmpty ? 0 : myPlansClosed / myPlans.length,
+                      color: const Color(0xFFFF9500),
+                      icon: Icons.fact_check_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // GRÁFICA DE BARRAS L - V
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE5E5EA)),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Cumplimiento por Día (Lun–Vie)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                    const SizedBox(height: 4),
+                    const Text('Porcentaje de rutinas completadas cada día', style: TextStyle(fontSize: 12, color: Color(0xFF86868B))),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 165,
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY: 100,
+                          gridData: FlGridData(
+                            show: true,
+                            drawVerticalLine: false,
+                            horizontalInterval: 25,
+                            getDrawingHorizontalLine: (_) => const FlLine(color: Color(0xFFF2F2F7), strokeWidth: 1),
+                          ),
+                          borderData: FlBorderData(show: false),
+                          titlesData: FlTitlesData(
+                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 32,
+                                interval: 25,
+                                getTitlesWidget: (v, _) => Text('${v.toInt()}%', style: const TextStyle(fontSize: 10, color: Color(0xFF8E8E93))),
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (v, _) {
+                                  const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
+                                  final idx = v.toInt();
+                                  if (idx < 0 || idx >= labels.length) return const SizedBox.shrink();
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Text(labels[idx], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          barGroups: List.generate(5, (idx) {
+                            final dayNum = idx + 1;
+                            final dList = weekTasks.where((t) => t.day == dayNum).toList();
+                            final pct = dList.isEmpty ? 0.0 : (dList.where((t) => t.done).length / dList.length) * 100.0;
+                            final barColor = pct >= 80
+                                ? const Color(0xFF34C759)
+                                : (pct >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
+                            return BarChartGroupData(
+                              x: idx,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: pct,
+                                  width: 24,
+                                  color: barColor,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                                  backDrawRodData: BackgroundBarChartRodData(show: true, toY: 100, color: const Color(0xFFF2F2F7)),
+                                ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // DESGLOSE POR CATEGORÍA
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE5E5EA)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Avance por Categoría', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                    const SizedBox(height: 12),
+                    if (byCat.isEmpty)
+                      const Text('Sin actividades asignadas esta semana.', style: TextStyle(fontSize: 12, color: Colors.grey))
+                    else
+                      ...byCat.entries.map((e) {
+                        final total = e.value.length;
+                        final done = e.value.where((t) => t.done).length;
+                        final pct = total == 0 ? 0.0 : done / total;
+                        final pctInt = (pct * 100).round();
+                        final c = pctInt >= 80 ? const Color(0xFF34C759) : (pctInt >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(child: Text(e.key, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F)))),
+                                  Text('$done/$total ($pctInt%)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: c)),
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(999),
+                                child: LinearProgressIndicator(value: pct, minHeight: 7, backgroundColor: const Color(0xFFF2F2F7), color: c),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
