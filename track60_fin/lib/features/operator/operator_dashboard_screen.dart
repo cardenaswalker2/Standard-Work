@@ -1,20 +1,39 @@
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../data/services/standard_work_provider.dart';
-import '../../data/services/excel_service.dart';
-import '../../data/models/app_models.dart';
-import '../../core/widgets/notifications_sheet.dart';
+
+import '../../core/widgets/action_plan_dialog.dart';
+import '../../core/widgets/activity_execution_modal.dart';
 import '../../core/widgets/activity_subtasks_modal.dart';
-import '../../core/widgets/reprogramming_dialog.dart';
 import '../../core/widgets/help_guide_modal.dart';
 import '../../core/widgets/industrial_timer_modal.dart';
-import '../../core/widgets/opl_sheet_modal.dart';
-import '../../core/widgets/action_plan_dialog.dart';
 import '../../core/widgets/meeting_record_dialog.dart';
-import '../../core/widgets/activity_execution_modal.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/widgets/notifications_sheet.dart';
+import '../../core/widgets/opl_sheet_modal.dart';
+import '../../core/widgets/reprogramming_dialog.dart';
+import '../../data/models/app_models.dart';
+import '../../data/services/excel_service.dart';
+import '../../data/services/standard_work_provider.dart';
 import '../login/login_screen.dart';
+
+const Color _kOpBg = Color(0xFFF5F7FB);
+const Color _kOpNavy = Color(0xFF002F6C);
+const Color _kOpBlue = Color(0xFF007AFF);
+const Color _kOpText = Color(0xFF0F172A);
+const Color _kOpMuted = Color(0xFF64748B);
+const Color _kOpBorder = Color(0xFFE2E8F0);
+const Color _kOpGreen = Color(0xFF16A34A);
+const Color _kOpAmber = Color(0xFFD97706);
+const Color _kOpRed = Color(0xFFDC2626);
+
+const Map<int, String> _kOpDayNames = {
+  1: 'Lun',
+  2: 'Mar',
+  3: 'Mié',
+  4: 'Jue',
+  5: 'Vie',
+  6: 'Sáb',
+};
 
 class OperatorDashboardScreen extends StatefulWidget {
   const OperatorDashboardScreen({super.key});
@@ -24,17 +43,15 @@ class OperatorDashboardScreen extends StatefulWidget {
 }
 
 class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
-  // 4 destinos principales del Operador:
-  // 0: Mi Día (Actividades para cumplir - primera al entrar)
-  // 1: Mi Jornada (Resumen y agenda)
-  // 2: Planes (Planes de acción en pantalla dedicada)
-  // 3: Indicadores (Métricas personales)
   int _currentScreenIndex = 0;
-  int _touchedOpPieIndex = -1;
-  int? _selectedOpChartDay;
+  int _touchedPieIndex = -1;
+  int? _selectedChartDay;
 
-  String _selectedActivityFilter = 'Todas'; // 'Todas', 'Pendientes', 'Completadas'
+  int _dayFilter = 0; // 0 = Todos
+  String _statusFilter = 'Todas'; // Todas, Pendientes, Completadas
   String _searchQuery = '';
+  bool _scheduleMode = false;
+  String _planFilter = 'Todos';
 
   void _showNotifications(BuildContext context) {
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
@@ -52,7 +69,6 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
 
   void _openSubtasksModal(BuildContext context, ActivityInstance instance) {
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -61,20 +77,18 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
         instance: instance,
         onComplete: (data) async {
           for (final entry in data.entries) {
-            final sid = entry.key;
-            final map = entry.value;
             await provider.reportSubtaskExecution(
               instanceId: instance.id!,
-              subtaskId: sid,
-              photoPath: map['photo'] as String?,
-              comment: map['comment'] as String?,
-              measuredValue: map['measurement'] as double?,
+              subtaskId: entry.key,
+              photoPath: entry.value['photo'] as String?,
+              comment: entry.value['comment'] as String?,
+              measuredValue: entry.value['measurement'] as double?,
             );
           }
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                backgroundColor: Color(0xFF16A34A),
+                backgroundColor: _kOpGreen,
                 content: Text('¡Evidencias de subtarea registradas exitosamente!'),
               ),
             );
@@ -86,7 +100,6 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
 
   void _openReprogramming(BuildContext context, ActivityInstance instance) {
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
-
     showDialog(
       context: context,
       builder: (_) => ReprogrammingDialog(
@@ -98,21 +111,16 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
             motivo: motivo,
           );
           if (context.mounted) {
-            if (ok) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  backgroundColor: Color(0xFF0284C7),
-                  content: Text('Actividad reprogramada exitosamente.'),
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: ok ? _kOpBlue : _kOpRed,
+                content: Text(
+                  ok
+                      ? 'Actividad reprogramada exitosamente.'
+                      : 'Esta actividad es fija y no admite reprogramación.',
                 ),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  backgroundColor: Color(0xFFDC2626),
-                  content: Text('Esta actividad es fija y no admite reprogramación.'),
-                ),
-              );
-            }
+              ),
+            );
           }
         },
       ),
@@ -121,57 +129,44 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
 
   Future<void> _handleCompleteActivity(BuildContext context, ActivityInstance item) async {
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
+    if (item.tipoActividad == 'registro') {
+      await MeetingRecordDialog.show(context: context, instance: item);
+      return;
+    }
+
+    final executed = await ActivityExecutionModal.show(context: context, instance: item);
+    if (executed == true || !context.mounted) return;
+
     final error = await provider.completeActivityInstance(instanceId: item.id!);
-
     if (!context.mounted) return;
-
     if (error != null) {
-      // Regla 6.3: Plan de Acción Obligatorio
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
+              Icon(Icons.warning_amber_rounded, color: _kOpAmber),
               SizedBox(width: 8),
               Text('Requisito Obligatorio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
-          content: Text(
-            error,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF334155)),
-          ),
+          content: Text(error, style: const TextStyle(fontSize: 13, color: _kOpText)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-            ),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
             ElevatedButton.icon(
               onPressed: () async {
                 Navigator.pop(ctx);
-                final completed = await ActionPlanDialog.show(
-                  context: context,
-                  instance: item,
-                  isMandatoryForActivity: true,
-                );
-                if (completed == true && context.mounted) {
-                  // Reintentar completar
+                final ok = await ActionPlanDialog.show(context: context, instance: item, isMandatoryForActivity: true);
+                if (ok == true && context.mounted) {
                   await provider.completeActivityInstance(instanceId: item.id!);
                 }
               },
-              icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white),
-              label: const Text('Diligenciar Plan Ahora', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C)),
+              icon: const Icon(Icons.flag_rounded, size: 16, color: Colors.white),
+              label: const Text('Diligenciar Plan', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: _kOpNavy),
             ),
           ],
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: Color(0xFF16A34A),
-          content: Text('¡Actividad completada y reportada a supervisión!'),
         ),
       );
     }
@@ -181,1178 +176,932 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<StandardWorkProvider>(context);
     final user = provider.currentUser;
+    final isWide = MediaQuery.of(context).size.width >= 900;
+
+    final myAll = provider.instances.where((i) => i.userId == user?.id).toList();
+    final pendingToday = myAll.where((i) => !i.done).length;
+    final pendingPlans = provider.proPlans.where((p) => p.estado != 'Cumplido').length;
+
+    final navItems = [
+      (label: 'Mi Día', icon: Icons.today_rounded, badge: pendingToday),
+      (label: 'Mi Jornada', icon: Icons.schedule_rounded, badge: 0),
+      (label: 'Planes', icon: Icons.flag_rounded, badge: pendingPlans),
+      (label: 'Indicadores', icon: Icons.bar_chart_rounded, badge: 0),
+    ];
+
+    final bodyContent = IndexedStack(
+      index: _currentScreenIndex,
+      children: [
+        _buildMiDiaTab(context, provider),
+        _buildMiJornadaTab(context, provider),
+        _buildPlanesTab(context, provider),
+        _buildIndicadoresTab(context, provider),
+      ],
+    );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      body: Column(
-        children: [
-          // HERO HEADER CORPORATIVO
-          Stack(
-            children: [
-              Container(
-                height: 180,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/darnel_planta.jpg'),
-                    fit: BoxFit.cover,
+      backgroundColor: _kOpBg,
+      body: isWide
+          ? Row(
+              children: [
+                _buildDesktopSidebar(user, navItems),
+                Expanded(
+                  child: Column(
+                    children: [
+                      _buildTopHeader(context, provider, navItems[_currentScreenIndex].label, isWide: true),
+                      Expanded(child: bodyContent),
+                    ],
                   ),
                 ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFF002F6C).withValues(alpha: 0.88),
-                        const Color(0xFF002F6C).withValues(alpha: 0.95),
+              ],
+            )
+          : Column(
+              children: [
+                _buildTopHeader(context, provider, navItems[_currentScreenIndex].label, isWide: false),
+                Expanded(child: bodyContent),
+              ],
+            ),
+      bottomNavigationBar: isWide
+          ? null
+          : BottomNavigationBar(
+              currentIndex: _currentScreenIndex,
+              onTap: (idx) => setState(() => _currentScreenIndex = idx),
+              selectedItemColor: _kOpBlue,
+              unselectedItemColor: const Color(0xFF86868B),
+              backgroundColor: Colors.white,
+              selectedFontSize: 11,
+              unselectedFontSize: 10,
+              type: BottomNavigationBarType.fixed,
+              items: navItems
+                  .map((item) => BottomNavigationBarItem(
+                        icon: Badge(
+                          isLabelVisible: item.badge > 0,
+                          label: Text('${item.badge}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                          child: Icon(item.icon),
+                        ),
+                        label: item.label,
+                      ))
+                  .toList(),
+            ),
+    );
+  }
+
+  Widget _buildDesktopSidebar(
+    UserProfile? user,
+    List<({String label, IconData icon, int badge})> navItems,
+  ) {
+    return Container(
+      width: 240,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF4F6FA),
+        border: Border(right: BorderSide(color: _kOpBorder)),
+      ),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(color: _kOpNavy, borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.engineering_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('TRACK60', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: _kOpNavy)),
+                        Text(user?.area ?? 'Operación', overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: _kOpMuted)),
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0284C7),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.engineering_rounded, color: Colors.white, size: 13),
-                                  SizedBox(width: 5),
-                                  Flexible(
-                                    child: Text(
-                                      'NIVEL 4 · OPERACIÓN',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: 'Temporizador',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                                icon: const Icon(Icons.timer_outlined, color: Colors.white, size: 20),
-                                onPressed: () {
-                                  final inst = provider.tasksForSelectedDay.isNotEmpty
-                                      ? provider.tasksForSelectedDay.first
-                                      : (provider.instances.isNotEmpty ? provider.instances.first : null);
-                                  if (inst != null) {
-                                    IndustrialTimerModal.show(context, inst);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('No hay actividades disponibles para el temporizador.')),
-                                    );
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                tooltip: 'Lección en un Punto (OPL)',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                                icon: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 20),
-                                onPressed: () {
-                                  final inst = provider.tasksForSelectedDay.isNotEmpty
-                                      ? provider.tasksForSelectedDay.first
-                                      : (provider.instances.isNotEmpty ? provider.instances.first : null);
-                                  if (inst != null) {
-                                    OplSheetModal.show(context, inst);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('No hay lecciones OPL disponibles.')),
-                                    );
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                tooltip: 'Guía',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                                icon: const Icon(Icons.help_outline_rounded, color: Colors.white, size: 20),
-                                onPressed: () => HelpGuideModal.show(context),
-                              ),
-                              IconButton(
-                                tooltip: 'Cerrar Sesión',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                                icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
-                                onPressed: () {
-                                  provider.logout();
-                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '¡Hola, ${user?.nombre.split(' ').first ?? 'Colaborador'}!',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      Text(
-                        '${user?.cargo} · Planta ${user?.plantId} · ${user?.area}',
-                        style: const TextStyle(fontSize: 12, color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // PANTALLAS (0: MI DÍA, 1: MI JORNADA, 2: PLANES, 3: INDICADORES)
-          Expanded(
-            child: IndexedStack(
-              index: _currentScreenIndex,
-              children: [
-                _buildMiTrabajoActividades(context, provider),
-                _buildMiJornadaScreen(context, provider),
-                _buildMiTrabajoPlanes(context, provider),
-                _buildOperatorIndicadores(context, provider),
-              ],
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentScreenIndex,
-        onTap: (index) => setState(() => _currentScreenIndex = index),
-        selectedItemColor: const Color(0xFF007AFF),
-        unselectedItemColor: const Color(0xFF86868B),
-        backgroundColor: Colors.white,
-        selectedFontSize: 12,
-        unselectedFontSize: 11,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: Badge(
-              isLabelVisible: provider.tasksForSelectedDay.where((t) => !t.done).isNotEmpty,
-              label: Text(
-                '${provider.tasksForSelectedDay.where((t) => !t.done).length}',
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-              ),
-              child: const Icon(Icons.task_alt_rounded),
-            ),
-            label: 'Mi Día',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.wb_sunny_rounded),
-            label: 'Mi Jornada',
-          ),
-          BottomNavigationBarItem(
-            icon: Badge(
-              isLabelVisible: provider.proPlans.where((p) => (p.responsable == provider.currentUser?.nombre || p.creadoPor == provider.currentUser?.id) && p.estado != 'Cumplido').isNotEmpty,
-              label: Text(
-                '${provider.proPlans.where((p) => (p.responsable == provider.currentUser?.nombre || p.creadoPor == provider.currentUser?.id) && p.estado != 'Cumplido').length}',
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-              ),
-              child: const Icon(Icons.fact_check_rounded),
-            ),
-            label: 'Planes',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.insights_rounded),
-            label: 'Indicadores',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ========================================================
-  // PANTALLA 1: MI JORNADA (INICIO DEL COLABORADOR)
-  // ========================================================
-  Widget _buildMiJornadaScreen(BuildContext context, StandardWorkProvider provider) {
-    final allTasks = provider.tasksForSelectedDay;
-    final totalCount = allTasks.length;
-    final completedCount = allTasks.where((t) => t.done).length;
-    final pendingCount = allTasks.where((t) => !t.done).length;
-    final urgentCount = allTasks.where((t) => !t.done && (t.prioridad == 'Alta' || t.prioridad == 'Crítica')).length;
-
-    final user = provider.currentUser;
-    final myPlans = provider.proPlans.where((p) => (p.responsable == user?.nombre || p.creadoPor == user?.id) && p.estado != 'Cumplido').length;
-
-    final days = [
-      {'day': 1, 'name': 'Lunes'},
-      {'day': 2, 'name': 'Martes'},
-      {'day': 3, 'name': 'Miércoles'},
-      {'day': 4, 'name': 'Jueves'},
-      {'day': 5, 'name': 'Viernes'},
-    ];
-
-    final progressPct = totalCount > 0 ? (completedCount / totalCount) : 0.0;
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // SELECTOR DE DÍA
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: days.map((d) {
-              final isSel = provider.selectedDay == d['day'];
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(d['name'] as String, style: TextStyle(fontSize: 12, fontWeight: isSel ? FontWeight.bold : FontWeight.normal, color: isSel ? Colors.white : const Color(0xFF334155))),
-                  selected: isSel,
-                  selectedColor: const Color(0xFF002F6C),
-                  backgroundColor: Colors.white,
-                  onSelected: (_) => provider.setSelectedDay(d['day'] as int),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 14),
-
-        // TARJETA DE PROGRESO DE LA JORNADA (ESTILO APPLE)
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE5E5EA)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4)),
-            ],
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 76,
-                height: 76,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: progressPct,
-                      strokeWidth: 9,
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      valueColor: AlwaysStoppedAnimation<Color>(progressPct >= 1.0 ? const Color(0xFF16A34A) : const Color(0xFF00A3E0)),
-                    ),
-                    Text(
-                      '${(progressPct * 100).toInt()}%',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF002F6C)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Progreso de tu Jornada', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF002F6C))),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$completedCount de $totalCount actividades cumplidas hoy',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      progressPct >= 1.0 ? '¡Excelente trabajo! Jornada completada.' : 'Mantén el ritmo del estándar operacional.',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // RESUMEN KPI
-        Row(
-          children: [
-            Expanded(child: _buildMiniKpi('Hoy', '$totalCount', const Color(0xFF002F6C), Icons.today_rounded)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildMiniKpi('Pendientes', '$pendingCount', const Color(0xFF0284C7), Icons.schedule_rounded)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildMiniKpi('Urgentes', '$urgentCount', const Color(0xFFDC2626), Icons.priority_high_rounded)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildMiniKpi('Planes', '$myPlans', const Color(0xFFF59E0B), Icons.flag_rounded)),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // ACCESOS RÁPIDOS
-        const Text('Accesos Rápidos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155))),
-        const SizedBox(height: 8),
-        Row(
-          children: [
+            const Divider(height: 1),
+            const SizedBox(height: 8),
             Expanded(
-              child: _buildQuickActionButton(
-                label: 'Continuar Actividad',
-                icon: Icons.play_arrow_rounded,
-                color: const Color(0xFF002F6C),
-                onTap: () => setState(() {
-                  _currentScreenIndex = 0;
-                  _selectedActivityFilter = 'Pendientes';
-                }),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildQuickActionButton(
-                label: 'Completar Plan',
-                icon: Icons.assignment_turned_in_rounded,
-                color: const Color(0xFFD97706),
-                onTap: () => setState(() {
-                  _currentScreenIndex = 2;
-                }),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        // LISTA DE ACTIVIDADES PARA HOY
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Actividades Programadas para Hoy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155))),
-            Text('$completedCount/$totalCount', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF002F6C))),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        if (allTasks.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-            alignment: Alignment.center,
-            child: const Text('No tienes actividades programadas para este día.', style: TextStyle(fontSize: 13, color: Colors.grey)),
-          )
-        else
-          ...allTasks.map((t) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
-                child: ListTile(
-                  leading: Icon(
-                    t.done ? Icons.check_circle_rounded : (t.esRegistro ? Icons.edit_note_rounded : Icons.radio_button_unchecked_rounded),
-                    color: t.done ? const Color(0xFF16A34A) : const Color(0xFF002F6C),
-                  ),
-                  title: Text(t.nombre, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, decoration: t.done ? TextDecoration.lineThrough : null)),
-                  subtitle: Text('${t.timeStart} - ${t.timeEnd} · ${t.area}', style: const TextStyle(fontSize: 11)),
-                  trailing: const Icon(Icons.chevron_right, size: 20),
-                  onTap: () => setState(() {
-                    _currentScreenIndex = 0;
-                  }),
-                ),
-              )),
-      ],
-    );
-  }
-
-  // Nota: Mi Día y Planes ahora son pestañas independientes en el BottomNavigationBar.
-
-  Widget _buildMiTrabajoActividades(BuildContext context, StandardWorkProvider provider) {
-    final allTasks = provider.tasksForSelectedDay;
-
-    final filtered = allTasks.where((t) {
-      if (_selectedActivityFilter == 'Pendientes' && t.done) return false;
-      if (_selectedActivityFilter == 'Completadas' && !t.done) return false;
-      if (_searchQuery.isNotEmpty && !t.nombre.toLowerCase().contains(_searchQuery.toLowerCase())) return false;
-      return true;
-    }).toList();
-
-    return Column(
-      children: [
-        // BUSCADOR Y FILTROS
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  decoration: InputDecoration(
-                    hintText: 'Buscar actividad...',
-                    hintStyle: const TextStyle(fontSize: 12),
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('Pendientes', style: TextStyle(fontSize: 11)),
-                selected: _selectedActivityFilter == 'Pendientes',
-                selectedColor: const Color(0xFF002F6C),
-                labelStyle: TextStyle(color: _selectedActivityFilter == 'Pendientes' ? Colors.white : Colors.black),
-                onSelected: (sel) => setState(() => _selectedActivityFilter = sel ? 'Pendientes' : 'Todas'),
-              ),
-            ],
-          ),
-        ),
-
-        // LISTA DE TARJETAS DE TRABAJO
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.done_all_rounded, size: 48, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text('No hay actividades pendientes en este filtro', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
-                  itemBuilder: (ctx, i) {
-                    final item = filtered[i];
-                    final isDone = item.done;
-                    final borderColor = isDone ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
-                    final bgTint = isDone ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2);
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(color: borderColor.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4)),
-                        ],
-                      ),
-                      child: Material(
-                        color: bgTint.withValues(alpha: 0.42),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          side: BorderSide(color: borderColor, width: 1.7),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                itemCount: navItems.length,
+                itemBuilder: (_, idx) {
+                  final item = navItems[idx];
+                  final selected = _currentScreenIndex == idx;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: InkWell(
+                      onTap: () => setState(() => _currentScreenIndex = idx),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: selected ? _kOpNavy : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () {
-                            if (item.esRegistro) {
-                              MeetingRecordDialog.show(context: context, instance: item);
-                            } else {
-                              ActivityExecutionModal.show(context: context, instance: item);
-                            }
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(15),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                            // HEADER TARJETA
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF002F6C))),
+                        child: Row(
+                          children: [
+                            Icon(item.icon, size: 19, color: selected ? Colors.white : _kOpMuted),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                item.label,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                                  color: selected ? Colors.white : _kOpText,
                                 ),
-                                _buildStatusBadge(item),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text('${item.timeStart} - ${item.timeEnd} · Área: ${item.area}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                            if (item.descripcion.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text(item.descripcion, style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
-                            ],
-                            const SizedBox(height: 10),
-
-                            // BADGES DE MODALIDAD
-                            Wrap(
-                              spacing: 6,
-                              children: [
-                                if (item.esRegistro)
-                                  _buildChipBadge('📝 Registro de Información / Reunión', const Color(0xFFEFF6FF), const Color(0xFF0284C7)),
-                                if (item.planAccionObligatorio)
-                                  _buildChipBadge('⚠️ Plan de Acción Obligatorio', const Color(0xFFFEF3C7), const Color(0xFFD97706)),
-                                if (item.fija)
-                                  _buildChipBadge('🔒 Estándar Fijo', const Color(0xFFF1F5F9), const Color(0xFF475569)),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-
-                            // PROGRESO DE SUBTAREAS
-                            if (item.subtasksTotal > 0) ...[
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Subtareas: ${item.subtasksReported}/${item.subtasksTotal}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                  Text('${(item.executionProgress * 100).toInt()}% Avance', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                                ],
                               ),
-                              const SizedBox(height: 4),
-                              LinearProgressIndicator(
-                                value: item.executionProgress,
-                                minHeight: 6,
-                                backgroundColor: Colors.grey.shade200,
-                                valueColor: AlwaysStoppedAnimation<Color>(item.done ? const Color(0xFF16A34A) : const Color(0xFF00A3E0)),
-                              ),
-                              const SizedBox(height: 10),
-                            ],
-
-                            // BOTONES DE ACCIÓN (RESPONSIVOS SIN DESBORDE)
-                            Wrap(
-                              alignment: WrapAlignment.end,
-                              spacing: 8,
-                              runSpacing: 6,
-                              children: [
-                                if (!item.fija && !item.done)
-                                  TextButton.icon(
-                                    onPressed: () => _openReprogramming(context, item),
-                                    icon: const Icon(Icons.update_rounded, size: 16),
-                                    label: const Text('Reprogramar', style: TextStyle(fontSize: 11)),
-                                  ),
-                                if (item.esRegistro) ...[
-                                  ElevatedButton.icon(
-                                    onPressed: () => MeetingRecordDialog.show(context: context, instance: item),
-                                    icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white),
-                                    label: const Text('Diligenciar Registro', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF007AFF),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
-                                    ),
-                                  ),
-                                ] else if (item.subtasksTotal > 0) ...[
-                                  OutlinedButton.icon(
-                                    onPressed: () => _openSubtasksModal(context, item),
-                                    icon: const Icon(Icons.checklist_rounded, size: 16),
-                                    label: const Text('Checklist & Fotos', style: TextStyle(fontSize: 11)),
-                                    style: OutlinedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
-                                    ),
-                                  ),
-                                ],
-                                if (!item.done && !item.esRegistro)
-                                  ElevatedButton.icon(
-                                    onPressed: () => ActivityExecutionModal.show(context: context, instance: item),
-                                    icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white),
-                                    label: const Text('Diligenciar & Finalizar', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF34C759),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
-                                    ),
-                                  ),
-                              ],
                             ),
+                            if (item.badge > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: selected ? Colors.white.withValues(alpha: 0.2) : _kOpRed,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text('${item.badge}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                              ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                );
-                  },
-                ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildMiTrabajoPlanes(BuildContext context, StandardWorkProvider provider) {
+  Widget _buildTopHeader(
+    BuildContext context,
+    StandardWorkProvider provider,
+    String title, {
+    required bool isWide,
+  }) {
     final user = provider.currentUser;
-    final myPlans = provider.proPlans.where((p) => p.responsable == user?.nombre || p.creadoPor == user?.id).toList();
-
-    return myPlans.isEmpty
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, isWide ? 14 : MediaQuery.of(context).padding.top + 10, 16, 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: _kOpBorder)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(color: _kOpNavy, borderRadius: BorderRadius.circular(20)),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.flag_outlined, size: 48, color: Colors.grey.shade400),
-                const SizedBox(height: 8),
-                Text('No tienes planes de acción asignados actualmente', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                Icon(Icons.engineering_rounded, color: Colors.white, size: 13),
+                SizedBox(width: 5),
+                Text('OPERADOR', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
               ],
             ),
-          )
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: myPlans.length,
-            itemBuilder: (ctx, i) {
-              final plan = myPlans[i];
-              final isDone = plan.estado == 'Cumplido';
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                elevation: 1,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Colors.grey.shade200)),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(plan.plan, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF002F6C))),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isDone ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              plan.estado,
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isDone ? const Color(0xFF15803D) : const Color(0xFFB45309)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text('Fecha límite: ${plan.fechaCompromiso} · Área: ${plan.area}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                      if (plan.activityNombre != null) ...[
-                        const SizedBox(height: 4),
-                        Text('Vinculado a: ${plan.activityNombre}', style: const TextStyle(fontSize: 11, color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
-                      ],
-                      if (plan.descripcionSituacion != null && plan.descripcionSituacion!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Text(plan.descripcionSituacion!, style: const TextStyle(fontSize: 12)),
-                      ],
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Avance reportado:', style: TextStyle(fontSize: 11)),
-                          Text('${(plan.porcentajeAvance * 100).toInt()}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: plan.porcentajeAvance,
-                        minHeight: 6,
-                        backgroundColor: Colors.grey.shade200,
-                        valueColor: AlwaysStoppedAnimation<Color>(isDone ? const Color(0xFF16A34A) : const Color(0xFFF59E0B)),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () => ActionPlanDialog.show(context: context, existingPlan: plan),
-                            icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white),
-                            label: Text(isDone ? 'Consultar Plan' : 'Actualizar Avance / Completar', style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                            style: ElevatedButton.styleFrom(backgroundColor: isDone ? const Color(0xFF64748B) : const Color(0xFF002F6C)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kOpText)),
+                Text(
+                  '${user?.nombre ?? "Colaborador"} · ${provider.currentPlant?.nombre ?? user?.plantId ?? ""}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: _kOpMuted),
                 ),
-              );
+              ],
+            ),
+          ),
+          _headerIconButton(
+            tooltip: 'Sincronizar',
+            icon: Icons.sync_rounded,
+            onPressed: () => provider.refreshData(),
+          ),
+          _headerIconButton(
+            tooltip: 'Notificaciones',
+            icon: Icons.notifications_rounded,
+            badgeCount: provider.unreadNotificationsCount,
+            onPressed: () => _showNotifications(context),
+          ),
+          _headerIconButton(
+            tooltip: 'Cronómetro 60s',
+            icon: Icons.timer_rounded,
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => IndustrialTimerModal(instance: _fallbackInstance(provider, 'Cronómetro Libre')),
+            ),
+          ),
+          _headerIconButton(
+            tooltip: 'Hoja OPL',
+            icon: Icons.menu_book_rounded,
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => OplSheetModal(instance: _fallbackInstance(provider, 'Lección de Un Punto')),
+            ),
+          ),
+          _headerIconButton(
+            tooltip: 'Guía',
+            icon: Icons.help_outline_rounded,
+            onPressed: () => HelpGuideModal.show(context),
+          ),
+          _headerIconButton(
+            tooltip: 'Cerrar Sesión',
+            icon: Icons.logout_rounded,
+            onPressed: () {
+              provider.logout();
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
             },
-          );
-  }
-
-  Widget _buildMiniKpi(String label, String value, Color color, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
-          Text(label, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActionButton({
-    required String label,
+  Widget _headerIconButton({
+    required String tooltip,
     required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
+    required VoidCallback onPressed,
+    int badgeCount = 0,
   }) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 16, color: Colors.white),
-      label: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(ActivityInstance item) {
-    Color bg;
-    Color fg;
-    String label = item.state;
-    if (item.done) {
-      if (item.state == 'Validada') {
-        bg = const Color(0xFFDCFCE7);
-        fg = const Color(0xFF15803D);
-      } else {
-        bg = const Color(0xFFEFF6FF);
-        fg = const Color(0xFF0284C7);
-      }
-    } else {
-      bg = const Color(0xFFF1F5F9);
-      fg = const Color(0xFF64748B);
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-      child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: fg)),
-    );
-  }
-
-  Widget _buildChipBadge(String text, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(text, style: TextStyle(fontSize: 10, color: fg, fontWeight: FontWeight.bold)),
-    );
-  }
-
-  // ========================================================
-  // PANTALLA 4: INDICADORES EJECUTIVOS DEL OPERADOR
-  // ========================================================
-  Widget _buildOperatorIndicadores(BuildContext context, StandardWorkProvider provider) {
-    final user = provider.currentUser;
-    final todayTasks = provider.tasksForSelectedDay;
-    final todayDone = todayTasks.where((t) => t.done).length;
-    final todayPct = todayTasks.isEmpty ? 0 : ((todayDone / todayTasks.length) * 100).round();
-
-    final weekTasks = provider.instances.where((i) => i.userId == user?.id).toList();
-    final weekDone = weekTasks.where((i) => i.done).length;
-    final weekPending = weekTasks.length - weekDone;
-    final weekPct = weekTasks.isEmpty ? 0 : ((weekDone / weekTasks.length) * 100).round();
-
-    final fixedDone = weekTasks.where((i) => i.fija && i.done).length;
-    final fixedTotal = weekTasks.where((i) => i.fija).length;
-    final flexDone = weekTasks.where((i) => !i.fija && i.done).length;
-    final flexTotal = weekTasks.where((i) => !i.fija).length;
-
-    final myPlans = provider.proPlans.where((p) => p.responsable == user?.nombre || p.creadoPor == user?.id).toList();
-    final myPlansClosed = myPlans.where((p) => p.estado == 'Cumplido').length;
-
-    // Agrupar por categoría
-    final Map<String, List<ActivityInstance>> byCat = {};
-    for (final t in weekTasks) {
-      byCat.putIfAbsent(t.category.isEmpty ? 'General' : t.category, () => []).add(t);
-    }
-
-    return Container(
-      color: const Color(0xFFF2F2F7),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 960),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-            children: [
-              // HERO RING SEMANAL ESTILO APPLE
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF002F6C), Color(0xFF0284C7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [BoxShadow(color: const Color(0xFF002F6C).withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 6))],
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 110,
-                      height: 110,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          PieChart(
-                            PieChartData(
-                              pieTouchData: PieTouchData(
-                                touchCallback: (event, resp) {
-                                  if (!event.isInterestedForInteractions || resp == null || resp.touchedSection == null) {
-                                    if (_touchedOpPieIndex != -1) setState(() => _touchedOpPieIndex = -1);
-                                    return;
-                                  }
-                                  final idx = resp.touchedSection!.touchedSectionIndex;
-                                  if (_touchedOpPieIndex != idx) setState(() => _touchedOpPieIndex = idx);
-                                },
-                              ),
-                              startDegreeOffset: -90,
-                              sectionsSpace: 3,
-                              centerSpaceRadius: 35,
-                              sections: [
-                                PieChartSectionData(
-                                  value: weekDone == 0 && weekPending == 0 ? 1 : weekDone.toDouble(),
-                                  color: const Color(0xFF34C759),
-                                  radius: _touchedOpPieIndex == 0 ? 18 : 14,
-                                  showTitle: false,
-                                ),
-                                PieChartSectionData(
-                                  value: weekPending.toDouble(),
-                                  color: Colors.white.withValues(alpha: 0.22),
-                                  radius: _touchedOpPieIndex == 1 ? 16 : 12,
-                                  showTitle: false,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _touchedOpPieIndex == 0
-                                    ? '$weekDone'
-                                    : (_touchedOpPieIndex == 1 ? '$weekPending' : '$weekPct%'),
-                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
-                              ),
-                              Text(
-                                _touchedOpPieIndex == 0
-                                    ? 'Hechas'
-                                    : (_touchedOpPieIndex == 1 ? 'Pend.' : 'Semana'),
-                                style: const TextStyle(fontSize: 10, color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 18),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.16),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              weekPct >= 85 ? 'Excelente Ritmo' : (weekPct >= 60 ? 'Buen Avance' : 'Tareas Pendientes'),
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Mi Desempeño Operativo',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Completadas: $weekDone · Pendientes: $weekPending · Hoy: $todayDone/${todayTasks.length}',
-                            style: const TextStyle(fontSize: 12, color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: Badge(
+            isLabelVisible: badgeCount > 0,
+            label: Text('$badgeCount', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: _kOpBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kOpBorder),
               ),
-              const SizedBox(height: 14),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildOpIndicatorCard(
-                      title: 'Hoy (Día ${provider.selectedDay})',
-                      value: '$todayPct%',
-                      subtitle: '$todayDone de ${todayTasks.length} hechas',
-                      progress: todayTasks.isEmpty ? 0 : todayDone / todayTasks.length,
-                      color: todayPct >= 80 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
-                      icon: Icons.today_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildOpIndicatorCard(
-                      title: 'Fijas / Flexibles',
-                      value: '$fixedDone/$fixedTotal',
-                      subtitle: 'Flexibles: $flexDone/$flexTotal',
-                      progress: fixedTotal == 0 ? 0 : fixedDone / fixedTotal,
-                      color: const Color(0xFF5856D6),
-                      icon: Icons.lock_clock_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildOpIndicatorCard(
-                      title: 'Semana Total',
-                      value: '$weekDone/${weekTasks.length}',
-                      subtitle: '$weekPending por completar',
-                      progress: weekTasks.isEmpty ? 0 : weekDone / weekTasks.length,
-                      color: const Color(0xFF007AFF),
-                      icon: Icons.calendar_view_week_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildOpIndicatorCard(
-                      title: 'Mis Planes',
-                      value: '$myPlansClosed/${myPlans.length}',
-                      subtitle: '${myPlans.length - myPlansClosed} abiertos',
-                      progress: myPlans.isEmpty ? 0 : myPlansClosed / myPlans.length,
-                      color: const Color(0xFFFF9500),
-                      icon: Icons.fact_check_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // GRÁFICA DE BARRAS L - V
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5E5EA)),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Cumplimiento por Día (Lun–Vie)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
-                    const SizedBox(height: 4),
-                    Text(
-                      _selectedOpChartDay == null
-                          ? 'Toca cualquier barra para ver el detalle de ese día'
-                          : () {
-                              const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-                              final dList = weekTasks.where((t) => t.day == _selectedOpChartDay!).toList();
-                              final dDone = dList.where((t) => t.done).length;
-                              return '${dayNames[_selectedOpChartDay! - 1]}: $dDone de ${dList.length} completadas';
-                            }(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: _selectedOpChartDay == null ? FontWeight.normal : FontWeight.w700,
-                        color: _selectedOpChartDay == null ? const Color(0xFF86868B) : const Color(0xFF007AFF),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 165,
-                      child: BarChart(
-                        BarChartData(
-                          alignment: BarChartAlignment.spaceAround,
-                          maxY: 100,
-                          barTouchData: BarTouchData(
-                            enabled: true,
-                            touchCallback: (event, resp) {
-                              if (event is FlTapUpEvent && resp?.spot != null) {
-                                final d = resp!.spot!.touchedBarGroupIndex + 1;
-                                setState(() => _selectedOpChartDay = _selectedOpChartDay == d ? null : d);
-                              }
-                            },
-                            touchTooltipData: BarTouchTooltipData(
-                              getTooltipColor: (_) => const Color(0xFF1D1D1F),
-                              tooltipBorderRadius: BorderRadius.circular(10),
-                              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                                const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-                                final dList = weekTasks.where((t) => t.day == group.x + 1).toList();
-                                final dDone = dList.where((t) => t.done).length;
-                                return BarTooltipItem(
-                                  '${days[group.x]}\n${rod.toY.toStringAsFixed(0)}% ($dDone/${dList.length})',
-                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11),
-                                );
-                              },
-                            ),
-                          ),
-                          gridData: FlGridData(
-                            show: true,
-                            drawVerticalLine: false,
-                            horizontalInterval: 25,
-                            getDrawingHorizontalLine: (_) => const FlLine(color: Color(0xFFF2F2F7), strokeWidth: 1),
-                          ),
-                          borderData: FlBorderData(show: false),
-                          titlesData: FlTitlesData(
-                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                            leftTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 32,
-                                interval: 25,
-                                getTitlesWidget: (v, _) => Text('${v.toInt()}%', style: const TextStyle(fontSize: 10, color: Color(0xFF8E8E93))),
-                              ),
-                            ),
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (v, _) {
-                                  const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
-                                  final idx = v.toInt();
-                                  if (idx < 0 || idx >= labels.length) return const SizedBox.shrink();
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Text(labels[idx], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          barGroups: List.generate(5, (idx) {
-                            final dayNum = idx + 1;
-                            final dList = weekTasks.where((t) => t.day == dayNum).toList();
-                            final pct = dList.isEmpty ? 0.0 : (dList.where((t) => t.done).length / dList.length) * 100.0;
-                            final barColor = pct >= 80
-                                ? const Color(0xFF34C759)
-                                : (pct >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
-                            return BarChartGroupData(
-                              x: idx,
-                              barRods: [
-                                BarChartRodData(
-                                  toY: pct,
-                                  width: 24,
-                                  color: barColor,
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                                  backDrawRodData: BackgroundBarChartRodData(show: true, toY: 100, color: const Color(0xFFF2F2F7)),
-                                ),
-                              ],
-                            );
-                          }),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // DESGLOSE POR CATEGORÍA
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5E5EA)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Avance por Categoría', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
-                    const SizedBox(height: 12),
-                    if (byCat.isEmpty)
-                      const Text('Sin actividades asignadas esta semana.', style: TextStyle(fontSize: 12, color: Colors.grey))
-                    else
-                      ...byCat.entries.map((e) {
-                        final total = e.value.length;
-                        final done = e.value.where((t) => t.done).length;
-                        final pct = total == 0 ? 0.0 : done / total;
-                        final pctInt = (pct * 100).round();
-                        final c = pctInt >= 80 ? const Color(0xFF34C759) : (pctInt >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(child: Text(e.key, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F)))),
-                                  Text('$done/$total ($pctInt%)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: c)),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(999),
-                                child: LinearProgressIndicator(value: pct, minHeight: 7, backgroundColor: const Color(0xFFF2F2F7), color: c),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                  ],
-                ),
-              ),
-            ],
+              child: Icon(icon, size: 17, color: _kOpNavy),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOpIndicatorCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required double progress,
-    required Color color,
-    required IconData icon,
-  }) {
+  Widget _buildBentoKpi(String label, String value, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3))],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, size: 17, color: color),
-              ),
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 6),
+              Expanded(child: Text(label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kOpMuted))),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+        ],
+      ),
+    );
+  }
+
+  // --- TAB 0: MI DÍA ---
+  Widget _buildMiDiaTab(BuildContext context, StandardWorkProvider provider) {
+    final userId = provider.currentUser?.id;
+    final allMy = provider.instances.where((i) => i.userId == userId).toList();
+    final doneCount = allMy.where((i) => i.done).length;
+    final pendingCount = allMy.length - doneCount;
+    final pct = allMy.isEmpty ? 0.0 : (doneCount / allMy.length) * 100;
+
+    final filtered = allMy.where((i) {
+      if (_dayFilter != 0 && i.day != _dayFilter) return false;
+      if (_statusFilter == 'Pendientes' && i.done) return false;
+      if (_statusFilter == 'Completadas' && !i.done) return false;
+      if (_searchQuery.isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        if (!i.nombre.toLowerCase().contains(q) && !i.area.toLowerCase().contains(q)) return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) => a.timeStart.compareTo(b.timeStart));
+
+    return RefreshIndicator(
+      onRefresh: () => provider.refreshData(),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(
+            children: [
+              Expanded(child: _buildBentoKpi('Asignadas', '${allMy.length}', _kOpBlue, Icons.layers_rounded)),
               const SizedBox(width: 8),
+              Expanded(child: _buildBentoKpi('Hechas', '$doneCount', _kOpGreen, Icons.check_circle_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildBentoKpi('Pendientes', '$pendingCount', _kOpRed, Icons.pending_actions_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildBentoKpi('Avance', '${pct.toStringAsFixed(0)}%', _kOpNavy, Icons.insights_rounded)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            decoration: InputDecoration(
+              hintText: 'Buscar actividad o área...',
+              prefixIcon: const Icon(Icons.search_rounded, size: 19, color: _kOpMuted),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kOpBorder)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kOpBorder)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _dayChip(0, 'Todos'),
+                for (final e in _kOpDayNames.entries) _dayChip(e.key, e.value),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
-                child: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF3A3A3C))),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: ['Todas', 'Pendientes', 'Completadas'].map((lbl) {
+                      final selected = _statusFilter == lbl;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(lbl, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? Colors.white : _kOpText)),
+                          selected: selected,
+                          selectedColor: _kOpBlue,
+                          backgroundColor: Colors.white,
+                          side: BorderSide(color: selected ? _kOpBlue : _kOpBorder),
+                          onSelected: (_) => setState(() => _statusFilter = lbl),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, icon: Icon(Icons.view_agenda_rounded, size: 16), label: Text('Lista', style: TextStyle(fontSize: 11))),
+                  ButtonSegment(value: true, icon: Icon(Icons.schedule_rounded, size: 16), label: Text('Horario', style: TextStyle(fontSize: 11))),
+                ],
+                selected: {_scheduleMode},
+                onSelectionChanged: (s) => setState(() => _scheduleMode = s.first),
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? _kOpNavy : Colors.white),
+                  foregroundColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? Colors.white : _kOpText),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: color, letterSpacing: -0.5)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF86868B))),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
-              minHeight: 5,
-              backgroundColor: const Color(0xFFF2F2F7),
-              color: color,
+          const SizedBox(height: 14),
+          if (filtered.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(36),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: _kOpBorder)),
+              child: const Column(
+                children: [
+                  Icon(Icons.check_circle_outline_rounded, size: 42, color: _kOpMuted),
+                  SizedBox(height: 10),
+                  Text('No hay actividades para este filtro', style: TextStyle(fontWeight: FontWeight.w700, color: _kOpMuted)),
+                ],
+              ),
+            )
+          else if (_scheduleMode)
+            ..._buildScheduleView(context, filtered)
+          else
+            ...filtered.map((item) => _buildActivityCard(context, provider, item)),
+        ],
+      ),
+    );
+  }
+
+  Widget _dayChip(int day, String label) {
+    final selected = _dayFilter == day;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: ChoiceChip(
+        label: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? Colors.white : _kOpText)),
+        selected: selected,
+        selectedColor: _kOpNavy,
+        backgroundColor: Colors.white,
+        side: BorderSide(color: selected ? _kOpNavy : _kOpBorder),
+        onSelected: (_) => setState(() => _dayFilter = day),
+      ),
+    );
+  }
+
+  List<Widget> _buildScheduleView(BuildContext context, List<ActivityInstance> items) {
+    final byHour = <String, List<ActivityInstance>>{};
+    for (final i in items) {
+      byHour.putIfAbsent(i.timeStart, () => []).add(i);
+    }
+    final hours = byHour.keys.toList()..sort();
+    return hours.map((h) {
+      final list = byHour[h]!;
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kOpBorder)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: _kOpNavy.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Text(h, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: _kOpNavy)),
+                ),
+                const SizedBox(width: 8),
+                Text('${list.length} actividad(es)', style: const TextStyle(fontSize: 11, color: _kOpMuted)),
+              ],
             ),
+            const SizedBox(height: 10),
+            ...list.map((inst) => InkWell(
+                  onTap: () => _handleCompleteActivity(context, inst),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _kOpBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: inst.done ? _kOpGreen.withValues(alpha: 0.4) : _kOpBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(inst.done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                            size: 18, color: inst.done ? _kOpGreen : _kOpBlue),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                              Text('${_kOpDayNames[inst.day] ?? ""} · ${inst.area} · ${inst.timeStart}-${inst.timeEnd}',
+                                  style: const TextStyle(fontSize: 11, color: _kOpMuted)),
+                            ],
+                          ),
+                        ),
+                        _buildStatusBadge(inst),
+                      ],
+                    ),
+                  ),
+                )),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildActivityCard(BuildContext context, StandardWorkProvider provider, ActivityInstance item) {
+    final stripeColor = item.done ? _kOpGreen : (item.prioridad == 'Alta' ? _kOpRed : _kOpBlue);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kOpBorder)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(width: 4, height: 34, decoration: BoxDecoration(color: stripeColor, borderRadius: BorderRadius.circular(4))),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kOpText)),
+                    Text(
+                      '${_kOpDayNames[item.day] ?? ""} · ${item.timeStart}-${item.timeEnd} · ${item.area}',
+                      style: const TextStyle(fontSize: 11, color: _kOpMuted),
+                    ),
+                  ],
+                ),
+              ),
+              _buildStatusBadge(item),
+            ],
+          ),
+          if (item.descripcion.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(item.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: _kOpMuted)),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              if (!item.done)
+                ElevatedButton.icon(
+                  onPressed: () => _handleCompleteActivity(context, item),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 16, color: Colors.white),
+                  label: Text(item.tipoActividad == 'registro' ? 'Registrar' : 'Ejecutar',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kOpNavy,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              if (item.subtasksTotal > 0)
+                OutlinedButton.icon(
+                  onPressed: () => _openSubtasksModal(context, item),
+                  icon: const Icon(Icons.checklist_rounded, size: 15),
+                  label: Text('Subtareas (${item.subtasksReported}/${item.subtasksTotal})', style: const TextStyle(fontSize: 11)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _kOpBlue,
+                    side: const BorderSide(color: _kOpBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              if (!item.fija && !item.done)
+                OutlinedButton.icon(
+                  onPressed: () => _openReprogramming(context, item),
+                  icon: const Icon(Icons.event_repeat_rounded, size: 15),
+                  label: const Text('Reprogramar', style: TextStyle(fontSize: 11)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _kOpMuted,
+                    side: const BorderSide(color: _kOpBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              if (item.requierePlanAccion)
+                OutlinedButton.icon(
+                  onPressed: () => ActionPlanDialog.show(context: context, instance: item, isMandatoryForActivity: item.planAccionObligatorio),
+                  icon: const Icon(Icons.flag_rounded, size: 15),
+                  label: const Text('Plan de Acción', style: TextStyle(fontSize: 11)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _kOpAmber,
+                    side: BorderSide(color: _kOpAmber.withValues(alpha: 0.4)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  // --- TAB 1: MI JORNADA ---
+  Widget _buildMiJornadaTab(BuildContext context, StandardWorkProvider provider) {
+    final userId = provider.currentUser?.id;
+    final myAll = provider.instances.where((i) => i.userId == userId).toList()
+      ..sort((a, b) => a.timeStart.compareTo(b.timeStart));
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (_) => IndustrialTimerModal(instance: _fallbackInstance(provider, 'Cronómetro Libre')),
+                ),
+                icon: const Icon(Icons.timer_rounded, size: 17, color: Colors.white),
+                label: const Text('Cronómetro 60s', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kOpNavy,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (_) => OplSheetModal(instance: _fallbackInstance(provider, 'Lección de Un Punto')),
+                ),
+                icon: const Icon(Icons.menu_book_rounded, size: 17),
+                label: const Text('Hojas OPL', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _kOpNavy,
+                  side: const BorderSide(color: _kOpBorder),
+                  backgroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (myAll.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kOpBorder)),
+            child: const Center(child: Text('No tienes actividades programadas en tu jornada.', style: TextStyle(color: _kOpMuted))),
+          )
+        else
+          ..._buildScheduleView(context, myAll),
+      ],
+    );
+  }
+
+  // --- TAB 2: PLANES ---
+  Widget _buildPlanesTab(BuildContext context, StandardWorkProvider provider) {
+    final plans = provider.proPlans.where((p) {
+      if (_planFilter == 'Todos') return true;
+      return p.estado == _planFilter;
+    }).toList();
+
+    return RefreshIndicator(
+      onRefresh: () => provider.refreshData(),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: ['Todos', 'Pendiente', 'En Proceso', 'Cumplido'].map((lbl) {
+                      final selected = _planFilter == lbl;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(lbl, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? Colors.white : _kOpText)),
+                          selected: selected,
+                          selectedColor: _kOpNavy,
+                          backgroundColor: Colors.white,
+                          side: BorderSide(color: selected ? _kOpNavy : _kOpBorder),
+                          onSelected: (_) => setState(() => _planFilter = lbl),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => ActionPlanDialog.show(context: context),
+                icon: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                label: const Text('Nuevo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kOpNavy,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (plans.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kOpBorder)),
+              child: const Center(child: Text('No hay planes de acción registrados.', style: TextStyle(color: _kOpMuted))),
+            )
+          else
+            ...plans.map((p) {
+              final isDone = p.estado == 'Cumplido';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kOpBorder)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(p.plan, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kOpText))),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: (isDone ? _kOpGreen : _kOpAmber).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(p.estado, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: isDone ? _kOpGreen : _kOpAmber)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Resp: ${p.responsable} · Área: ${p.area} · Límite: ${p.fechaCompromiso}',
+                        style: const TextStyle(fontSize: 11, color: _kOpMuted)),
+                    if (!isDone) ...[
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => provider.updateProPlanStatus(planId: p.id!, nuevoEstado: 'Cumplido', porcentajeAvance: 1.0),
+                        icon: const Icon(Icons.check_circle_outline_rounded, size: 16, color: _kOpGreen),
+                        label: const Text('Marcar Cumplido', style: TextStyle(fontSize: 12, color: _kOpGreen, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  // --- TAB 3: INDICADORES ---
+  Widget _buildIndicadoresTab(BuildContext context, StandardWorkProvider provider) {
+    final userId = provider.currentUser?.id;
+    final myAll = provider.instances.where((i) => i.userId == userId).toList();
+    final total = myAll.length;
+    final done = myAll.where((i) => i.done).length;
+    final pending = total - done;
+    final pct = total == 0 ? 0.0 : (done / total) * 100;
+
+    final dayGroups = <BarChartGroupData>[];
+    for (int d = 1; d <= 6; d++) {
+      final dayItems = myAll.where((i) => i.day == d).toList();
+      final dayPct = dayItems.isEmpty ? 0.0 : (dayItems.where((i) => i.done).length / dayItems.length) * 100;
+      dayGroups.add(
+        BarChartGroupData(
+          x: d,
+          barRods: [
+            BarChartRodData(
+              toY: dayPct,
+              width: 18,
+              borderRadius: BorderRadius.circular(6),
+              color: _selectedChartDay == d ? _kOpBlue : _kOpNavy,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildBentoKpi('Mi Cumplimiento', '${pct.toStringAsFixed(1)}%', _kOpNavy, Icons.insights_rounded)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildBentoKpi('Hechas', '$done', _kOpGreen, Icons.check_circle_rounded)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildBentoKpi('Pendientes', '$pending', _kOpRed, Icons.pending_rounded)),
+          ],
+        ),
+        const SizedBox(height: 14),
+        ElevatedButton.icon(
+          onPressed: () async {
+            final usersById = {for (final u in provider.allUsers) u.id: u};
+            await ExcelService.instance.exportFilteredReport(
+              filterSummary: 'Operador · ${provider.currentUser?.nombre ?? ""}',
+              plants: provider.currentPlant != null ? [provider.currentPlant!] : [],
+              instances: myAll,
+              plans: provider.proPlans,
+              usersById: usersById,
+            );
+          },
+          icon: const Icon(Icons.table_chart_rounded, size: 17, color: Colors.white),
+          label: const Text('Exportar Mi Reporte Excel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kOpGreen,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: _kOpBorder)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Mi Cumplimiento Diario (Lun - Sáb)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kOpNavy)),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 200,
+                child: BarChart(
+                  BarChartData(
+                    maxY: 100,
+                    barTouchData: BarTouchData(
+                      touchCallback: (event, resp) {
+                        if (resp?.spot != null && event.isInterestedForInteractions) {
+                          setState(() => _selectedChartDay = resp!.spot!.touchedBarGroup.x);
+                        }
+                      },
+                    ),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (v, _) => Text(_kOpDayNames[v.toInt()] ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: dayGroups,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: _kOpBorder)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Resumen de Mis Actividades', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kOpNavy)),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 180,
+                child: total == 0
+                    ? const Center(child: Text('Sin actividades asignadas todavía', style: TextStyle(color: _kOpMuted)))
+                    : PieChart(
+                        PieChartData(
+                          pieTouchData: PieTouchData(
+                            touchCallback: (event, resp) {
+                              setState(() => _touchedPieIndex = resp?.touchedSection?.touchedSectionIndex ?? -1);
+                            },
+                          ),
+                          sectionsSpace: 3,
+                          centerSpaceRadius: 40,
+                          sections: [
+                            PieChartSectionData(
+                              value: done.toDouble(),
+                              color: _kOpGreen,
+                              radius: _touchedPieIndex == 0 ? 52 : 44,
+                              title: '$done\nHechas',
+                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
+                            PieChartSectionData(
+                              value: pending.toDouble(),
+                              color: _kOpRed,
+                              radius: _touchedPieIndex == 1 ? 52 : 44,
+                              title: '$pending\nPend.',
+                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  ActivityInstance _fallbackInstance(StandardWorkProvider provider, String nombre) {
+    final user = provider.currentUser;
+    return provider.instances.firstWhere(
+      (i) => i.userId == user?.id && !i.done,
+      orElse: () => ActivityInstance(
+        activityId: 0,
+        userId: user?.id ?? '',
+        plantId: user?.plantId ?? '',
+        weekKey: 'W1',
+        nombre: nombre,
+        descripcion: '',
+        area: user?.area ?? 'Operación',
+        category: 'Operación',
+        timeStart: '08:00',
+        timeEnd: '09:00',
+        day: 1,
+        orig: 1,
+        fija: false,
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(ActivityInstance item) {
+    final bg = item.done ? _kOpGreen.withValues(alpha: 0.12) : _kOpAmber.withValues(alpha: 0.12);
+    final fg = item.done ? _kOpGreen : _kOpAmber;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+      child: Text(item.state, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: fg)),
     );
   }
 }

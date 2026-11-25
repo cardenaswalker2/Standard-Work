@@ -1,18 +1,39 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../data/services/standard_work_provider.dart';
-import '../../data/services/excel_service.dart';
-import '../../data/models/app_models.dart';
-import '../../core/widgets/help_guide_modal.dart';
-import '../../core/widgets/collaborator_profile_modal.dart';
+
 import '../../core/widgets/action_plan_dialog.dart';
-import '../../core/widgets/meeting_record_dialog.dart';
 import '../../core/widgets/activity_execution_modal.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/widgets/activity_subtasks_modal.dart';
+import '../../core/widgets/collaborator_profile_modal.dart';
+import '../../core/widgets/help_guide_modal.dart';
+import '../../core/widgets/meeting_record_dialog.dart';
+import '../../data/models/app_models.dart';
+import '../../data/services/excel_service.dart';
+import '../../data/services/standard_work_provider.dart';
+import '../../data/services/ultra_report_service.dart';
 import '../login/login_screen.dart';
-import '../../core/widgets/track60_charts.dart';
+
+const Color _kSupBg = Color(0xFFF5F7FB);
+const Color _kSupNavy = Color(0xFF002F6C);
+const Color _kSupBlue = Color(0xFF007AFF);
+const Color _kSupText = Color(0xFF0F172A);
+const Color _kSupMuted = Color(0xFF64748B);
+const Color _kSupBorder = Color(0xFFE2E8F0);
+const Color _kSupGreen = Color(0xFF16A34A);
+const Color _kSupAmber = Color(0xFFD97706);
+const Color _kSupRed = Color(0xFFDC2626);
+
+const Map<int, String> _kSupDayNames = {
+  1: 'Lun',
+  2: 'Mar',
+  3: 'Mié',
+  4: 'Jue',
+  5: 'Vie',
+  6: 'Sáb',
+};
 
 class SupervisorShellScreen extends StatefulWidget {
   const SupervisorShellScreen({super.key});
@@ -22,22 +43,28 @@ class SupervisorShellScreen extends StatefulWidget {
 }
 
 class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
-  // 5 secciones principales del Supervisor:
-  // 0: Mis Actividades (Trabajo personal del Supervisor - primera al entrar)
-  // 1: Mi Equipo (Resumen y cumplimiento)
-  // 2: Seguimiento (Revisión de actividades del equipo)
-  // 3: Planes (Planes de acción en pantalla dedicada)
-  // 4: Indicadores (Métricas personales y de equipo)
   int _currentScreenIndex = 0;
-  int _touchedSupPieIndex = -1;
-  int? _selectedSupChartDay;
+  int _touchedPieIndex = -1;
+  int? _selectedChartDay;
 
   List<SubtaskExecutionModel> _allExecutions = [];
-  bool _loading = true;
-  String _selectedActivityFilter = 'Todas';
-  String _selectedPlanFilter = 'Todos';
-  String? _selectedOperatorFilter;
-  String _personSearchQuery = '';
+  bool _loadingExecutions = true;
+
+  // Filtros Mis Actividades
+  int _myDayFilter = 0; // 0 = Todos
+  String _mySearch = '';
+  bool _myScheduleMode = false;
+
+  // Filtros Mi Equipo
+  String _teamSearch = '';
+
+  // Filtros Seguimiento
+  String _segStatusFilter = 'Todas'; // Todas, Pendientes, Completadas, Por Validar
+  String? _segOperatorId;
+  int _segDayFilter = 0;
+
+  // Filtros Planes
+  String _planFilter = 'Todos';
 
   @override
   void initState() {
@@ -47,16 +74,45 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
 
   Future<void> _loadExecutions() async {
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
-    final plantId = provider.currentUser?.plantId;
-    if (plantId == null) return;
-
+    if (provider.currentUser == null) return;
     final list = await provider.getPendingReviewsForPlant();
     if (mounted) {
       setState(() {
         _allExecutions = list;
-        _loading = false;
+        _loadingExecutions = false;
       });
     }
+  }
+
+  Future<void> _refreshAll() async {
+    final provider = Provider.of<StandardWorkProvider>(context, listen: false);
+    await provider.refreshData();
+    await _loadExecutions();
+  }
+
+  Widget _buildImageWidget(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return Image.network(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
+      );
+    }
+    if (path.startsWith('assets/')) {
+      return Image.asset(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Icon(Icons.photo_rounded, size: 40, color: Colors.grey),
+      );
+    }
+    if (kIsWeb) {
+      return const Icon(Icons.image_rounded, size: 40, color: Colors.grey);
+    }
+    return Image.file(
+      File(path),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const Icon(Icons.image_rounded, size: 40, color: Colors.grey),
+    );
   }
 
   void _inspectEvidenceModal(BuildContext context, SubtaskExecutionModel rev) {
@@ -91,8 +147,14 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Inspección de Evidencia en Piso', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF002F6C))),
-                        Text('Operador ID: ${rev.userId} · Subtarea #${rev.subtaskId}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                        const Text(
+                          'Inspección de Evidencia en Piso',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _kSupNavy),
+                        ),
+                        Text(
+                          'Operador ID: ${rev.userId} · Subtarea #${rev.subtaskId}',
+                          style: const TextStyle(fontSize: 12, color: _kSupMuted),
+                        ),
                       ],
                     ),
                   ),
@@ -101,10 +163,10 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
               ),
               const Divider(height: 24),
               if (rev.fotoPath != null && rev.fotoPath!.isNotEmpty) ...[
-                const Text('Registro Fotográfico Adjunto:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const Text('Registro Fotográfico Adjunto:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                 const SizedBox(height: 8),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   child: Container(
                     height: 220,
                     width: double.infinity,
@@ -117,42 +179,59 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
               if (rev.valorMedido != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFBBF7D0))),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFBBF7D0)),
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.speed_rounded, color: Color(0xFF16A34A)),
+                      const Icon(Icons.speed_rounded, color: _kSupGreen),
                       const SizedBox(width: 10),
-                      Text('Medición reportada: ${rev.valorMedido}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF16A34A), fontSize: 14)),
+                      Text(
+                        'Medición reportada: ${rev.valorMedido}',
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: _kSupGreen, fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
               ],
-              const Text('Comentario del Colaborador:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              const SizedBox(height: 4),
+              const Text('Comentario del Colaborador:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              const SizedBox(height: 6),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade300)),
-                child: Text(rev.comentario?.isNotEmpty == true ? rev.comentario! : 'Sin observaciones registradas por el operador.', style: const TextStyle(fontSize: 13)),
+                decoration: BoxDecoration(
+                  color: _kSupBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _kSupBorder),
+                ),
+                child: Text(
+                  rev.comentario?.isNotEmpty == true ? rev.comentario! : 'Sin observaciones registradas por el operador.',
+                  style: const TextStyle(fontSize: 13, color: _kSupText),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () async {
                         final provider = Provider.of<StandardWorkProvider>(context, listen: false);
-                        await provider.rejectSubtaskExecution(executionId: rev.id!, motivoRechazo: 'Evidencia no conforme. Requiere corrección en piso.');
-                        Navigator.pop(ctx);
-                        _loadExecutions();
+                        await provider.rejectSubtaskExecution(
+                          executionId: rev.id!,
+                          motivoRechazo: 'Evidencia no conforme. Requiere corrección en piso.',
+                        );
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        await _loadExecutions();
                       },
-                      icon: const Icon(Icons.thumb_down_alt_rounded, color: Color(0xFFDC2626)),
-                      label: const Text('Rechazar', style: TextStyle(color: Color(0xFFDC2626))),
+                      icon: const Icon(Icons.thumb_down_alt_rounded, color: _kSupRed),
+                      label: const Text('Rechazar', style: TextStyle(color: _kSupRed, fontWeight: FontWeight.w700)),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFDC2626)),
+                        side: const BorderSide(color: _kSupRed),
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -162,15 +241,15 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
                       onPressed: () async {
                         final provider = Provider.of<StandardWorkProvider>(context, listen: false);
                         await provider.approveSubtaskExecution(executionId: rev.id!, instanceId: rev.instanceId);
-                        Navigator.pop(ctx);
-                        _loadExecutions();
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        await _loadExecutions();
                       },
                       icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
-                      label: const Text('Aprobar', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                      label: const Text('Aprobar', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF16A34A),
+                        backgroundColor: _kSupGreen,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -183,24 +262,14 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
     );
   }
 
-  Widget _buildImageWidget(String path) {
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return Image.network(path, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey));
-    } else if (path.startsWith('assets/')) {
-      return Image.asset(path, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.photo_rounded, size: 40, color: Colors.grey));
-    } else {
-      return Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.image_rounded, size: 40, color: Colors.grey));
-    }
-  }
-
   void _showPhotoStandardsModal(BuildContext context) {
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+      builder: (ctx) => Container(
+        height: MediaQuery.of(context).size.height * 0.80,
         decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -208,28 +277,49 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Banco de Estándares Visuales 5S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF002F6C))),
-                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
+                const Text('Banco de Estándares Visuales 5S', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _kSupNavy)),
+                IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded)),
               ],
             ),
             const Divider(),
             Expanded(
               child: provider.photoStandards.isEmpty
-                  ? const Center(child: Text('No hay fotos modelo registradas aún en esta planta.'))
+                  ? const Center(
+                      child: Text(
+                        'No hay fotos modelo registradas aún en esta planta.',
+                        style: TextStyle(color: _kSupMuted),
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: provider.photoStandards.length,
-                      itemBuilder: (ctx, i) {
+                      itemBuilder: (_, i) {
                         final std = provider.photoStandards[i];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          elevation: 1,
-                          child: ListTile(
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: SizedBox(width: 50, height: 50, child: _buildImageWidget(std.fotoPath)),
-                            ),
-                            title: Text(std.titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                            subtitle: Text('${std.area} · ${std.descripcion}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _kSupBg,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: _kSupBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: SizedBox(width: 54, height: 54, child: _buildImageWidget(std.fotoPath)),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(std.titulo, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _kSupText)),
+                                    const SizedBox(height: 2),
+                                    Text('${std.area} · ${std.descripcion}', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: _kSupMuted)),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -242,58 +332,123 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
   }
 
   void _showGemba5SModal(BuildContext context) {
+    final areaCtrl = TextEditingController(text: 'Piso de Producción');
+    final obsCtrl = TextEditingController();
+    final scores = <String, int>{
+      'Seiri (Clasificar)': 5,
+      'Seiton (Ordenar)': 5,
+      'Seiso (Limpiar)': 5,
+      'Seiketsu (Estandarizar)': 5,
+      'Shitsuke (Disciplina)': 5,
+    };
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.70,
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Ronda Gemba Walk & Auditoría 5S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF002F6C))),
-                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
-              ],
-            ),
-            const Divider(),
-            const Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.cleaning_services_rounded, color: Color(0xFF0284C7)),
-                      title: Text('1. Seiri (Clasificar / Despejar)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      subtitle: Text('Área libre de materiales obsoletos o fuera de estándar.', style: TextStyle(fontSize: 11)),
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.grid_view_rounded, color: Color(0xFF0284C7)),
-                      title: Text('2. Seiton (Ordenar)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      subtitle: Text('Herramientas y bobinas demarcadas e identificadas.', style: TextStyle(fontSize: 11)),
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.auto_awesome_rounded, color: Color(0xFF0284C7)),
-                      title: Text('3. Seiso (Limpiar)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      subtitle: Text('Línea de extrusión/termoformado sin residuos ni fugas.', style: TextStyle(fontSize: 11)),
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.fact_check_rounded, color: Color(0xFF0284C7)),
-                      title: Text('4. Seiketsu (Estandarizar)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      subtitle: Text('Formatos y checklist operacionales visibles y al día.', style: TextStyle(fontSize: 11)),
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.psychology_rounded, color: Color(0xFF0284C7)),
-                      title: Text('5. Shitsuke (Disciplina)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      subtitle: Text('Uso riguroso de EPPs y cumplimiento del turno.', style: TextStyle(fontSize: 11)),
-                    ),
-                  ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Ronda Gemba Walk & Auditoría 5S', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _kSupNavy)),
+                  IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded)),
+                ],
+              ),
+              const Divider(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: areaCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Área / Línea Auditada',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...scores.keys.map((pillar) => Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _kSupBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: _kSupBorder),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(pillar, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                ),
+                                DropdownButton<int>(
+                                  value: scores[pillar],
+                                  underline: const SizedBox(),
+                                  items: [1, 2, 3, 4, 5]
+                                      .map((v) => DropdownMenuItem(value: v, child: Text('$v / 5', style: const TextStyle(fontWeight: FontWeight.w700))))
+                                      .toList(),
+                                  onChanged: (v) {
+                                    if (v != null) setModalState(() => scores[pillar] = v);
+                                  },
+                                ),
+                              ],
+                            ),
+                          )),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: obsCtrl,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          labelText: 'Hallazgos / Observaciones Gemba',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final provider = Provider.of<StandardWorkProvider>(context, listen: false);
+                    final avg = scores.values.reduce((a, b) => a + b) / scores.length;
+                    final pctScore = (avg * 20).round();
+                    await provider.submitGemba5SWalk(
+                      plantId: provider.currentUser?.plantId ?? 'ALL',
+                      score: pctScore,
+                      notes: '${areaCtrl.text.trim().isEmpty ? "General" : areaCtrl.text.trim()}: ${obsCtrl.text.trim()}',
+                    );
+                    if (ctx.mounted) {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: _kSupGreen,
+                          content: Text('Ronda 5S registrada ($pctScore%)'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                  label: const Text('Registrar Auditoría 5S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kSupNavy,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -303,1490 +458,1222 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<StandardWorkProvider>(context);
     final user = provider.currentUser;
+    final isWide = MediaQuery.of(context).size.width >= 900;
+
+    final myPendingCount = provider.instances
+        .where((i) => i.userId == user?.id && i.day == provider.selectedDay && !i.done)
+        .length;
+    final openPlansCount = provider.proPlans.where((p) => p.estado != 'Cumplido').length;
+    final pendingReviewsCount = _allExecutions.where((e) => e.reportada && !e.aprobada && (e.motivoRechazo == null || e.motivoRechazo!.isEmpty)).length;
+
+    final navItems = [
+      (label: 'Mis Actividades', icon: Icons.task_alt_rounded, badge: myPendingCount),
+      (label: 'Mi Equipo', icon: Icons.groups_rounded, badge: 0),
+      (label: 'Seguimiento', icon: Icons.fact_check_rounded, badge: pendingReviewsCount),
+      (label: 'Planes', icon: Icons.flag_rounded, badge: openPlansCount),
+      (label: 'Indicadores', icon: Icons.bar_chart_rounded, badge: 0),
+    ];
+
+    final bodyContent = IndexedStack(
+      index: _currentScreenIndex,
+      children: [
+        _buildMisActividades(context, provider),
+        _buildResumenEquipo(context, provider),
+        _buildSeguimientoActividades(context, provider),
+        _buildSeguimientoPlanes(context, provider),
+        _buildSupervisorIndicadores(context, provider),
+      ],
+    );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      body: Column(
-        children: [
-          // HEADER EMPRESARIAL
-          Stack(
-            children: [
-              Container(
-                height: 180,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/darnel_planta.jpg'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFF002F6C).withValues(alpha: 0.88),
-                        const Color(0xFF002F6C).withValues(alpha: 0.95),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      backgroundColor: _kSupBg,
+      body: isWide
+          ? Row(
+              children: [
+                _buildDesktopSidebar(user, navItems),
+                Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0284C7),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.security_rounded, color: Colors.white, size: 13),
-                                  SizedBox(width: 5),
-                                  Flexible(
-                                    child: Text(
-                                      'NIVEL 3 · SUPERVISOR',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: 'Banco Fotos 5S',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(5),
-                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 19),
-                                onPressed: () => _showPhotoStandardsModal(context),
-                              ),
-                              IconButton(
-                                tooltip: 'Ronda 5S',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(5),
-                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                icon: const Icon(Icons.checklist_rtl_rounded, color: Colors.white, size: 19),
-                                onPressed: () => _showGemba5SModal(context),
-                              ),
-                              IconButton(
-                                tooltip: 'Guía',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(5),
-                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                icon: const Icon(Icons.help_outline_rounded, color: Colors.white, size: 19),
-                                onPressed: () => HelpGuideModal.show(context),
-                              ),
-                              IconButton(
-                                tooltip: 'Exportar Excel',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(5),
-                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                icon: const Icon(Icons.file_download_rounded, color: Colors.white, size: 19),
-                                onPressed: () async {
-                                  try {
-                                    await ExcelService.instance.exportAndShare();
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                                    }
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                tooltip: 'Cerrar Sesión',
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.all(5),
-                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 19),
-                                onPressed: () {
-                                  provider.logout();
-                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        user?.nombre ?? 'Supervisor de Planta',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      Text(
-                        '${user?.cargo} · Planta ${user?.plantId} · Equipo Asignado',
-                        style: const TextStyle(fontSize: 12, color: Colors.white70),
-                      ),
+                      _buildTopHeader(context, provider, navItems[_currentScreenIndex].label, isWide: true),
+                      Expanded(child: bodyContent),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-
-          // PANTALLAS (0: MIS ACTIVIDADES, 1: MI EQUIPO, 2: SEGUIMIENTO, 3: PLANES, 4: INDICADORES)
-          Expanded(
-            child: IndexedStack(
-              index: _currentScreenIndex,
+              ],
+            )
+          : Column(
               children: [
-                _buildMisActividades(context, provider),
-                _buildResumenEquipo(context, provider),
-                _buildSeguimientoActividades(context, provider),
-                _buildSeguimientoPlanes(context, provider),
-                _buildSupervisorIndicadores(context, provider),
+                _buildTopHeader(context, provider, navItems[_currentScreenIndex].label, isWide: false),
+                Expanded(child: bodyContent),
               ],
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentScreenIndex,
-        onTap: (index) => setState(() => _currentScreenIndex = index),
-        selectedItemColor: const Color(0xFF007AFF),
-        unselectedItemColor: const Color(0xFF86868B),
-        backgroundColor: Colors.white,
-        selectedFontSize: 11,
-        unselectedFontSize: 10,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: Badge(
-              isLabelVisible: provider.instances
-                  .where((i) => i.userId == user?.id && i.day == provider.selectedDay && !i.done)
-                  .isNotEmpty,
-              label: Text(
-                '${provider.instances.where((i) => i.userId == user?.id && i.day == provider.selectedDay && !i.done).length}',
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-              ),
-              child: const Icon(Icons.task_alt_rounded),
+      bottomNavigationBar: isWide
+          ? null
+          : BottomNavigationBar(
+              currentIndex: _currentScreenIndex,
+              onTap: (idx) => setState(() => _currentScreenIndex = idx),
+              selectedItemColor: _kSupBlue,
+              unselectedItemColor: const Color(0xFF86868B),
+              backgroundColor: Colors.white,
+              selectedFontSize: 11,
+              unselectedFontSize: 10,
+              type: BottomNavigationBarType.fixed,
+              items: navItems
+                  .map((item) => BottomNavigationBarItem(
+                        icon: Badge(
+                          isLabelVisible: item.badge > 0,
+                          label: Text('${item.badge}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                          child: Icon(item.icon),
+                        ),
+                        label: item.label,
+                      ))
+                  .toList(),
             ),
-            label: 'Mis Actividades',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_rounded),
-            label: 'Mi Equipo',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_turned_in_rounded),
-            label: 'Seguimiento',
-          ),
-          BottomNavigationBarItem(
-            icon: Badge(
-              isLabelVisible: provider.proPlans.where((p) => p.estado != 'Cumplido').isNotEmpty,
-              label: Text(
-                '${provider.proPlans.where((p) => p.estado != 'Cumplido').length}',
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-              ),
-              child: const Icon(Icons.fact_check_rounded),
-            ),
-            label: 'Planes',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.insights_rounded),
-            label: 'Indicadores',
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildMisActividades(BuildContext context, StandardWorkProvider provider) {
-    final user = provider.currentUser;
-    final myTasks = provider.instances
-        .where((i) => i.userId == user?.id && i.day == provider.selectedDay)
-        .toList();
-    final doneCount = myTasks.where((t) => t.done).length;
-    final pct = myTasks.isEmpty ? 0.0 : doneCount / myTasks.length;
-
-    const days = [
-      {'day': 1, 'name': 'Lunes'},
-      {'day': 2, 'name': 'Martes'},
-      {'day': 3, 'name': 'Miércoles'},
-      {'day': 4, 'name': 'Jueves'},
-      {'day': 5, 'name': 'Viernes'},
-    ];
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Selector de día estilo Apple
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: days.map((d) {
-              final isSel = provider.selectedDay == d['day'];
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(
-                    d['name'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                      color: isSel ? Colors.white : const Color(0xFF1D1D1F),
-                    ),
-                  ),
-                  selected: isSel,
-                  selectedColor: const Color(0xFF007AFF),
-                  backgroundColor: Colors.white,
-                  side: BorderSide(color: isSel ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  onSelected: (_) => provider.setSelectedDay(d['day'] as int),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 14),
-
-        // Tarjeta Apple de Progreso del Supervisor
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE5E5EA)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4)),
-            ],
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 68,
-                height: 68,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: pct,
-                      strokeWidth: 8,
-                      backgroundColor: const Color(0xFFF5F5F7),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        pct >= 1.0 ? const Color(0xFF34C759) : const Color(0xFF007AFF),
-                      ),
-                    ),
-                    Text(
-                      '${(pct * 100).round()}%',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1D1D1F)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Mis Actividades Asignadas', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$doneCount de ${myTasks.length} actividades cumplidas hoy',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF86868B)),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      myTasks.isEmpty
-                          ? 'Sin actividades asignadas para este día.'
-                          : (pct >= 1.0 ? '¡Excelente! Completaste tu jornada.' : 'Toca una tarjeta roja para ejecutar y completar.'),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: pct >= 1.0 && myTasks.isNotEmpty ? const Color(0xFF34C759) : const Color(0xFF007AFF),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-
-        if (myTasks.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE5E5EA)),
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.task_alt_rounded, size: 42, color: Color(0xFF86868B)),
-                SizedBox(height: 8),
-                Text('No tienes actividades asignadas este día', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-                SizedBox(height: 4),
-                Text('Cuando el Admin de Planta te asigne actividades, aparecerán aquí.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Color(0xFF86868B))),
-              ],
-            ),
-          )
-        else
-          ...myTasks.map((item) {
-            final isDone = item.done;
-            final borderColor = isDone ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
-            final bgTint = isDone ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: () {
-                    if (item.esRegistro) {
-                      MeetingRecordDialog.show(context: context, instance: item);
-                    } else {
-                      ActivityExecutionModal.show(context: context, instance: item);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: bgTint.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: borderColor, width: 1.7),
-                      boxShadow: [
-                        BoxShadow(color: borderColor.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                item.nombre,
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: borderColor.withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                isDone ? 'Cumplida' : 'Sin Completar',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: borderColor),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${item.timeStart} - ${item.timeEnd} · Área: ${item.area}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF86868B), fontWeight: FontWeight.w500),
-                        ),
-                        if (item.descripcion.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Text(item.descripcion, style: const TextStyle(fontSize: 12, color: Color(0xFF3A3A3C))),
-                        ],
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                if (item.esRegistro) {
-                                  MeetingRecordDialog.show(context: context, instance: item);
-                                } else {
-                                  ActivityExecutionModal.show(context: context, instance: item);
-                                }
-                              },
-                              icon: Icon(isDone ? Icons.visibility_rounded : Icons.play_arrow_rounded, size: 16),
-                              label: Text(isDone ? 'Ver Registro' : (item.esRegistro ? 'Diligenciar Reunión' : 'Ejecutar & Completar')),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isDone ? const Color(0xFF34C759) : const Color(0xFF007AFF),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-      ],
-    );
-  }
-
-  // ========================================================
-  // PANTALLA 1: RESUMEN DE MI EQUIPO
-  // ========================================================
-  Widget _buildResumenEquipo(BuildContext context, StandardWorkProvider provider) {
-    final operators = provider.usersForCurrentPlant.where((u) => u.isOperator).toList();
-    final instances = provider.instances;
-
-    final totalCount = instances.length;
-    final completedCount = instances.where((i) => i.done).length;
-    final pendingCount = instances.where((i) => !i.done).length;
-    final overdueCount = instances.where((i) => !i.done && i.isReprogramada).length;
-    final pendingPlans = provider.proPlans.where((p) => p.estado != 'Cumplido').length;
-    final pendingReviews = _allExecutions.where((e) => !e.aprobada).length;
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // GRÁFICA COMPACTA Y KPI HEADER
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildDesktopSidebar(
+    UserProfile? user,
+    List<({String label, IconData icon, int badge})> navItems,
+  ) {
+    return Container(
+      width: 240,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF4F6FA),
+        border: Border(right: BorderSide(color: _kSupBorder)),
+      ),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
+              child: Row(
                 children: [
-                  const Text('Cumplimiento del Turno', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF002F6C))),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(12),
+                      color: _kSupNavy,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('${operators.length} Colaboradores', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
+                    child: const Icon(Icons.shield_rounded, color: Colors.white, size: 20),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 70,
-                    height: 70,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value: totalCount > 0 ? (completedCount / totalCount) : 0,
-                          strokeWidth: 8,
-                          backgroundColor: const Color(0xFFF1F5F9),
-                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00A3E0)),
-                        ),
-                        Text(
-                          totalCount > 0 ? '${((completedCount / totalCount) * 100).toInt()}%' : '0%',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF002F6C)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('$completedCount de $totalCount actividades realizadas', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                        const SizedBox(height: 4),
-                        Text('Planta ${provider.currentPlant?.nombre ?? "Operativa"} · Semana activa', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                        const SizedBox(height: 6),
-                        LinearProgressIndicator(
-                          value: totalCount > 0 ? (completedCount / totalCount) : 0,
-                          minHeight: 6,
-                          backgroundColor: Colors.grey.shade200,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF16A34A)),
+                        const Text('TRACK60', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: _kSupNavy)),
+                        Text(
+                          'Planta ${user?.plantId ?? "-"}',
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: _kSupMuted),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // TARJETAS KPI RESUMIDAS
-        Row(
-          children: [
-            Expanded(child: _buildKpiCard('Pendientes', '$pendingCount', const Color(0xFF0284C7), Icons.schedule_rounded)),
-            const SizedBox(width: 10),
-            Expanded(child: _buildKpiCard('Completadas', '$completedCount', const Color(0xFF16A34A), Icons.check_circle_rounded)),
-            const SizedBox(width: 10),
-            Expanded(child: _buildKpiCard('Planes Activos', '$pendingPlans', const Color(0xFFF59E0B), Icons.flag_rounded)),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // SECCIÓN DE ATENCIÓN INMEDIATA (ALERTAS OPERATIVAS)
-        const Text(
-          'Situaciones que Requieren Atención Inmediata',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155)),
-        ),
-        const SizedBox(height: 8),
-
-        if (pendingReviews > 0)
-          _buildAlertCard(
-            title: '$pendingReviews Evidencias en piso pendientes de validación',
-            subtitle: 'Revisa fotografías y mediciones de los operadores para aprobar cumplimiento.',
-            color: const Color(0xFF0284C7),
-            icon: Icons.rate_review_rounded,
-            actionLabel: 'Revisar',
-            onAction: () => setState(() {
-              _currentScreenIndex = 2;
-              _selectedActivityFilter = 'Reportadas';
-            }),
-          ),
-
-        if (pendingPlans > 0)
-          _buildAlertCard(
-            title: '$pendingPlans Planes de acción en curso sin cerrar',
-            subtitle: 'Compromisos operativos con fecha límite asignados a tu equipo.',
-            color: const Color(0xFFF59E0B),
-            icon: Icons.warning_amber_rounded,
-            actionLabel: 'Ver Planes',
-            onAction: () => setState(() {
-              _currentScreenIndex = 3;
-            }),
-          ),
-
-        if (overdueCount > 0)
-          _buildAlertCard(
-            title: '$overdueCount Actividades con reprogramación o desfase',
-            subtitle: 'Identifica causas de no realización en la línea de producción.',
-            color: const Color(0xFFDC2626),
-            icon: Icons.alarm_off_rounded,
-            actionLabel: 'Inspeccionar',
-            onAction: () => setState(() {
-              _currentScreenIndex = 2;
-            }),
-          ),
-
-        if (pendingReviews == 0 && pendingPlans == 0 && overdueCount == 0)
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFBBF7D0))),
-            child: const Row(
-              children: [
-                Icon(Icons.verified_user_rounded, color: Color(0xFF16A34A)),
-                SizedBox(width: 10),
-                Expanded(child: Text('¡Excelente! No hay alertas críticas ni evidencias pendientes en este momento.', style: TextStyle(fontSize: 12, color: Color(0xFF15803D), fontWeight: FontWeight.bold))),
-              ],
             ),
-          ),
-
-        const SizedBox(height: 20),
-
-        // EQUIPO DE COLABORADORES
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Colaboradores de mi Equipo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155))),
-            Text('${operators.length} asignados', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        ...operators.map((op) {
-          final opInstances = instances.where((i) => i.userId == op.id).toList();
-          final opCompleted = opInstances.where((i) => i.done).length;
-          final opTotal = opInstances.length;
-          final pct = opTotal > 0 ? (opCompleted / opTotal) : 0.0;
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: const Color(0xFF002F6C),
-                child: Text(op.iniciales, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-              ),
-              title: Text(op.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${op.cargo} · ${op.area}', style: const TextStyle(fontSize: 11)),
-                  const SizedBox(height: 4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(value: pct, minHeight: 4, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation<Color>(pct >= 1.0 ? const Color(0xFF16A34A) : const Color(0xFF0284C7))),
-                  ),
-                ],
-              ),
-              trailing: Text('$opCompleted/$opTotal', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF002F6C))),
-              onTap: () => CollaboratorProfileModal.show(context, op, opInstances, provider),
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  // Nota: Seguimiento y Planes de Acción ahora son pestañas independientes en el BottomNavigationBar.
-
-  Widget _buildSeguimientoActividades(BuildContext context, StandardWorkProvider provider) {
-    final instances = provider.instances;
-    final operators = provider.usersForCurrentPlant.where((u) => u.isOperator).toList();
-
-    final filtered = instances.where((i) {
-      if (_selectedOperatorFilter != null && i.userId != _selectedOperatorFilter) return false;
-      if (_selectedActivityFilter == 'Pendientes' && i.done) return false;
-      if (_selectedActivityFilter == 'Reportadas' && (!i.done || i.state != 'Reportada')) return false;
-      if (_selectedActivityFilter == 'Validadas' && i.state != 'Validada') return false;
-      return true;
-    }).toList();
-
-    return Column(
-      children: [
-        // FILTROS HORIZONTALES
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildActivityFilterChip('Todas'),
-                const SizedBox(width: 6),
-                _buildActivityFilterChip('Pendientes'),
-                const SizedBox(width: 6),
-                _buildActivityFilterChip('Reportadas'),
-                const SizedBox(width: 6),
-                _buildActivityFilterChip('Validadas'),
-                const SizedBox(width: 12),
-                // FILTRO DE OPERADOR
-                DropdownButton<String?>(
-                  value: _selectedOperatorFilter,
-                  hint: const Text('Colaborador', style: TextStyle(fontSize: 11)),
-                  underline: const SizedBox(),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('Todos los Colaboradores', style: TextStyle(fontSize: 11))),
-                    ...operators.map((op) => DropdownMenuItem(value: op.id, child: Text(op.nombre, style: const TextStyle(fontSize: 11)))),
-                  ],
-                  onChanged: (val) => setState(() => _selectedOperatorFilter = val),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // LISTA DE TARJETAS
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox_rounded, size: 48, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text('No hay actividades en esta vista', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
-                  itemBuilder: (ctx, i) {
-                    final item = filtered[i];
-                    final op = operators.firstWhere((u) => u.id == item.userId, orElse: () => UserProfile(id: item.userId, cedula: '', nombre: item.userId, cargo: '', area: item.area, iniciales: 'OP', rol: 'operador', plantId: item.plantId));
-
-                    final relatedExec = _allExecutions.where((e) => e.instanceId == item.id).toList();
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Colors.grey.shade200)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                itemCount: navItems.length,
+                itemBuilder: (_, idx) {
+                  final item = navItems[idx];
+                  final selected = _currentScreenIndex == idx;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: InkWell(
+                      onTap: () => setState(() => _currentScreenIndex = idx),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: selected ? _kSupNavy : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF002F6C))),
-                                      const SizedBox(height: 2),
-                                      Text('${op.nombre} · ${item.area} · ${item.timeStart} - ${item.timeEnd}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                                    ],
-                                  ),
+                            Icon(item.icon, size: 19, color: selected ? Colors.white : _kSupMuted),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                item.label,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                                  color: selected ? Colors.white : _kSupText,
                                 ),
-                                _buildStatusPill(item),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            // BADGES DE MODALIDAD
-                            Wrap(
-                              spacing: 6,
-                              children: [
-                                if (item.esRegistro)
-                                  _buildBadge('📝 Modalidad: Registro / Reunión', const Color(0xFFEFF6FF), const Color(0xFF0284C7)),
-                                if (item.planAccionObligatorio)
-                                  _buildBadge('⚠️ Plan de Acción Obligatorio', const Color(0xFFFEF3C7), const Color(0xFFD97706)),
-                                if (item.fija)
-                                  _buildBadge('🔒 Fija', const Color(0xFFF1F5F9), const Color(0xFF475569)),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            // PROGRESO DE SUBTAREAS
-                            if (item.subtasksTotal > 0) ...[
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Avance Operador: ${item.subtasksReported}/${item.subtasksTotal}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                  Text('Validadas por Supervisor: ${item.subtasksApproved}/${item.subtasksTotal}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                                ],
                               ),
-                              const SizedBox(height: 4),
-                              LinearProgressIndicator(
-                                value: item.executionProgress,
-                                minHeight: 6,
-                                backgroundColor: Colors.grey.shade200,
-                                valueColor: AlwaysStoppedAnimation<Color>(item.subtasksApproved == item.subtasksTotal ? const Color(0xFF16A34A) : const Color(0xFF0284C7)),
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            // ACCIONES RÁPIDAS
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                if (item.esRegistro)
-                                  TextButton.icon(
-                                    onPressed: () => MeetingRecordDialog.show(context: context, instance: item, isReadOnly: true),
-                                    icon: const Icon(Icons.description_rounded, size: 16),
-                                    label: const Text('Consultar Registro', style: TextStyle(fontSize: 12)),
-                                  ),
-                                if (relatedExec.isNotEmpty)
-                                  ElevatedButton.icon(
-                                    onPressed: () => _inspectEvidenceModal(context, relatedExec.first),
-                                    icon: const Icon(Icons.photo_camera_rounded, size: 16, color: Colors.white),
-                                    label: const Text('Inspeccionar Evidencias', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C)),
-                                  ),
-                              ],
                             ),
+                            if (item.badge > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: selected ? Colors.white.withValues(alpha: 0.2) : _kSupRed,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${item.badge}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                                ),
+                              ),
                           ],
                         ),
                       ),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSeguimientoPlanes(BuildContext context, StandardWorkProvider provider) {
-    final plans = provider.proPlans;
-    final operators = provider.usersForCurrentPlant.where((u) => u.isOperator).toList();
-
-    final filtered = plans.where((p) {
-      if (_selectedPlanFilter == 'Pendientes' && p.estado != 'Pendiente') return false;
-      if (_selectedPlanFilter == 'En Proceso' && p.estado != 'En Proceso') return false;
-      if (_selectedPlanFilter == 'Cumplidos' && p.estado != 'Cumplido') return false;
-      if (_selectedPlanFilter == 'Vencidos' && !p.isVencido) return false;
-      return true;
-    }).toList();
-
-    return Column(
-      children: [
-        // FILTROS
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildPlanFilterChip('Todos'),
-                const SizedBox(width: 6),
-                _buildPlanFilterChip('Pendientes'),
-                const SizedBox(width: 6),
-                _buildPlanFilterChip('En Proceso'),
-                const SizedBox(width: 6),
-                _buildPlanFilterChip('Cumplidos'),
-                const SizedBox(width: 6),
-                _buildPlanFilterChip('Vencidos'),
-              ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
+          ],
         ),
-
-        // LISTA DE PLANES DE ACCIÓN
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.flag_outlined, size: 48, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text('No hay planes de acción en esta categoría', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
-                  itemBuilder: (ctx, i) {
-                    final plan = filtered[i];
-                    final isDone = plan.estado == 'Cumplido';
-                    final isOverdue = plan.isVencido;
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Colors.grey.shade200)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(plan.plan, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF002F6C))),
-                                      const SizedBox(height: 2),
-                                      Text('Responsable: ${plan.responsable} · Área: ${plan.area}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: isDone ? const Color(0xFFDCFCE7) : (isOverdue ? const Color(0xFFFEE2E2) : const Color(0xFFFEF3C7)),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    isDone ? 'Cumplido' : (isOverdue ? 'Vencido' : plan.estado),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDone ? const Color(0xFF15803D) : (isOverdue ? const Color(0xFFB91C1C) : const Color(0xFFB45309)),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (plan.activityNombre != null) ...[
-                              const SizedBox(height: 6),
-                              Text('Actividad Vinculada: ${plan.activityNombre}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
-                            ],
-                            const SizedBox(height: 8),
-                            if (plan.descripcionSituacion != null && plan.descripcionSituacion!.isNotEmpty) ...[
-                              Text('Situación / Falla:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
-                              Text(plan.descripcionSituacion!, style: const TextStyle(fontSize: 12)),
-                              const SizedBox(height: 6),
-                            ],
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Fecha Compromiso: ${plan.fechaCompromiso}', style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
-                                Text('Avance: ${(plan.porcentajeAvance * 100).toInt()}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            LinearProgressIndicator(
-                              value: plan.porcentajeAvance,
-                              minHeight: 6,
-                              backgroundColor: Colors.grey.shade200,
-                              valueColor: AlwaysStoppedAnimation<Color>(isDone ? const Color(0xFF16A34A) : const Color(0xFFF59E0B)),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                OutlinedButton.icon(
-                                  onPressed: () => ActionPlanDialog.show(context: context, existingPlan: plan),
-                                  icon: const Icon(Icons.edit_note_rounded, size: 16),
-                                  label: const Text('Observación / Avance', style: TextStyle(fontSize: 11)),
-                                ),
-                                const SizedBox(width: 8),
-                                if (!isDone)
-                                  ElevatedButton.icon(
-                                    onPressed: () async {
-                                      await provider.updateProPlanStatus(planId: plan.id!, nuevoEstado: 'Cumplido', porcentajeAvance: 1.0);
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(backgroundColor: Color(0xFF16A34A), content: Text('¡Plan de acción aprobado y cerrado!')));
-                                    },
-                                    icon: const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
-                                    label: const Text('Aprobar Plan', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildKpiCard(String title, String value, Color color, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 6),
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          Text(title, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-        ],
       ),
     );
   }
 
-  Widget _buildAlertCard({
-    required String title,
-    required String subtitle,
-    required Color color,
-    required IconData icon,
-    required String actionLabel,
-    required VoidCallback onAction,
+  Widget _buildTopHeader(
+    BuildContext context,
+    StandardWorkProvider provider,
+    String title, {
+    required bool isWide,
   }) {
+    final user = provider.currentUser;
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
+      padding: EdgeInsets.fromLTRB(16, isWide ? 14 : MediaQuery.of(context).padding.top + 10, 16, 12),
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border(bottom: BorderSide(color: _kSupBorder)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, color: color, size: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: _kSupNavy,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.security_rounded, color: Colors.white, size: 13),
+                SizedBox(width: 5),
+                Text(
+                  'SUPERVISOR',
+                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kSupText)),
+                Text(
+                  '${user?.nombre ?? "Supervisor"} · ${provider.currentPlant?.nombre ?? user?.plantId ?? ""}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: _kSupMuted),
+                ),
               ],
             ),
           ),
-          TextButton(
-            onPressed: onAction,
-            child: Text(actionLabel, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          _headerIconButton(
+            tooltip: 'Actualizar datos',
+            icon: Icons.sync_rounded,
+            onPressed: _refreshAll,
+          ),
+          _headerIconButton(
+            tooltip: 'Banco Estándares 5S',
+            icon: Icons.photo_library_rounded,
+            onPressed: () => _showPhotoStandardsModal(context),
+          ),
+          _headerIconButton(
+            tooltip: 'Ronda Gemba 5S',
+            icon: Icons.checklist_rtl_rounded,
+            onPressed: () => _showGemba5SModal(context),
+          ),
+          _headerIconButton(
+            tooltip: 'Guía de Uso',
+            icon: Icons.help_outline_rounded,
+            onPressed: () => HelpGuideModal.show(context),
+          ),
+          _headerIconButton(
+            tooltip: 'Cerrar Sesión',
+            icon: Icons.logout_rounded,
+            onPressed: () {
+              provider.logout();
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActivityFilterChip(String label) {
-    final selected = _selectedActivityFilter == label;
-    return ChoiceChip(
-      label: Text(label, style: TextStyle(fontSize: 11, fontWeight: selected ? FontWeight.bold : FontWeight.normal, color: selected ? Colors.white : const Color(0xFF334155))),
-      selected: selected,
-      selectedColor: const Color(0xFF002F6C),
-      backgroundColor: const Color(0xFFF1F5F9),
-      onSelected: (_) => setState(() => _selectedActivityFilter = label),
-    );
-  }
-
-  Widget _buildPlanFilterChip(String label) {
-    final selected = _selectedPlanFilter == label;
-    return ChoiceChip(
-      label: Text(label, style: TextStyle(fontSize: 11, fontWeight: selected ? FontWeight.bold : FontWeight.normal, color: selected ? Colors.white : const Color(0xFF334155))),
-      selected: selected,
-      selectedColor: const Color(0xFF002F6C),
-      backgroundColor: const Color(0xFFF1F5F9),
-      onSelected: (_) => setState(() => _selectedPlanFilter = label),
-    );
-  }
-
-  Widget _buildStatusPill(ActivityInstance item) {
-    Color bg;
-    Color fg;
-    String label = item.state;
-    if (item.done) {
-      if (item.state == 'Validada') {
-        bg = const Color(0xFFDCFCE7);
-        fg = const Color(0xFF15803D);
-      } else {
-        bg = const Color(0xFFEFF6FF);
-        fg = const Color(0xFF0284C7);
-      }
-    } else {
-      bg = const Color(0xFFF1F5F9);
-      fg = const Color(0xFF64748B);
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-      child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: fg)),
-    );
-  }
-
-  Widget _buildBadge(String text, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(text, style: TextStyle(fontSize: 10, color: fg, fontWeight: FontWeight.bold)),
-    );
-  }
-
-  // ========================================================
-  // PANTALLA 5: INDICADORES EJECUTIVOS DEL SUPERVISOR Y EQUIPO
-  // ========================================================
-  Widget _buildSupervisorIndicadores(BuildContext context, StandardWorkProvider provider) {
-    final user = provider.currentUser;
-    final myAll = provider.instances.where((i) => i.userId == user?.id).toList();
-    final myDone = myAll.where((i) => i.done).length;
-    final myPending = myAll.length - myDone;
-    final myPct = myAll.isEmpty ? 0 : ((myDone / myAll.length) * 100).round();
-
-    final plantOps = provider.usersForCurrentPlant.where((u) => u.isOperator).toList();
-    final plantOpIds = plantOps.map((u) => u.id).toSet();
-    final teamAll = provider.instances.where((i) => plantOpIds.contains(i.userId)).toList();
-    final teamDone = teamAll.where((i) => i.done).length;
-    final teamPending = teamAll.length - teamDone;
-    final teamPct = teamAll.isEmpty ? 0 : ((teamDone / teamAll.length) * 100).round();
-
-    final plansAll = provider.proPlans;
-    final plansClosed = plansAll.where((p) => p.estado == 'Cumplido').length;
-    final plansOpen = plansAll.length - plansClosed;
-    final pendingRev = _allExecutions.where((e) => !e.aprobada).length;
-
-    final heroColor = teamPct >= 80
-        ? const Color(0xFF34C759)
-        : (teamPct >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
-
-    return Container(
-      color: const Color(0xFFF2F2F7),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-            children: [
-              // HERO RING: CUMPLIMIENTO GLOBAL EQUIPO + PERSONAL
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF002F6C), Color(0xFF005BB5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [BoxShadow(color: const Color(0xFF002F6C).withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 6))],
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 112,
-                      height: 112,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          PieChart(
-                            PieChartData(
-                              pieTouchData: PieTouchData(
-                                touchCallback: (event, resp) {
-                                  if (!event.isInterestedForInteractions || resp == null || resp.touchedSection == null) {
-                                    if (_touchedSupPieIndex != -1) setState(() => _touchedSupPieIndex = -1);
-                                    return;
-                                  }
-                                  final idx = resp.touchedSection!.touchedSectionIndex;
-                                  if (_touchedSupPieIndex != idx) setState(() => _touchedSupPieIndex = idx);
-                                },
-                              ),
-                              startDegreeOffset: -90,
-                              sectionsSpace: 3,
-                              centerSpaceRadius: 36,
-                              sections: [
-                                PieChartSectionData(
-                                  value: teamDone == 0 && teamPending == 0 ? 1 : teamDone.toDouble(),
-                                  color: const Color(0xFF34C759),
-                                  radius: _touchedSupPieIndex == 0 ? 18 : 14,
-                                  showTitle: false,
-                                ),
-                                PieChartSectionData(
-                                  value: teamPending.toDouble(),
-                                  color: Colors.white.withValues(alpha: 0.22),
-                                  radius: _touchedSupPieIndex == 1 ? 16 : 12,
-                                  showTitle: false,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _touchedSupPieIndex == 0
-                                    ? '$teamDone'
-                                    : (_touchedSupPieIndex == 1 ? '$teamPending' : '$teamPct%'),
-                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
-                              ),
-                              Text(
-                                _touchedSupPieIndex == 0
-                                    ? 'Hechas'
-                                    : (_touchedSupPieIndex == 1 ? 'Pend.' : 'Equipo'),
-                                style: const TextStyle(fontSize: 10, color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 18),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: heroColor.withValues(alpha: 0.22),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: Text(
-                              teamPct >= 80 ? 'Desempeño Óptimo' : (teamPct >= 50 ? 'En Progreso' : 'Requiere Seguimiento'),
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Indicadores de Supervisión',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Equipo: $teamDone/${teamAll.length} · Tus tareas: $myDone/${myAll.length} ($myPct%)',
-                            style: const TextStyle(fontSize: 12, color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              // 4 TARJETAS KPI
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSupervisorMetricCard(
-                      title: 'Mis Actividades',
-                      value: '$myPct%',
-                      subtitle: '$myDone hechas · $myPending pend.',
-                      progress: myAll.isEmpty ? 0 : myDone / myAll.length,
-                      color: myPct >= 80 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
-                      icon: Icons.verified_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildSupervisorMetricCard(
-                      title: 'Equipo de Piso',
-                      value: '$teamPct%',
-                      subtitle: '$teamDone hechas · $teamPending pend.',
-                      progress: teamAll.isEmpty ? 0 : teamDone / teamAll.length,
-                      color: const Color(0xFF007AFF),
-                      icon: Icons.groups_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSupervisorMetricCard(
-                      title: 'Planes Cerrados',
-                      value: '$plansClosed/${plansAll.length}',
-                      subtitle: '$plansOpen en curso',
-                      progress: plansAll.isEmpty ? 0 : plansClosed / plansAll.length,
-                      color: const Color(0xFFAF52DE),
-                      icon: Icons.fact_check_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildSupervisorMetricCard(
-                      title: 'Por Auditar',
-                      value: '$pendingRev',
-                      subtitle: '${_allExecutions.where((e) => e.aprobada).length} aprobadas',
-                      progress: _allExecutions.isEmpty
-                          ? 0
-                          : _allExecutions.where((e) => e.aprobada).length / _allExecutions.length,
-                      color: const Color(0xFFFF9500),
-                      icon: Icons.photo_camera_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // GRÁFICA DE BARRAS SEMANAL (L - V)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5E5EA)),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Cumplimiento Diario del Equipo (Lun–Vie)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
-                    const SizedBox(height: 4),
-                    Text(
-                      _selectedSupChartDay == null
-                          ? 'Toca cualquier barra para inspeccionar ese día'
-                          : () {
-                              const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-                              final dList = teamAll.where((t) => t.day == _selectedSupChartDay!).toList();
-                              final dDone = dList.where((t) => t.done).length;
-                              return '${dayNames[_selectedSupChartDay! - 1]}: $dDone de ${dList.length} completadas';
-                            }(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: _selectedSupChartDay == null ? FontWeight.normal : FontWeight.w700,
-                        color: _selectedSupChartDay == null ? const Color(0xFF86868B) : const Color(0xFF007AFF),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 170,
-                      child: BarChart(
-                        BarChartData(
-                          alignment: BarChartAlignment.spaceAround,
-                          maxY: 100,
-                          barTouchData: BarTouchData(
-                            enabled: true,
-                            touchCallback: (event, resp) {
-                              if (event is FlTapUpEvent && resp?.spot != null) {
-                                final d = resp!.spot!.touchedBarGroupIndex + 1;
-                                setState(() => _selectedSupChartDay = _selectedSupChartDay == d ? null : d);
-                              }
-                            },
-                            touchTooltipData: BarTouchTooltipData(
-                              getTooltipColor: (_) => const Color(0xFF1D1D1F),
-                              tooltipBorderRadius: BorderRadius.circular(10),
-                              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                                const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-                                final dList = teamAll.where((t) => t.day == group.x + 1).toList();
-                                final dDone = dList.where((t) => t.done).length;
-                                return BarTooltipItem(
-                                  '${days[group.x]}\n${rod.toY.toStringAsFixed(0)}% ($dDone/${dList.length})',
-                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11),
-                                );
-                              },
-                            ),
-                          ),
-                          gridData: FlGridData(
-                            show: true,
-                            drawVerticalLine: false,
-                            horizontalInterval: 25,
-                            getDrawingHorizontalLine: (_) => const FlLine(color: Color(0xFFF2F2F7), strokeWidth: 1),
-                          ),
-                          borderData: FlBorderData(show: false),
-                          titlesData: FlTitlesData(
-                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                            leftTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 32,
-                                interval: 25,
-                                getTitlesWidget: (v, _) => Text('${v.toInt()}%', style: const TextStyle(fontSize: 10, color: Color(0xFF8E8E93))),
-                              ),
-                            ),
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (v, _) {
-                                  const labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
-                                  final idx = v.toInt();
-                                  if (idx < 0 || idx >= labels.length) return const SizedBox.shrink();
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Text(labels[idx], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          barGroups: List.generate(5, (idx) {
-                            final dayNum = idx + 1;
-                            final dList = teamAll.where((t) => t.day == dayNum).toList();
-                            final pct = dList.isEmpty ? 0.0 : (dList.where((t) => t.done).length / dList.length) * 100.0;
-                            final barColor = pct >= 80
-                                ? const Color(0xFF34C759)
-                                : (pct >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
-                            return BarChartGroupData(
-                              x: idx,
-                              barRods: [
-                                BarChartRodData(
-                                  toY: pct,
-                                  width: 24,
-                                  color: barColor,
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                                  backDrawRodData: BackgroundBarChartRodData(show: true, toY: 100, color: const Color(0xFFF2F2F7)),
-                                ),
-                              ],
-                            );
-                          }),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // RANKING POR COLABORADOR DE PLANTA
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5E5EA)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Desempeño por Colaborador', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
-                    const SizedBox(height: 12),
-                    if (plantOps.isEmpty)
-                      const Text('No hay operadores asignados en esta planta.', style: TextStyle(fontSize: 12, color: Colors.grey))
-                    else
-                      ...plantOps.map((op) {
-                        final opTasks = teamAll.where((t) => t.userId == op.id).toList();
-                        final opDone = opTasks.where((t) => t.done).length;
-                        final opPct = opTasks.isEmpty ? 0.0 : opDone / opTasks.length;
-                        final opPctInt = (opPct * 100).round();
-                        final c = opPctInt >= 80
-                            ? const Color(0xFF34C759)
-                            : (opPctInt >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(op.nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-                                  ),
-                                  Text('$opDone/${opTasks.length} ($opPctInt%)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: c)),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(999),
-                                child: LinearProgressIndicator(value: opPct, minHeight: 7, backgroundColor: const Color(0xFFF2F2F7), color: c),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                  ],
-                ),
-              ),
-            ],
+  Widget _headerIconButton({
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: _kSupBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _kSupBorder),
+            ),
+            child: Icon(icon, size: 17, color: _kSupNavy),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSupervisorMetricCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required double progress,
-    required Color color,
-    required IconData icon,
-  }) {
+  Widget _buildBentoKpi(String label, String value, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3))],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, size: 17, color: color),
-              ),
-              const SizedBox(width: 8),
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 6),
               Expanded(
-                child: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF3A3A3C))),
+                child: Text(label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kSupMuted)),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: color, letterSpacing: -0.6)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF86868B))),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
-              minHeight: 5,
-              backgroundColor: const Color(0xFFF2F2F7),
-              color: color,
+          const SizedBox(height: 6),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+        ],
+      ),
+    );
+  }
+
+  // --- TAB 0: MIS ACTIVIDADES ---
+  Widget _buildMisActividades(BuildContext context, StandardWorkProvider provider) {
+    final user = provider.currentUser;
+    final allMy = provider.instances.where((i) => i.userId == user?.id).toList();
+    final filtered = allMy.where((i) {
+      if (_myDayFilter != 0 && i.day != _myDayFilter) return false;
+      if (_mySearch.isNotEmpty) {
+        final q = _mySearch.toLowerCase();
+        if (!i.nombre.toLowerCase().contains(q) && !i.area.toLowerCase().contains(q)) return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) => a.timeStart.compareTo(b.timeStart));
+
+    final doneCount = allMy.where((i) => i.done).length;
+    final pendingCount = allMy.length - doneCount;
+    final planCount = allMy.where((i) => i.requierePlanAccion).length;
+
+    return RefreshIndicator(
+      onRefresh: _refreshAll,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(
+            children: [
+              Expanded(child: _buildBentoKpi('Asignadas', '${allMy.length}', _kSupBlue, Icons.layers_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildBentoKpi('Hechas', '$doneCount', _kSupGreen, Icons.check_circle_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildBentoKpi('Pendientes', '$pendingCount', _kSupRed, Icons.pending_actions_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildBentoKpi('Con Plan', '$planCount', _kSupAmber, Icons.flag_rounded)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            onChanged: (v) => setState(() => _mySearch = v.trim()),
+            decoration: InputDecoration(
+              hintText: 'Buscar en mis actividades o áreas...',
+              prefixIcon: const Icon(Icons.search_rounded, size: 19, color: _kSupMuted),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kSupBorder)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kSupBorder)),
             ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _dayFilterChip(0, 'Todos', _myDayFilter, (d) => setState(() => _myDayFilter = d)),
+                      for (final entry in _kSupDayNames.entries)
+                        _dayFilterChip(entry.key, entry.value, _myDayFilter, (d) => setState(() => _myDayFilter = d)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, icon: Icon(Icons.view_agenda_rounded, size: 16), label: Text('Lista', style: TextStyle(fontSize: 11))),
+                  ButtonSegment(value: true, icon: Icon(Icons.schedule_rounded, size: 16), label: Text('Horario', style: TextStyle(fontSize: 11))),
+                ],
+                selected: {_myScheduleMode},
+                onSelectionChanged: (s) => setState(() => _myScheduleMode = s.first),
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? _kSupNavy : Colors.white),
+                  foregroundColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? Colors.white : _kSupText),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (filtered.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(36),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: _kSupBorder)),
+              child: const Column(
+                children: [
+                  Icon(Icons.assignment_turned_in_rounded, size: 42, color: _kSupMuted),
+                  SizedBox(height: 10),
+                  Text('No tienes actividades para este filtro', style: TextStyle(fontWeight: FontWeight.w700, color: _kSupMuted)),
+                ],
+              ),
+            )
+          else if (_myScheduleMode)
+            ..._buildScheduleView(filtered, (inst) => _executeSupervisorActivity(context, provider, inst))
+          else
+            ...filtered.map((inst) => _buildMyActivityCard(context, provider, inst)),
+        ],
+      ),
+    );
+  }
+
+  Widget _dayFilterChip(int day, String label, int current, ValueChanged<int> onTap) {
+    final selected = day == current;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: ChoiceChip(
+        label: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? Colors.white : _kSupText)),
+        selected: selected,
+        selectedColor: _kSupNavy,
+        backgroundColor: Colors.white,
+        side: BorderSide(color: selected ? _kSupNavy : _kSupBorder),
+        onSelected: (_) => onTap(day),
+      ),
+    );
+  }
+
+  List<Widget> _buildScheduleView(List<ActivityInstance> items, ValueChanged<ActivityInstance> onTap) {
+    final byHour = <String, List<ActivityInstance>>{};
+    for (final inst in items) {
+      byHour.putIfAbsent(inst.timeStart, () => []).add(inst);
+    }
+    final hours = byHour.keys.toList()..sort();
+    return hours.map((hour) {
+      final list = byHour[hour]!;
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kSupBorder)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: _kSupNavy.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Text(hour, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: _kSupNavy)),
+                ),
+                const SizedBox(width: 8),
+                Text('${list.length} actividad(es)', style: const TextStyle(fontSize: 11, color: _kSupMuted, fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...list.map((inst) => InkWell(
+                  onTap: () => onTap(inst),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _kSupBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: inst.done ? _kSupGreen.withValues(alpha: 0.4) : _kSupBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(inst.done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                            size: 18, color: inst.done ? _kSupGreen : _kSupBlue),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                              Text('${_kSupDayNames[inst.day] ?? ""} · ${inst.area} · ${inst.timeStart}-${inst.timeEnd}',
+                                  style: const TextStyle(fontSize: 11, color: _kSupMuted)),
+                            ],
+                          ),
+                        ),
+                        _buildStatusPill(inst),
+                      ],
+                    ),
+                  ),
+                )),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
+  Future<void> _executeSupervisorActivity(BuildContext context, StandardWorkProvider provider, ActivityInstance inst) async {
+    if (inst.tipoActividad == 'registro') {
+      await MeetingRecordDialog.show(context: context, instance: inst);
+    } else {
+      await ActivityExecutionModal.show(context: context, instance: inst);
+    }
+    await _refreshAll();
+  }
+
+  Widget _buildMyActivityCard(BuildContext context, StandardWorkProvider provider, ActivityInstance inst) {
+    final color = inst.done ? _kSupGreen : (inst.prioridad == 'Alta' ? _kSupRed : _kSupBlue);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kSupBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(width: 4, height: 34, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kSupText)),
+                    Text(
+                      '${_kSupDayNames[inst.day] ?? ""} · ${inst.timeStart}-${inst.timeEnd} · ${inst.area}',
+                      style: const TextStyle(fontSize: 11, color: _kSupMuted),
+                    ),
+                  ],
+                ),
+              ),
+              _buildStatusPill(inst),
+            ],
+          ),
+          if (inst.descripcion.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(inst.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: _kSupMuted)),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              if (!inst.done)
+                ElevatedButton.icon(
+                  onPressed: () => _executeSupervisorActivity(context, provider, inst),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 16, color: Colors.white),
+                  label: Text(inst.tipoActividad == 'registro' ? 'Registrar Reunión' : 'Ejecutar',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kSupNavy,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              if (inst.subtasksTotal > 0)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => ActivitySubtasksModal(
+                        instance: inst,
+                        onComplete: (data) async {
+                          for (final e in data.entries) {
+                            await provider.reportSubtaskExecution(
+                              instanceId: inst.id!,
+                              subtaskId: e.key,
+                              photoPath: e.value['photo'] as String?,
+                              comment: e.value['comment'] as String?,
+                              measuredValue: e.value['measurement'] as double?,
+                            );
+                          }
+                          await _refreshAll();
+                        },
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.checklist_rounded, size: 15),
+                  label: Text('Subtareas (${inst.subtasksReported}/${inst.subtasksTotal})', style: const TextStyle(fontSize: 11)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _kSupBlue,
+                    side: const BorderSide(color: _kSupBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              if (inst.requierePlanAccion)
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await ActionPlanDialog.show(context: context, instance: inst, isMandatoryForActivity: inst.planAccionObligatorio);
+                    await _refreshAll();
+                  },
+                  icon: const Icon(Icons.flag_rounded, size: 15),
+                  label: const Text('Plan de Acción', style: TextStyle(fontSize: 11)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _kSupAmber,
+                    side: BorderSide(color: _kSupAmber.withValues(alpha: 0.4)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  // --- TAB 1: MI EQUIPO ---
+  Widget _buildResumenEquipo(BuildContext context, StandardWorkProvider provider) {
+    final plantId = provider.currentUser?.plantId ?? '';
+    final operators = provider.allUsers.where((u) => u.isOperator && u.plantId == plantId).where((u) {
+      if (_teamSearch.isEmpty) return true;
+      final q = _teamSearch.toLowerCase();
+      return u.nombre.toLowerCase().contains(q) || u.area.toLowerCase().contains(q);
+    }).toList();
+
+    final teamTasks = provider.instances.where((i) => i.plantId == plantId).toList();
+    final doneTeam = teamTasks.where((i) => i.done).length;
+    final pct = teamTasks.isEmpty ? 0.0 : (doneTeam / teamTasks.length) * 100;
+    final pendingRev = _allExecutions.where((e) => e.reportada && !e.aprobada && (e.motivoRechazo == null || e.motivoRechazo!.isEmpty)).length;
+
+    return RefreshIndicator(
+      onRefresh: _refreshAll,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(
+            children: [
+              Expanded(child: _buildBentoKpi('Operadores', '${operators.length}', _kSupNavy, Icons.groups_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildBentoKpi('Cumplimiento', '${pct.toStringAsFixed(0)}%', _kSupGreen, Icons.verified_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildBentoKpi('x Revisar', '$pendingRev', _kSupAmber, Icons.rate_review_rounded)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showGemba5SModal(context),
+                  icon: const Icon(Icons.checklist_rtl_rounded, size: 17, color: Colors.white),
+                  label: const Text('Ronda Gemba 5S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kSupNavy,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _showPhotoStandardsModal(context),
+                  icon: const Icon(Icons.photo_library_rounded, size: 17),
+                  label: const Text('Estándares 5S', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _kSupNavy,
+                    side: const BorderSide(color: _kSupBorder),
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            onChanged: (v) => setState(() => _teamSearch = v.trim()),
+            decoration: InputDecoration(
+              hintText: 'Buscar colaborador por nombre o área...',
+              prefixIcon: const Icon(Icons.search_rounded, size: 19, color: _kSupMuted),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kSupBorder)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kSupBorder)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (operators.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kSupBorder)),
+              child: const Center(child: Text('No hay operadores asignados a esta planta.', style: TextStyle(color: _kSupMuted))),
+            )
+          else
+            ...operators.map((op) {
+              final opTasks = teamTasks.where((t) => t.userId == op.id).toList();
+              final opDone = opTasks.where((t) => t.done).length;
+              final opPct = opTasks.isEmpty ? 0.0 : opDone / opTasks.length;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kSupBorder)),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: _kSupNavy.withValues(alpha: 0.1),
+                          child: Text(op.iniciales, style: const TextStyle(color: _kSupNavy, fontWeight: FontWeight.w800, fontSize: 13)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(op.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kSupText)),
+                              Text('${op.cargo} · ${op.area}', style: const TextStyle(fontSize: 11, color: _kSupMuted)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Ver Perfil',
+                          icon: const Icon(Icons.person_search_rounded, color: _kSupBlue),
+                          onPressed: () => CollaboratorProfileModal.show(context, op, opTasks, provider),
+                        ),
+                        IconButton(
+                          tooltip: 'Ver Actividades',
+                          icon: const Icon(Icons.arrow_forward_ios_rounded, size: 15, color: _kSupMuted),
+                          onPressed: () {
+                            setState(() {
+                              _segOperatorId = op.id;
+                              _currentScreenIndex = 2;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: opPct,
+                        minHeight: 7,
+                        backgroundColor: _kSupBg,
+                        valueColor: AlwaysStoppedAnimation<Color>(opPct >= 0.8 ? _kSupGreen : (opPct >= 0.4 ? _kSupAmber : _kSupBlue)),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('$opDone/${opTasks.length} completadas', style: const TextStyle(fontSize: 11, color: _kSupMuted, fontWeight: FontWeight.w600)),
+                        Text('${(opPct * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _kSupNavy)),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  // --- TAB 2: SEGUIMIENTO ---
+  Widget _buildSeguimientoActividades(BuildContext context, StandardWorkProvider provider) {
+    final plantId = provider.currentUser?.plantId ?? '';
+    final operators = provider.allUsers.where((u) => u.isOperator && u.plantId == plantId).toList();
+    final usersById = {for (final u in provider.allUsers) u.id: u};
+
+    final pendingReviews = _allExecutions.where((e) => e.reportada && !e.aprobada && (e.motivoRechazo == null || e.motivoRechazo!.isEmpty)).toList();
+
+    final list = provider.instances.where((i) {
+      if (i.plantId != plantId) return false;
+      if (_segOperatorId != null && i.userId != _segOperatorId) return false;
+      if (_segDayFilter != 0 && i.day != _segDayFilter) return false;
+      if (_segStatusFilter == 'Pendientes' && i.done) return false;
+      if (_segStatusFilter == 'Completadas' && !i.done) return false;
+      if (_segStatusFilter == 'Por Validar' && i.state != 'Reportada') return false;
+      return true;
+    }).toList()
+      ..sort((a, b) => a.day.compareTo(b.day));
+
+    return RefreshIndicator(
+      onRefresh: _refreshAll,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          if (_loadingExecutions)
+            const LinearProgressIndicator()
+          else if (pendingReviews.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _kSupAmber.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.rate_review_rounded, color: _kSupAmber, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Evidencias por Validar (${pendingReviews.length})',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kSupText),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ...pendingReviews.take(5).map((rev) => InkWell(
+                        onTap: () => _inspectEvidenceModal(context, rev),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.photo_camera_rounded, size: 16, color: _kSupBlue),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${usersById[rev.userId]?.nombre ?? rev.userId} · Subtarea #${rev.subtaskId}',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              const Text('Revisar >', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kSupBlue)),
+                            ],
+                          ),
+                        ),
+                      )),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: ['Todas', 'Pendientes', 'Completadas', 'Por Validar'].map((lbl) {
+                final selected = _segStatusFilter == lbl;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(lbl, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? Colors.white : _kSupText)),
+                    selected: selected,
+                    selectedColor: _kSupNavy,
+                    backgroundColor: Colors.white,
+                    side: BorderSide(color: selected ? _kSupNavy : _kSupBorder),
+                    onSelected: (_) => setState(() => _segStatusFilter = lbl),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String?>(
+                  initialValue: _segOperatorId,
+                  decoration: InputDecoration(
+                    labelText: 'Filtrar Colaborador',
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kSupBorder)),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('Todo el Equipo')),
+                    ...operators.map((op) => DropdownMenuItem(value: op.id, child: Text(op.nombre))),
+                  ],
+                  onChanged: (v) => setState(() => _segOperatorId = v),
+                ),
+              ),
+              const SizedBox(width: 8),
+              DropdownButton<int>(
+                value: _segDayFilter,
+                items: [
+                  const DropdownMenuItem(value: 0, child: Text('Todos los días')),
+                  for (final e in _kSupDayNames.entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
+                ],
+                onChanged: (v) => setState(() => _segDayFilter = v ?? 0),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (list.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kSupBorder)),
+              child: const Center(child: Text('No hay actividades que coincidan con los filtros.', style: TextStyle(color: _kSupMuted))),
+            )
+          else
+            ...list.map((inst) {
+              final opName = usersById[inst.userId]?.nombre ?? inst.userId;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: _kSupBorder)),
+                child: Row(
+                  children: [
+                    Icon(inst.done ? Icons.check_circle_rounded : Icons.schedule_rounded,
+                        color: inst.done ? _kSupGreen : _kSupAmber, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          Text('$opName · ${_kSupDayNames[inst.day] ?? ""} · ${inst.timeStart}-${inst.timeEnd}',
+                              style: const TextStyle(fontSize: 11, color: _kSupMuted)),
+                        ],
+                      ),
+                    ),
+                    _buildStatusPill(inst),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  // --- TAB 3: PLANES DE ACCIÓN ---
+  Widget _buildSeguimientoPlanes(BuildContext context, StandardWorkProvider provider) {
+    final plans = provider.proPlans.where((p) {
+      if (_planFilter == 'Todos') return true;
+      return p.estado == _planFilter;
+    }).toList();
+
+    return RefreshIndicator(
+      onRefresh: _refreshAll,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: ['Todos', 'Pendiente', 'En Proceso', 'Cumplido'].map((lbl) {
+                      final selected = _planFilter == lbl;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text(lbl, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? Colors.white : _kSupText)),
+                          selected: selected,
+                          selectedColor: _kSupNavy,
+                          backgroundColor: Colors.white,
+                          side: BorderSide(color: selected ? _kSupNavy : _kSupBorder),
+                          onSelected: (_) => setState(() => _planFilter = lbl),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await ActionPlanDialog.show(context: context);
+                  await _refreshAll();
+                },
+                icon: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                label: const Text('Nuevo Plan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kSupNavy,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (plans.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kSupBorder)),
+              child: const Center(child: Text('No hay planes de acción para mostrar.', style: TextStyle(color: _kSupMuted))),
+            )
+          else
+            ...plans.map((p) {
+              final isDone = p.estado == 'Cumplido';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kSupBorder)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(p.plan, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kSupText)),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: (isDone ? _kSupGreen : _kSupAmber).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(p.estado, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: isDone ? _kSupGreen : _kSupAmber)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Resp: ${p.responsable} · Área: ${p.area} · Límite: ${p.fechaCompromiso}',
+                        style: const TextStyle(fontSize: 11, color: _kSupMuted)),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        if (!isDone)
+                          TextButton.icon(
+                            onPressed: () => provider.updateProPlanStatus(planId: p.id!, nuevoEstado: 'Cumplido', porcentajeAvance: 1.0),
+                            icon: const Icon(Icons.check_circle_outline_rounded, size: 16, color: _kSupGreen),
+                            label: const Text('Marcar Cumplido', style: TextStyle(fontSize: 12, color: _kSupGreen, fontWeight: FontWeight.w700)),
+                          ),
+                        const Spacer(),
+                        IconButton(
+                          tooltip: 'Eliminar Plan',
+                          icon: const Icon(Icons.delete_outline_rounded, size: 18, color: _kSupRed),
+                          onPressed: () => provider.deleteProPlan(p.id!),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  // --- TAB 4: INDICADORES ---
+  Widget _buildSupervisorIndicadores(BuildContext context, StandardWorkProvider provider) {
+    final plantId = provider.currentUser?.plantId ?? '';
+    final plantTasks = provider.instances.where((i) => i.plantId == plantId).toList();
+    final total = plantTasks.length;
+    final done = plantTasks.where((i) => i.done).length;
+    final pending = total - done;
+    final pct = total == 0 ? 0.0 : (done / total) * 100;
+
+    final dayGroups = <BarChartGroupData>[];
+    for (int d = 1; d <= 6; d++) {
+      final dayItems = plantTasks.where((i) => i.day == d).toList();
+      final dayPct = dayItems.isEmpty ? 0.0 : (dayItems.where((i) => i.done).length / dayItems.length) * 100;
+      dayGroups.add(
+        BarChartGroupData(
+          x: d,
+          barRods: [
+            BarChartRodData(
+              toY: dayPct,
+              width: 18,
+              borderRadius: BorderRadius.circular(6),
+              color: _selectedChartDay == d ? _kSupBlue : _kSupNavy,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildBentoKpi('Cumplimiento Planta', '${pct.toStringAsFixed(1)}%', _kSupNavy, Icons.insights_rounded)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildBentoKpi('Completadas', '$done', _kSupGreen, Icons.check_circle_rounded)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildBentoKpi('Pendientes', '$pending', _kSupRed, Icons.pending_rounded)),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final usersById = {for (final u in provider.allUsers) u.id: u};
+                  await ExcelService.instance.exportFilteredReport(
+                    filterSummary: 'Supervisor · Planta $plantId',
+                    plants: provider.allPlants.where((p) => p.id == plantId).toList(),
+                    instances: plantTasks,
+                    plans: provider.proPlans,
+                    usersById: usersById,
+                  );
+                },
+                icon: const Icon(Icons.table_chart_rounded, size: 17, color: Colors.white),
+                label: const Text('Exportar Excel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kSupGreen,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final usersById = {for (final u in provider.allUsers) u.id: u};
+                  await UltraReportService.instance.generateFilteredExecutivePdf(
+                    issuerName: provider.currentUser?.nombre ?? 'Supervisor',
+                    filterSummary: 'Supervisor · Planta $plantId',
+                    plants: provider.allPlants.where((p) => p.id == plantId).toList(),
+                    instances: plantTasks,
+                    plans: provider.proPlans,
+                    usersById: usersById,
+                  );
+                },
+                icon: const Icon(Icons.picture_as_pdf_rounded, size: 17, color: Colors.white),
+                label: const Text('Reporte PDF', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kSupNavy,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: _kSupBorder)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Cumplimiento Diario (Lun - Sáb)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kSupNavy)),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 200,
+                child: BarChart(
+                  BarChartData(
+                    maxY: 100,
+                    barTouchData: BarTouchData(
+                      touchCallback: (event, resp) {
+                        if (resp?.spot != null && event.isInterestedForInteractions) {
+                          setState(() => _selectedChartDay = resp!.spot!.touchedBarGroup.x);
+                        }
+                      },
+                    ),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (v, _) => Text(_kSupDayNames[v.toInt()] ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: dayGroups,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: _kSupBorder)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Distribución de Ejecución', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kSupNavy)),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 180,
+                child: total == 0
+                    ? const Center(child: Text('Sin actividades registradas todavía', style: TextStyle(color: _kSupMuted)))
+                    : PieChart(
+                        PieChartData(
+                          pieTouchData: PieTouchData(
+                            touchCallback: (event, resp) {
+                              setState(() {
+                                _touchedPieIndex = resp?.touchedSection?.touchedSectionIndex ?? -1;
+                              });
+                            },
+                          ),
+                          sectionsSpace: 3,
+                          centerSpaceRadius: 40,
+                          sections: [
+                            PieChartSectionData(
+                              value: done.toDouble(),
+                              color: _kSupGreen,
+                              radius: _touchedPieIndex == 0 ? 52 : 44,
+                              title: '$done\nHechas',
+                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
+                            PieChartSectionData(
+                              value: pending.toDouble(),
+                              color: _kSupRed,
+                              radius: _touchedPieIndex == 1 ? 52 : 44,
+                              title: '$pending\nPend.',
+                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusPill(ActivityInstance item) {
+    final bg = item.done ? _kSupGreen.withValues(alpha: 0.12) : _kSupAmber.withValues(alpha: 0.12);
+    final fg = item.done ? _kSupGreen : _kSupAmber;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+      child: Text(item.state, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: fg)),
     );
   }
 }
