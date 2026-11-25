@@ -266,6 +266,34 @@ class UltraReportService {
           if (includeRanking && plants.isNotEmpty) ...[
             pw.Text('Cumplimiento por Planta', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColor.fromHex('#002F6C'))),
             pw.SizedBox(height: 6),
+            ...plants.map((p) {
+              final pInst = instances.where((i) => i.plantId == p.id).toList();
+              final pDone = pInst.where((i) => i.done).length;
+              final ratio = pInst.isNotEmpty ? (pDone / pInst.length) : 0.0;
+              return pw.Padding(
+                padding: const pw.EdgeInsets.only(bottom: 6),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('${p.nombre} (${p.codigo})', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                        pw.Text('$pDone/${pInst.length} (${(ratio * 100).toStringAsFixed(1)}%)', style: const pw.TextStyle(fontSize: 8.5)),
+                      ],
+                    ),
+                    pw.SizedBox(height: 3),
+                    pw.Stack(
+                      children: [
+                        pw.Container(height: 6, width: 520, decoration: pw.BoxDecoration(color: PdfColor.fromHex('#E5E5EA'), borderRadius: pw.BorderRadius.circular(3))),
+                        pw.Container(height: 6, width: (520 * ratio).clamp(4.0, 520.0), decoration: pw.BoxDecoration(color: PdfColor.fromHex('#002F6C'), borderRadius: pw.BorderRadius.circular(3))),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+            pw.SizedBox(height: 8),
             pw.TableHelper.fromTextArray(
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white, fontSize: 9),
               headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#002F6C')),
