@@ -543,12 +543,32 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
               ),
               const SizedBox(height: 10),
 
-              // Métricas de Línea
-              const Text('Líneas de Producción y Estado:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              // Métricas reales por Área de la Planta
+              const Text('Cumplimiento por Área (Real):', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              _buildLineStatusRow('Línea de Extrusión Principal 01', '96% Cumplimiento', const Color(0xFF16A34A)),
-              _buildLineStatusRow('Línea de Termoformado y Troquelado', '92% Cumplimiento', const Color(0xFF0284C7)),
-              _buildLineStatusRow('Área de Empaque y Paletizado', '98% Cumplimiento', const Color(0xFF16A34A)),
+              Builder(builder: (ctx) {
+                final plantInst = ctx.watch<StandardWorkProvider>().instances.where((i) => i.plantId == plant.id).toList();
+                if (plantInst.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: Text('Sin actividades asignadas en esta planta aún.', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  );
+                }
+                final Map<String, List<ActivityInstance>> byArea = {};
+                for (final inst in plantInst) {
+                  byArea.putIfAbsent(inst.area.isEmpty ? 'General' : inst.area, () => []).add(inst);
+                }
+                return Column(
+                  children: byArea.entries.map((e) {
+                    final done = e.value.where((t) => t.done).length;
+                    final pct = ((done / e.value.length) * 100).round();
+                    final color = pct >= 80
+                        ? const Color(0xFF16A34A)
+                        : (pct >= 50 ? const Color(0xFF0284C7) : const Color(0xFFEA580C));
+                    return _buildLineStatusRow(e.key, '$pct% ($done/${e.value.length} tareas)', color);
+                  }).toList(),
+                );
+              }),
               const SizedBox(height: 16),
 
               Text('Personal Adscrito (${plantUsers.length} colaboradores):', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
@@ -772,10 +792,15 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Semáforo de Cumplimiento por Planta (%)',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    const Expanded(
+                      child: Text(
+                        'Semáforo de Cumplimiento por Planta (%)',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
@@ -1103,12 +1128,21 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.emoji_events_rounded, color: Color(0xFFD97706), size: 22),
-                        SizedBox(width: 8),
-                        Text('Benchmarking Industrial · Ranking Q4', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                      ],
+                    const Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.emoji_events_rounded, color: Color(0xFFD97706), size: 22),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Ranking Real por Planta',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.share_rounded, size: 18, color: Color(0xFF002F6C)),
@@ -1118,11 +1152,30 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                   ],
                 ),
                 const SizedBox(height: 10),
-                _buildBenchmarkingRow('🥇 1°', 'Planta Extrusa', '94.2%', '0 Accidentes / 0 Paradas', const Color(0xFF16A34A)),
-                const SizedBox(height: 6),
-                _buildBenchmarkingRow('🥈 2°', 'Planta Termoformado', '91.8%', '1 Parada Resuelta', const Color(0xFF0284C7)),
-                const SizedBox(height: 6),
-                _buildBenchmarkingRow('🥉 3°', 'Planta Inyección', '88.5%', '2 Paradas Menores', const Color(0xFFD97706)),
+                if (plantStats.isEmpty)
+                  const Text('Sin plantas registradas aún.', style: TextStyle(fontSize: 12, color: Color(0xFF64748B)))
+                else
+                  ...(() {
+                    final ranked = List.of(plantStats)..sort((a, b) => b.rate.compareTo(a.rate));
+                    const medals = ['🥇 1°', '🥈 2°', '🥉 3°'];
+                    return List.generate(ranked.length, (i) {
+                      final st = ranked[i];
+                      final badge = i < medals.length ? medals[i] : '${i + 1}°';
+                      final c = st.rate >= 80
+                          ? const Color(0xFF16A34A)
+                          : (st.rate >= 50 ? const Color(0xFF0284C7) : const Color(0xFFEA580C));
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: _buildBenchmarkingRow(
+                          badge,
+                          st.plant.nombre,
+                          '${st.rate.toStringAsFixed(1)}%',
+                          '${st.done}/${st.total} tareas · ${st.ops} op.',
+                          c,
+                        ),
+                      );
+                    });
+                  })(),
               ],
             ),
           ),
@@ -1923,7 +1976,7 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
   String _search = '';
   String _plantFilter = 'ALL';
 
-  void _openCreateDispatchSheet(BuildContext context) {
+  void _openCreateDispatchSheet(BuildContext context, {ActivityInstance? editingActivity}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1946,12 +1999,20 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
               padding: const EdgeInsets.fromLTRB(18, 10, 10, 6),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Despacho Universal Corporativo', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-                        Text('Crea y asigna rutinas marco a una o todas las plantas', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                        Text(
+                          editingActivity != null ? 'Editar Actividad Corporativa' : 'Nueva Actividad Corporativa',
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                        ),
+                        Text(
+                          editingActivity != null
+                              ? 'Actualiza horario, área, tipo o plan de acción'
+                              : 'Crea y asigna rutinas marco a una o todas las plantas',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
                       ],
                     ),
                   ),
@@ -1965,6 +2026,7 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
             const Divider(height: 1),
             Expanded(
               child: _SuperAdminCorporateDispatchForm(
+                editingActivity: editingActivity,
                 onDispatched: () {
                   if (sheetCtx.mounted) Navigator.of(sheetCtx).pop();
                 },
@@ -2022,29 +2084,85 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Actividades Corporativas',
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.3),
+                              ),
+                              Text(
+                                '${groups.length} rutinas únicas · ${filtered.length} asignaciones',
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
-                              'Actividades Corporativas',
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.3),
+                            ActionChip(
+                              avatar: const Icon(Icons.category_rounded, size: 15, color: Color(0xFF007AFF)),
+                              label: const Text('Áreas', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Color(0xFFBFDBFE)),
+                              onPressed: () => _openCatalogsManagerSheet(context),
                             ),
-                            Text(
-                              '${groups.length} rutinas únicas · ${filtered.length} asignaciones activas',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            const SizedBox(width: 6),
+                            ActionChip(
+                              avatar: const Icon(Icons.auto_stories_rounded, size: 15, color: Color(0xFF002F6C)),
+                              label: const Text('Plantillas', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              onPressed: () {
+                                TemplatesModal.show(
+                                  context: context,
+                                  onSelectTemplate: (_) => _openCreateDispatchSheet(context),
+                                );
+                              },
                             ),
                           ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: const Color(0xFFE5E5EA)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // TARJETAS RESUMEN ARRIBA (ESTILO APPLE)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildDispatchKpiCard(
+                            'Rutinas',
+                            '${groups.length}',
+                            const Color(0xFF007AFF),
+                            Icons.layers_rounded,
                           ),
-                          child: Text(
-                            '${groups.length} rutinas',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF007AFF)),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildDispatchKpiCard(
+                            'Hechas',
+                            '${filtered.where((i) => i.done).length}',
+                            const Color(0xFF34C759),
+                            Icons.check_circle_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildDispatchKpiCard(
+                            'Pendientes',
+                            '${filtered.where((i) => !i.done).length}',
+                            const Color(0xFFFF3B30),
+                            Icons.pending_actions_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildDispatchKpiCard(
+                            'Con Plan',
+                            '${groups.where((g) => g.first.requierePlanAccion || g.first.planAccionObligatorio).length}',
+                            const Color(0xFFFF9500),
+                            Icons.flag_rounded,
                           ),
                         ),
                       ],
@@ -2145,54 +2263,15 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
         bottom: 16,
         child: SafeArea(
           top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              FloatingActionButton.extended(
-                heroTag: 'superadmin_catalogs_fab',
-                onPressed: () => _openCatalogsManagerSheet(context),
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF007AFF),
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFFBFDBFE)),
-                ),
-                icon: const Icon(Icons.category_rounded, size: 18),
-                label: const Text('Áreas y Categorías', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-              ),
-              const SizedBox(height: 10),
-              FloatingActionButton.extended(
-                heroTag: 'superadmin_templates_fab',
-                onPressed: () {
-                  TemplatesModal.show(
-                    context: context,
-                    onSelectTemplate: (_) => _openCreateDispatchSheet(context),
-                  );
-                },
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF002F6C),
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                ),
-                icon: const Icon(Icons.auto_stories_rounded, size: 18),
-                label: const Text('Plantillas', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-              ),
-              const SizedBox(height: 10),
-              FloatingActionButton.extended(
-                heroTag: 'superadmin_create_act_fab',
-                onPressed: () => _openCreateDispatchSheet(context),
-                backgroundColor: const Color(0xFF002F6C),
-                foregroundColor: Colors.white,
-                elevation: 6,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                icon: const Icon(Icons.add_task_rounded, size: 20),
-                label: const Text('+ Crear Actividad', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-              ),
-            ],
+          child: FloatingActionButton.extended(
+            heroTag: 'superadmin_create_act_fab',
+            onPressed: () => _openCreateDispatchSheet(context),
+            backgroundColor: const Color(0xFF002F6C),
+            foregroundColor: Colors.white,
+            elevation: 6,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            icon: const Icon(Icons.add_task_rounded, size: 20),
+            label: const Text('+ Crear Actividad', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
           ),
         ),
       ),
@@ -2275,17 +2354,40 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: first.fija ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  first.fija ? 'FIJA' : 'FLEX',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: first.fija ? const Color(0xFFDC2626) : const Color(0xFF007AFF)),
-                ),
+              const SizedBox(width: 6),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF007AFF)),
+                tooltip: 'Editar Actividad',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                onPressed: () => _openCreateDispatchSheet(context, editingActivity: first),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFFF3B30)),
+                tooltip: 'Eliminar Actividad',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                onPressed: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (dCtx) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      title: const Text('Eliminar Actividad', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      content: Text('¿Deseas eliminar "${first.nombre}" y todas sus asignaciones?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF3B30)),
+                          onPressed: () => Navigator.pop(dCtx, true),
+                          child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (ok == true && context.mounted) {
+                    await Provider.of<StandardWorkProvider>(context, listen: false).deleteActivity(first.activityId);
+                  }
+                },
               ),
             ],
           ),
@@ -2437,6 +2539,38 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDispatchKpiCard(String label, String value, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
+        ],
       ),
     );
   }
@@ -2606,7 +2740,8 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
 
 class _SuperAdminCorporateDispatchForm extends StatefulWidget {
   final VoidCallback? onDispatched;
-  const _SuperAdminCorporateDispatchForm({this.onDispatched});
+  final ActivityInstance? editingActivity;
+  const _SuperAdminCorporateDispatchForm({this.onDispatched, this.editingActivity});
 
   @override
   State<_SuperAdminCorporateDispatchForm> createState() => _SuperAdminCorporateDispatchFormState();
@@ -2627,8 +2762,28 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
   final _reunionHoraCtrl = TextEditingController(text: '08:00 AM');
   String _reunionLugar = 'Sala de Planta';
   bool _planAccionObligatorio = false;
+  bool _requierePlanAccion = false;
   String _targetPlanta = 'ALL';
   String _targetUserId = 'ALL';
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.editingActivity;
+    if (e != null) {
+      _nombreCtrl.text = e.nombre;
+      _descCtrl.text = e.descripcion;
+      _horaIniCtrl.text = e.timeStart;
+      _horaFinCtrl.text = e.timeEnd;
+      _area = e.area.isEmpty ? 'Todas las Áreas' : e.area;
+      _categoria = e.category.isEmpty ? 'General' : e.category;
+      _prioridad = e.prioridad.isEmpty ? 'Alta' : e.prioridad;
+      _fija = e.fija;
+      _tipoActividad = e.tipoActividad;
+      _requierePlanAccion = e.requierePlanAccion || e.planAccionObligatorio;
+      _planAccionObligatorio = e.planAccionObligatorio;
+    }
+  }
   final Set<int> _selectedDays = {1, 2, 3, 4, 5}; // Lun-Vie por defecto
 
   final List<ActivitySubtaskModel> _subtasks = [
@@ -2854,13 +3009,6 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
       return;
     }
 
-    if (_tipoActividad == 'ejecucion' && _subtasks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('En actividad de ejecución, agrega al menos una subtarea para guiar al colaborador')),
-      );
-      return;
-    }
-
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
     final sortedDays = (_selectedDays.toList()..sort()).join(',');
 
@@ -2869,6 +3017,40 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
     final fullDesc = isMeetingMode
         ? '${baseDesc.isNotEmpty ? "$baseDesc\n" : ""}[REUNIÓN PROGRAMADA: ${_reunionHoraCtrl.text.trim()} · $_reunionLugar]'
         : baseDesc;
+
+    if (widget.editingActivity != null) {
+      await provider.updateActivityGroup(
+        activityId: widget.editingActivity!.activityId,
+        nombre: _nombreCtrl.text.trim(),
+        descripcion: fullDesc,
+        area: _area,
+        category: _categoria,
+        timeStart: _horaIniCtrl.text.trim(),
+        timeEnd: _horaFinCtrl.text.trim(),
+        fija: _fija,
+        prioridad: _prioridad,
+        tipoActividad: _tipoActividad,
+        requierePlanAccion: _requierePlanAccion || _planAccionObligatorio,
+        planAccionObligatorio: _planAccionObligatorio,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Color(0xFF16A34A),
+            content: Text('¡Actividad actualizada con éxito!'),
+          ),
+        );
+        widget.onDispatched?.call();
+      }
+      return;
+    }
+
+    if (_tipoActividad == 'ejecucion' && _subtasks.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('En actividad de ejecución, agrega al menos una subtarea para guiar al colaborador')),
+      );
+      return;
+    }
 
     await provider.dispatchCorporateActivity(
       nombre: _nombreCtrl.text.trim(),
@@ -2882,7 +3064,7 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
       prioridad: _prioridad,
       subtasks: isMeetingMode ? [] : _subtasks,
       tipoActividad: _tipoActividad,
-      requierePlanAccion: _planAccionObligatorio,
+      requierePlanAccion: _requierePlanAccion || _planAccionObligatorio,
       planAccionObligatorio: _planAccionObligatorio,
       targetPlantIds: _targetPlanta == 'ALL' ? null : [_targetPlanta],
       targetUserIds: _targetUserId == 'ALL' ? null : [_targetUserId],
@@ -3360,17 +3542,35 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
           const SizedBox(height: 10),
 
           Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _requierePlanAccion ? const Color(0xFFFFF7ED) : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: _requierePlanAccion ? const Color(0xFFF59E0B) : Colors.grey.shade200),
             ),
-            child: SwitchListTile(
-              title: const Text('Requiere Plan de Acción Obligatorio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              subtitle: const Text('El colaborador no podrá completar la actividad sin diligenciar y cerrar el plan asociado', style: TextStyle(fontSize: 11)),
-              value: _planAccionObligatorio,
-              activeColor: const Color(0xFFD97706),
-              onChanged: (val) => setState(() => _planAccionObligatorio = val),
+            child: Column(
+              children: [
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Incluir Plan de Acción (Reunión Diaria / Seguimiento)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  subtitle: const Text('Habilita registrar planes de acción directamente desde esta actividad', style: TextStyle(fontSize: 11)),
+                  value: _requierePlanAccion,
+                  activeThumbColor: const Color(0xFFF59E0B),
+                  onChanged: (val) => setState(() {
+                    _requierePlanAccion = val;
+                    if (!val) _planAccionObligatorio = false;
+                  }),
+                ),
+                if (_requierePlanAccion)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: const Text('¿Plan de Acción Obligatorio para cerrar?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                    value: _planAccionObligatorio,
+                    activeThumbColor: const Color(0xFFDC2626),
+                    onChanged: (val) => setState(() => _planAccionObligatorio = val),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 16),

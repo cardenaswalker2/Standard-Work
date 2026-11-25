@@ -2056,4 +2056,36 @@ class StandardWorkProvider with ChangeNotifier {
     await _db.deleteActivity(activityId);
     await refreshData();
   }
+
+  Future<void> updateActivityGroup({
+    required int activityId,
+    required String nombre,
+    required String descripcion,
+    required String area,
+    required String category,
+    required String timeStart,
+    required String timeEnd,
+    required bool fija,
+    required String prioridad,
+    required String tipoActividad,
+    required bool requierePlanAccion,
+    required bool planAccionObligatorio,
+  }) async {
+    for (final inst in _instances.where((i) => i.activityId == activityId)) {
+      await _db.updateInstance(inst.copyWith(
+        nombre: nombre,
+        descripcion: descripcion,
+        area: area,
+        category: category,
+        timeStart: timeStart,
+        timeEnd: timeEnd,
+        fija: fija,
+        prioridad: prioridad,
+        tipoActividad: tipoActividad,
+        requierePlanAccion: requierePlanAccion,
+        planAccionObligatorio: planAccionObligatorio,
+      ));
+    }
+    await refreshData();
+  }
 }

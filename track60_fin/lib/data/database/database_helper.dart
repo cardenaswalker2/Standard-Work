@@ -1199,6 +1199,21 @@ class DatabaseHelper {
     );
   }
 
+  Future<void> updateInstance(ActivityInstance updated) async {
+    if (kIsWeb) {
+      await _ensureWebInitialized();
+      final idx = _webInstances.indexWhere((i) => i.id == updated.id);
+      if (idx != -1) {
+        _webInstances[idx] = updated;
+        await _persistWebState();
+      }
+      return;
+    }
+    if (updated.id == null) return;
+    final db = await database;
+    await db.update('instances', updated.toMap(), where: 'id = ?', whereArgs: [updated.id]);
+  }
+
   Future<List<ActivitySubtaskModel>> getSubtasksForActivity(int activityId) async {
     if (kIsWeb) {
       await _ensureWebInitialized();
