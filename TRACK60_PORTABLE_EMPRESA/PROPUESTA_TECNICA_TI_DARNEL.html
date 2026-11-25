@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dossier Técnico TI - Integración TRACK60 & Microsoft SharePoint | Grupo Darnel</title>
+  <link rel="icon" type="image/png" href="app_web/favicon.png">
+  <style>
+    :root {
+      --primary: #002F6C;
+      --secondary: #00A3E0;
+      --dark: #0B132B;
+      --light-bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #1E293B;
+      --text-muted: #64748B;
+      --success: #10B981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--light-bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+    }
+    .top-bar {
+      background: var(--primary);
+      color: white;
+      padding: 12px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    .top-bar .title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .btn-print {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-print:hover { background: #0284C7; }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: var(--card-bg);
+      padding: 48px 56px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    .header-doc {
+      border-bottom: 3px solid var(--primary);
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+    }
+    .badge-corp {
+      background: rgba(0, 47, 108, 0.08);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 26px;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      background: var(--light-bg);
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .meta-item strong { display: block; color: var(--primary); font-size: 11px; text-transform: uppercase; }
+    h2 {
+      font-size: 18px;
+      color: var(--primary);
+      margin: 32px 0 16px;
+      padding-left: 12px;
+      border-left: 4px solid var(--secondary);
+    }
+    p { margin-bottom: 14px; font-size: 14.5px; color: #334155; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13.5px;
+    }
+    th, td {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    th {
+      background: #F1F5F9;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    tr:nth-child(even) { background: #F8FAFC; }
+    .box-callout {
+      background: #F0F9FF;
+      border: 1px solid #BAE6FD;
+      border-left: 4px solid var(--secondary);
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    .box-callout strong { color: var(--primary); }
+    ul { padding-left: 24px; margin-bottom: 16px; font-size: 14px; color: #334155; }
+    li { margin-bottom: 8px; }
+    .req-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 14px;
+      background: #FFFFFF;
+    }
+    .req-card h3 { font-size: 14px; color: var(--primary); margin-bottom: 6px; }
+    code {
+      background: #E2E8F0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+      font-size: 12.5px;
+      color: #0F172A;
+    }
+    .footer-doc {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    @media print {
+      .top-bar { display: none; }
+      body { background: white; }
+      .container { border: none; box-shadow: none; margin: 0; padding: 0; max-width: 100%; }
+      h2 { page-break-after: avoid; }
+      table { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="title">TRACK60 - DOSSIER TÉCNICO PARA TI | GRUPO DARNEL</div>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar en PDF</button>
+  </div>
+
+  <div class="container">
+    <div class="header-doc">
+      <span class="badge-corp">DIRECCIÓN DE OPERACIONES & DIRECCIÓN DE TI</span>
+      <h1>Propuesta Técnica de Arquitectura e Integración</h1>
+      <div class="subtitle">Conexión de la Plataforma TRACK60 con Microsoft SharePoint Online & Microsoft Entra ID</div>
+
+      <div class="meta-grid">
+        <div class="meta-item">
+          <strong>Proyecto</strong>
+          TRACK60 (Standard Work & Control)
+        </div>
+        <div class="meta-item">
+          <strong>Tecnología</strong>
+          Flutter Enterprise Multiplataforma
+        </div>
+        <div class="meta-item">
+          <strong>Destinatarios</strong>
+          Jefatura de TI / Arquitectura de Software
+        </div>
+      </div>
+    </div>
+
+    <h2>1. Resumen Ejecutivo</h2>
+    <p>
+      El proyecto <strong>TRACK60</strong> es una plataforma corporativa desarrollada para auditar, gobernar y registrar en tiempo real el cumplimiento del trabajo estandarizado (Standard Work), la supervisión 5S y los planes de acción (ProPlanes) en las plantas de <strong>Extrusión, Termoformado, Inyección y Litografía</strong> de Grupo Darnel.
+    </p>
+    <p>
+      La aplicación ya está operativa y validada multiplataforma (Web en navegadores de PC, APK nativo en Android y PWA instalable en iOS/iPhone). El objetivo de este documento es solicitar a TI la habilitación de los permisos delegados en <strong>Microsoft Entra ID (Azure AD)</strong> y <strong>Microsoft Graph API</strong> para conectar la aplicación directamente con las <strong>listas de SharePoint ya existentes</strong>.
+    </p>
+
+    <h2>2. Comparativo: Estado Actual vs. Conexión con SharePoint</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Criterio Técnico</th>
+          <th>Etapa Transitoria (Local / Excel)</th>
+          <th>Etapa Futura (Microsoft SharePoint Online)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Almacenamiento</strong></td>
+          <td>Base de datos local SQLite y exportaciones periódicas.</td>
+          <td><strong>Listas oficiales centralizadas</strong> en el tenant institucional de Darnel.</td>
+        </tr>
+        <tr>
+          <td><strong>Autenticación</strong></td>
+          <td>PIN y cédula contra catálogo interno seguro.</td>
+          <td><strong>Single Sign-On (SSO)</strong> con credenciales oficiales <code>@darnel.com</code> (Entra ID).</td>
+        </tr>
+        <tr>
+          <td><strong>Concurrencia</strong></td>
+          <td>Archivos compartidos propensos a bloqueos.</td>
+          <td><strong>Edición transaccional masiva</strong> de cientos de operarios en paralelo.</td>
+        </tr>
+        <tr>
+          <td><strong>Auditoría & Logs</strong></td>
+          <td>Registro en almacenamiento local.</td>
+          <td>Trazabilidad nativa de Microsoft 365 con versionado y retención corporativa.</td>
+        </tr>
+        <tr>
+          <td><strong>Costo de Licencias</strong></td>
+          <td>$0 adicionales.</td>
+          <td><strong>$0 adicionales:</strong> Aprovecha 100% las licencias existentes de Microsoft 365.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. Estándares de Seguridad y Mínimo Privilegio (Zero Trust)</h2>
+    <div class="box-callout">
+      <strong>Cumplimiento de Seguridad Informática:</strong> La aplicación <u>nunca almacena ni procesa contraseñas</u> de los usuarios. Todo el flujo se delega a los servidores oficiales de inicio de sesión de Microsoft (OAuth 2.0 con PKCE).
+    </div>
+    <ul>
+      <li><strong>Protocolo Estándar:</strong> OAuth 2.0 con <em>Authorization Code Flow with PKCE</em> (RFC 7636), recomendado formalmente por Microsoft para aplicaciones Single Page (SPA) y móviles.</li>
+      <li><strong>Aislamiento Estricto:</strong> La aplicación solo tendrá acceso a las listas asociadas al proyecto TRACK60 mediante permisos <code>Sites.Selected</code>, sin visibilidad sobre otros sitios, carpetas ni correos institucionales.</li>
+      <li><strong>Tokens Cifrados:</strong> Utiliza tokens JWT de corta duración emitidos y firmados directamente por el tenant de Grupo Darnel.</li>
+    </ul>
+
+    <h2>4. Solicitud Específica para el Equipo de TI de Darnel</h2>
+    <p>Para completar la vinculación, se requiere la creación de un <strong>App Registration</strong> en el portal de Microsoft Entra ID con los siguientes parámetros:</p>
+
+    <div class="req-card">
+      <h3>A. Configuración del Registro de Aplicación</h3>
+      <p>• <strong>Nombre:</strong> <code>TRACK60 - Grupo Darnel</code><br>
+         • <strong>Tipo de Cuentas:</strong> Solo las cuentas de este directorio organizativo (Single Tenant - Darnel Group).</p>
+    </div>
+
+    <div class="req-card">
+      <h3>B. Permisos Delegados de Microsoft Graph API</h3>
+      <p>• <code>User.Read</code>: Lectura del perfil básico del colaborador (Nombre, cargo, correo).<br>
+         • <code>Sites.Selected</code>: Acceso de lectura/escritura restringido exclusivamente al sitio de TRACK60.</p>
+    </div>
+
+    <div class="req-card">
+      <h3>C. URIs de Redirección (Redirect URIs)</h3>
+      <p>• <strong>Plataforma Web (PC / PWA):</strong> <code>http://localhost:8080/</code> (Pruebas) y URL interna de producción.<br>
+         • <strong>Plataforma Android:</strong> <code>msauth://com.darnel.track60/</code></p>
+    </div>
+
+    <div class="req-card">
+      <h3>D. Parámetros a Entregar al Equipo de Proyecto</h3>
+      <p>• <code>Application (Client) ID</code><br>
+         • <code>Directory (Tenant) ID</code><br>
+         • URL o Site ID del sitio de SharePoint asignado.</p>
+    </div>
+
+    <h2>5. Impacto Operativo Directo</h2>
+    <ul>
+      <li><strong>Visibilidad en Tiempo Real:</strong> La gerencia de operaciones y los jefes de planta visualizan en vivo el cumplimiento de cada línea sin esperar al cierre de turno.</li>
+      <li><strong>Cero Papel y Auditoría Fotográfica:</strong> Las tareas críticas incorporan fotos de antes y después aprobadas por supervisión técnica.</li>
+      <li><strong>Cero Mantenimiento para TI:</strong> No requiere servidores dedicados, bases de datos externas ni soporte de infraestructura adicional.</li>
+    </ul>
+
+    <div class="footer-doc">
+      Proyecto TRACK60 • Grupo Darnel • Dirección de Operaciones & Mejora Continua • 2026
+    </div>
+  </div>
+</body>
+</html>
+

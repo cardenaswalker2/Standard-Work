@@ -14,8 +14,8 @@ public class Track60UserPrincipal {
     private final String userId;
     private final String cedula;
     private final String nombre;
-    private final String rol;      // superadmin | admin_planta | supervisor | operador
-    private final String plantId;  // 'ALL' o ID de planta
+    private final String rol; // superadmin | admin_planta | supervisor | operador
+    private final String plantId; // 'ALL' o ID de planta
 
     public String getSpringRole() {
         return switch (rol == null ? "" : rol.toLowerCase()) {
@@ -47,4 +47,3 @@ public class Track60UserPrincipal {
         return "supervisor".equalsIgnoreCase(rol);
     }
 }
-

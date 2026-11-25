@@ -27,138 +27,135 @@ class _SuperAdminShellScreenState extends State<SuperAdminShellScreen> {
     final user = provider.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF2F2F7),
       body: Column(
         children: [
-          // HERO HEADER CORPORATIVO CON FOTO AÉREA Y RELIEVE 3D
-          Stack(
-            children: [
-              Container(
-                height: 195,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/darnel_planta.jpg'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFF002F6C).withValues(alpha: 0.88),
-                        const Color(0xFF002F6C).withValues(alpha: 0.95),
-                        const Color(0xFF0F172A).withValues(alpha: 0.98),
-                      ],
-                    ),
-                  ),
-                ),
+          // HERO HEADER CORPORATIVO ESTILO APPLE EXECUTIVE
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF002F6C),
+                  Color(0xFF0A2540),
+                  Color(0xFF111827),
+                ],
               ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.shield_rounded, color: Colors.white, size: 14),
-                                SizedBox(width: 6),
-                                Text(
-                                  'TORRE DE CONTROL · SUPERADMIN',
-                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                tooltip: 'Guía',
-                                icon: const Icon(Icons.help_outline_rounded, color: Colors.white, size: 20),
-                                onPressed: () => HelpGuideModal.show(context),
-                              ),
-                              IconButton(
-                                tooltip: 'Exportar Excel',
-                                icon: const Icon(Icons.file_download_rounded, color: Colors.white, size: 20),
-                                onPressed: () async {
-                                  try {
-                                    await ExcelService.instance.exportAndShare();
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                                    }
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                tooltip: 'Cerrar Sesión',
-                                icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
-                                onPressed: () {
-                                  provider.logout();
-                                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        user?.nombre ?? 'Javier Julio',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5),
-                      ),
-                      const Text(
-                        'Dirección General · Gobierno Operativo Grupo Darnel',
-                        style: TextStyle(fontSize: 12, color: Colors.white70),
-                      ),
-                      if (provider.emergencyAlertActive) ...[
-                        const SizedBox(height: 6),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 10, 14, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDC2626),
-                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 0.8),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 14),
-                              const SizedBox(width: 6),
+                              Icon(Icons.shield_rounded, color: Color(0xFF60A5FA), size: 13),
+                              SizedBox(width: 6),
                               Text(
-                                'ALERTA ROJA EHS: ${provider.emergencyAlertMessage}',
-                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                'TORRE DE CONTROL · SUPERADMIN',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.6,
+                                ),
                               ),
                             ],
                           ),
                         ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _headerIconBtn(
+                              tooltip: 'Guía',
+                              icon: Icons.help_outline_rounded,
+                              onPressed: () => HelpGuideModal.show(context),
+                            ),
+                            const SizedBox(width: 6),
+                            _headerIconBtn(
+                              tooltip: 'Exportar Excel',
+                              icon: Icons.file_download_rounded,
+                              onPressed: () async {
+                                try {
+                                  await ExcelService.instance.exportAndShare();
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                  }
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 6),
+                            _headerIconBtn(
+                              tooltip: 'Cerrar Sesión',
+                              icon: Icons.logout_rounded,
+                              onPressed: () {
+                                provider.logout();
+                                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                              },
+                            ),
+                          ],
+                        ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      user?.nombre ?? 'Javier Julio',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Dirección General · Gobierno Operativo Grupo Darnel',
+                      style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.72), fontWeight: FontWeight.w500),
+                    ),
+                    if (provider.emergencyAlertActive) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF3B30),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 14),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'ALERTA ROJA EHS: ${provider.emergencyAlertMessage}',
+                                style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
 
           // TABS DE NAVEGACIÓN
@@ -176,21 +173,47 @@ class _SuperAdminShellScreenState extends State<SuperAdminShellScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentTabIndex,
-        onTap: (index) => setState(() => _currentTabIndex = index),
-        selectedItemColor: const Color(0xFF002F6C),
-        unselectedItemColor: Colors.grey.shade500,
-        selectedFontSize: 10,
-        unselectedFontSize: 9,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Torre'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_task_rounded), label: 'Asignar'),
-          BottomNavigationBarItem(icon: Icon(Icons.business_rounded), label: 'Procesos'),
-          BottomNavigationBarItem(icon: Icon(Icons.rule_folder_rounded), label: 'Alertas'),
-          BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Logs'),
-        ],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentTabIndex,
+          onTap: (index) => setState(() => _currentTabIndex = index),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          selectedItemColor: const Color(0xFF007AFF),
+          unselectedItemColor: const Color(0xFF8E8E93),
+          selectedLabelStyle: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
+          unselectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Torre'),
+            BottomNavigationBarItem(icon: Icon(Icons.add_task_rounded), label: 'Asignar'),
+            BottomNavigationBarItem(icon: Icon(Icons.business_rounded), label: 'Procesos'),
+            BottomNavigationBarItem(icon: Icon(Icons.notifications_active_outlined), label: 'Alertas'),
+            BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Logs'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _headerIconBtn({required String tooltip, required IconData icon, required VoidCallback onPressed}) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+        ),
       ),
     );
   }
@@ -689,46 +712,67 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
     }).toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // BARRA SUPERIOR DE ACCIONES RÁPIDAS (Sin botón de Alerta EHS)
+          // BARRA SUPERIOR ESTILO APPLE
           Row(
             children: [
               const Expanded(
-                child: Text(
-                  'Semáforo de Operación en Vivo',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Resumen Ejecutivo',
+                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.4),
+                    ),
+                    Text(
+                      'Indicadores consolidados en tiempo real',
+                      style: TextStyle(fontSize: 11.5, color: Color(0xFF8E8E93)),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () => _showLiveInspectionDialog(context, provider),
-                icon: const Icon(Icons.remove_red_eye_rounded, size: 14, color: Color(0xFF002F6C)),
-                label: const Text('En Vivo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF002F6C))),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  backgroundColor: Colors.white,
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () => _showLiveInspectionDialog(context, provider),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFE5E5EA)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.circle, size: 8, color: Color(0xFF34C759)),
+                        SizedBox(width: 6),
+                        Text('En Vivo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // TARJETAS CON EFECTO 3D DE RELIEVE
+          // TARJETAS KPI ESTILO APPLE iOS 18
           Row(
             children: [
               Expanded(
                 child: _build3DMetricCard(
                   title: 'Plantas Activas',
                   value: '${plants.length}',
-                  subtitle: '100% conectadas',
+                  subtitle: 'Sedes operativas',
                   icon: Icons.factory_rounded,
-                  color: const Color(0xFF002F6C),
-                  accentColor: const Color(0xFF0284C7),
+                  color: const Color(0xFF007AFF),
+                  accentColor: const Color(0xFF007AFF),
                 ),
               ),
               const SizedBox(width: 12),
@@ -736,10 +780,10 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 child: _build3DMetricCard(
                   title: 'Admins Planta',
                   value: '${admins.length}',
-                  subtitle: 'Liderando sedes',
+                  subtitle: 'Líderes asignados',
                   icon: Icons.admin_panel_settings_rounded,
-                  color: const Color(0xFF0284C7),
-                  accentColor: const Color(0xFF38BDF8),
+                  color: const Color(0xFF5856D6),
+                  accentColor: const Color(0xFF5856D6),
                 ),
               ),
             ],
@@ -753,8 +797,8 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                   value: '${operators.length}',
                   subtitle: 'En líneas Darnel',
                   icon: Icons.groups_rounded,
-                  color: const Color(0xFF16A34A),
-                  accentColor: const Color(0xFF4ADE80),
+                  color: const Color(0xFF34C759),
+                  accentColor: const Color(0xFF34C759),
                 ),
               ),
               const SizedBox(width: 12),
@@ -762,27 +806,28 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 child: _build3DMetricCard(
                   title: 'Cumplimiento',
                   value: '$complianceRate%',
-                  subtitle: 'Meta: 95.0%',
+                  subtitle: 'Meta corporativa 95%',
                   icon: Icons.verified_rounded,
-                  color: const Color(0xFF7C3AED),
-                  accentColor: const Color(0xFFA78BFA),
+                  color: const Color(0xFFAF52DE),
+                  accentColor: const Color(0xFFAF52DE),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // COMPARATIVO DE PLANTAS FL_CHART
+          // SEMÁFORO DE CUMPLIMIENTO POR PLANTA (ESTILO APPLE)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF002F6C).withValues(alpha: 0.06),
+                  color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 12,
-                  offset: const Offset(0, 5),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -790,34 +835,33 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Expanded(
                       child: Text(
-                        'Semáforo de Cumplimiento por Planta (%)',
+                        'Cumplimiento por Planta (%)',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.2),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(10),
+                        color: const Color(0xFF34C759).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Text('🟢 >90% Óptimo', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                      child: const Text('>90% Óptimo', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                const Text('Estándar de calidad, seguridad y mantenimiento de turnos', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                const SizedBox(height: 20),
+                const SizedBox(height: 3),
+                const Text('Estándar de calidad, seguridad y mantenimiento de turnos', style: TextStyle(fontSize: 11.5, color: Color(0xFF8E8E93))),
+                const SizedBox(height: 18),
                 SizedBox(
                   height: 175,
                   child: plantStats.isEmpty
-                      ? const Center(child: Text('Sin plantas registradas', style: TextStyle(color: Colors.grey)))
+                      ? const Center(child: Text('Sin plantas registradas', style: TextStyle(color: Color(0xFF8E8E93))))
                       : BarChart(
                           BarChartData(
                             alignment: BarChartAlignment.spaceAround,
@@ -848,7 +892,7 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                                         : plantStats[idx].plant.nombre.replaceAll('Planta ', '');
                                     return Padding(
                                       padding: const EdgeInsets.only(top: 6),
-                                      child: Text(code, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                      child: Text(code, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF3A3A3C))),
                                     );
                                   },
                                 ),
@@ -857,31 +901,36 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                                 sideTitles: SideTitles(
                                   showTitles: true,
                                   reservedSize: 30,
-                                  getTitlesWidget: (val, meta) => Text('${val.toInt()}%', style: const TextStyle(fontSize: 9, color: Colors.grey)),
+                                  getTitlesWidget: (val, meta) => Text('${val.toInt()}%', style: const TextStyle(fontSize: 9.5, color: Color(0xFF8E8E93))),
                                 ),
                               ),
                               topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                             ),
-                            gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 25),
+                            gridData: FlGridData(
+                              show: true,
+                              drawVerticalLine: false,
+                              horizontalInterval: 25,
+                              getDrawingHorizontalLine: (_) => const FlLine(color: Color(0xFFF2F2F7), strokeWidth: 1),
+                            ),
                             borderData: FlBorderData(show: false),
                             barGroups: List.generate(plantStats.length, (i) {
                               final st = plantStats[i];
                               final barColor = st.rate >= 90
-                                  ? const Color(0xFF16A34A)
-                                  : (st.rate >= 60 ? const Color(0xFF0284C7) : const Color(0xFFEA580C));
+                                  ? const Color(0xFF34C759)
+                                  : (st.rate >= 60 ? const Color(0xFF007AFF) : const Color(0xFFFF9500));
                               return BarChartGroupData(
                                 x: i,
                                 barRods: [
                                   BarChartRodData(
                                     toY: st.rate.clamp(2.0, 100.0),
                                     color: barColor,
-                                    width: 22,
-                                    borderRadius: BorderRadius.circular(6),
+                                    width: 24,
+                                    borderRadius: BorderRadius.circular(8),
                                     backDrawRodData: BackgroundBarChartRodData(
                                       show: true,
                                       toY: 100,
-                                      color: const Color(0xFFF1F5F9),
+                                      color: const Color(0xFFF2F2F7),
                                     ),
                                   ),
                                 ],
@@ -892,37 +941,38 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 ),
                 if (plantStats.isNotEmpty) ...[
                   const SizedBox(height: 14),
-                  const Divider(height: 1),
+                  const Divider(height: 1, color: Color(0xFFF2F2F7)),
                   const SizedBox(height: 10),
                   ...plantStats.map((st) {
                     final badgeColor = st.rate >= 90
-                        ? const Color(0xFF16A34A)
-                        : (st.rate >= 60 ? const Color(0xFF0284C7) : const Color(0xFFDC2626));
+                        ? const Color(0xFF34C759)
+                        : (st.rate >= 60 ? const Color(0xFF007AFF) : const Color(0xFFFF3B30));
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
                           Expanded(
                             child: Text(
                               st.plant.nombre,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF1D1D1F)),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
-                            '${st.done}/${st.total} tareas · ${st.pending} pend · ${st.ops} op',
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                            '${st.done}/${st.total} · ${st.pending} pend',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93)),
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: badgeColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
                               '${st.rate.toStringAsFixed(0)}%',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: badgeColor),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: badgeColor),
                             ),
                           ),
                         ],
@@ -1032,21 +1082,21 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
           ),
           const SizedBox(height: 20),
 
-          // TABLERO DE GOBERNANZA OPERATIVA REAL
+          // TABLERO DE GOBERNANZA OPERATIVA REAL (APPLE DARK GLASS)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF002F6C), Color(0xFF0F172A)],
+                colors: [Color(0xFF1C1C1E), Color(0xFF2C2C2E)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF002F6C).withValues(alpha: 0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -1056,24 +1106,28 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.rule_folder_rounded, color: Color(0xFF38BDF8), size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Gobernanza Operativa en Tiempo Real',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                      ],
+                    const Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.verified_user_rounded, color: Color(0xFF0A84FF), size: 19),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Gobernanza Operativa',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF38BDF8).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF38BDF8), width: 0.8),
+                        color: const Color(0xFF34C759).withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Text('En Vivo', style: TextStyle(color: Color(0xFF38BDF8), fontSize: 10, fontWeight: FontWeight.bold)),
+                      child: const Text('En Vivo', style: TextStyle(color: Color(0xFF30D158), fontSize: 10.5, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
@@ -1085,7 +1139,7 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                         'Solicitudes >10',
                         '${provider.extraTaskRequests.where((r) => r.estado == 'Pendiente').length}',
                         'Por autorizar',
-                        const Color(0xFFF59E0B),
+                        const Color(0xFFFF9F0A),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1094,7 +1148,7 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                         'Directivas',
                         '${provider.announcements.length}',
                         'Publicadas',
-                        const Color(0xFF38BDF8),
+                        const Color(0xFF0A84FF),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1102,8 +1156,8 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                       child: _buildRealMetricBox(
                         'Auditorías',
                         '${provider.auditLogs.length}',
-                        'Trazadas hoy',
-                        const Color(0xFF4ADE80),
+                        'Trazadas',
+                        const Color(0xFF30D158),
                       ),
                     ),
                   ],
@@ -1111,41 +1165,47 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // MATRIZ DE BENCHMARKING Y RANKING DE PLANTAS
+          // RANKING REAL POR PLANTA (APPLE CARD)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: App3D.cardShadow(baseColor: const Color(0xFFF59E0B)),
-              border: Border.all(color: const Color(0xFFFEF3C7)),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF9500).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFF9500), size: 18),
+                    ),
+                    const SizedBox(width: 10),
                     const Expanded(
-                      child: Row(
-                        children: [
-                          Icon(Icons.emoji_events_rounded, color: Color(0xFFD97706), size: 22),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Ranking Real por Planta',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        'Ranking Real por Planta',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.share_rounded, size: 18, color: Color(0xFF002F6C)),
+                      icon: const Icon(Icons.ios_share_rounded, size: 18, color: Color(0xFF007AFF)),
                       tooltip: 'Exportar Ranking',
                       onPressed: () => ExcelService.instance.exportAndShare(),
                     ),
@@ -1153,7 +1213,7 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 ),
                 const SizedBox(height: 10),
                 if (plantStats.isEmpty)
-                  const Text('Sin plantas registradas aún.', style: TextStyle(fontSize: 12, color: Color(0xFF64748B)))
+                  const Text('Sin plantas registradas aún.', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)))
                 else
                   ...(() {
                     final ranked = List.of(plantStats)..sort((a, b) => b.rate.compareTo(a.rate));
@@ -1162,10 +1222,10 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                       final st = ranked[i];
                       final badge = i < medals.length ? medals[i] : '${i + 1}°';
                       final c = st.rate >= 80
-                          ? const Color(0xFF16A34A)
-                          : (st.rate >= 50 ? const Color(0xFF0284C7) : const Color(0xFFEA580C));
+                          ? const Color(0xFF34C759)
+                          : (st.rate >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF9500));
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.only(bottom: 8),
                         child: _buildBenchmarkingRow(
                           badge,
                           st.plant.nombre,
@@ -1179,14 +1239,19 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // LISTADO DE PLANTAS INSPECCIONABLES
           const Text(
-            'Sedes Industriales Darnel (Toca para Inspeccionar)',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            'Sedes Industriales Darnel',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.2),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 2),
+          const Text(
+            'Toca una sede para inspeccionar áreas y responsables',
+            style: TextStyle(fontSize: 11.5, color: Color(0xFF8E8E93)),
+          ),
+          const SizedBox(height: 12),
 
           ListView.separated(
             shrinkWrap: true,
@@ -1202,17 +1267,21 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 orElse: () => users.first,
               );
               final pctColor = st.rate >= 90
-                  ? const Color(0xFF16A34A)
-                  : (st.rate >= 60 ? const Color(0xFF0284C7) : const Color(0xFFEA580C));
+                  ? const Color(0xFF34C759)
+                  : (st.rate >= 60 ? const Color(0xFF007AFF) : const Color(0xFFFF9500));
 
-              return Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              return Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
                   onTap: () => _inspectPlant(context, plant, users),
-                  child: Padding(
+                  child: Container(
                     padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1220,12 +1289,12 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(9),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF002F6C).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
+                                color: const Color(0xFF007AFF).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.domain_rounded, color: Color(0xFF002F6C)),
+                              child: const Icon(Icons.domain_rounded, color: Color(0xFF007AFF), size: 20),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1236,31 +1305,31 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                                     plant.nombre,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F)),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     '${plant.codigo} · ${plant.ubicacion}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
                                   ),
                                 ],
                               ),
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0284C7).withValues(alpha: 0.1),
+                                color: const Color(0xFF007AFF).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text('Inspeccionar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
+                                  Text('Inspeccionar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
                                   SizedBox(width: 2),
-                                  Icon(Icons.chevron_right, size: 16, color: Color(0xFF0284C7)),
+                                  Icon(Icons.chevron_right_rounded, size: 15, color: Color(0xFF007AFF)),
                                 ],
                               ),
                             ),
@@ -1268,18 +1337,18 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                         ),
                         const SizedBox(height: 12),
                         Wrap(
-                          spacing: 8,
+                          spacing: 6,
                           runSpacing: 6,
                           children: [
                             _buildPlantStatPill('${st.rate.toStringAsFixed(0)}% Cumpl.', pctColor),
-                            _buildPlantStatPill('Tareas: ${st.done}/${st.total}', const Color(0xFF002F6C)),
-                            _buildPlantStatPill('Pendientes: ${st.pending}', const Color(0xFF0284C7)),
-                            if (st.overdue > 0) _buildPlantStatPill('Vencidas: ${st.overdue}', const Color(0xFFDC2626)),
-                            _buildPlantStatPill('Sup: ${st.sups} · Op: $plantOps', const Color(0xFF475569)),
+                            _buildPlantStatPill('Tareas: ${st.done}/${st.total}', const Color(0xFF1D1D1F)),
+                            _buildPlantStatPill('Pendientes: ${st.pending}', const Color(0xFF007AFF)),
+                            if (st.overdue > 0) _buildPlantStatPill('Vencidas: ${st.overdue}', const Color(0xFFFF3B30)),
+                            _buildPlantStatPill('Sup: ${st.sups} · Op: $plantOps', const Color(0xFF8E8E93)),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: Color(0xFFF2F2F7)),
                         const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1288,13 +1357,13 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                               child: Text(
                                 'Admin: ${plantAdmin.nombre}',
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF3A3A3C)),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               '$plantOps Colaboradores',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
                             ),
                           ],
                         ),
@@ -1336,34 +1405,41 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.12),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 3),
           ),
         ],
-        border: Border.all(color: color.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF8E8E93)),
+                ),
+              ),
+              const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Icon(icon, size: 16, color: color),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(9)),
+                child: Icon(icon, size: 15, color: color),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: color)),
+          const SizedBox(height: 10),
+          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.5)),
           const SizedBox(height: 2),
-          Text(subtitle, style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+          Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, color: Color(0xFF8E8E93))),
         ],
       ),
     );
@@ -1371,37 +1447,35 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
 
   Widget _buildBenchmarkingRow(String rank, String plant, String score, String detail, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: const Color(0xFFF9F9FB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(rank, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(plant, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                  Text(detail, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-                ],
-              ),
-            ],
+          Text(rank, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(plant, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                Text(detail, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, color: Color(0xFF8E8E93))),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               score,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: color),
             ),
           ),
         ],
@@ -1545,18 +1619,37 @@ class _SuperAdminExtraTasksApprovalTab extends StatelessWidget {
     final requests = provider.extraTaskRequests;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF2F2F7),
       body: requests.isEmpty
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle_outline_rounded, size: 54, color: Colors.grey.shade400),
-                  const SizedBox(height: 10),
-                  const Text('Sin solicitudes de tareas adicionales pendientes', style: TextStyle(color: Colors.grey, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  const Text('Todas las plantas se mantienen en el estándar de 10 tareas diarias.', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                  ),
+                  child: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded, size: 48, color: Color(0xFF34C759)),
+                      SizedBox(height: 12),
+                      Text(
+                        'Sin solicitudes pendientes',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Color(0xFF1D1D1F), fontSize: 15, fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Todas las plantas se mantienen dentro del estándar operativo.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             )
           : ListView.separated(
@@ -1914,51 +2007,88 @@ class _SuperAdminPlantAdminsTab extends StatelessWidget {
     final admins = provider.allUsers.where((u) => u.isPlantAdmin).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: admins.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final admin = admins[index];
-          return Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              leading: CircleAvatar(
-                radius: 22,
-                backgroundColor: const Color(0xFF002F6C),
-                child: Text(admin.iniciales, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      backgroundColor: const Color(0xFFF2F2F7),
+      body: admins.isEmpty
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'Sin procesos ni administradores creados.\nToca "+ Nuevo Proceso" para comenzar.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+                ),
               ),
-              title: Text(admin.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              subtitle: Text('${admin.cargo}\nPlanta: ${admin.plantId} · PIN: ${admin.pin}'),
-              isThreeLine: true,
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Color(0xFF002F6C), size: 20),
-                    tooltip: 'Editar Administrador',
-                    onPressed: () => _showEditAdminDialog(context, admin, provider),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+              itemCount: admins.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final admin = admins[index];
+                return Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Color(0xFFDC2626), size: 20),
-                    tooltip: 'Dar de Baja',
-                    onPressed: () => _confirmDeleteAdmin(context, admin, provider),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: const Color(0xFF007AFF).withValues(alpha: 0.12),
+                        child: Text(admin.iniciales, style: const TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(admin.nombre, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF1D1D1F))),
+                            const SizedBox(height: 2),
+                            Text(admin.cargo, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(color: const Color(0xFFF2F2F7), borderRadius: BorderRadius.circular(999)),
+                                  child: Text('Planta: ${admin.plantId}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF3A3A3C))),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(color: const Color(0xFF007AFF).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(999)),
+                                  child: Text('PIN: ${admin.pin}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, color: Color(0xFF007AFF), size: 20),
+                        tooltip: 'Editar Administrador',
+                        onPressed: () => _showEditAdminDialog(context, admin, provider),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF3B30), size: 20),
+                        tooltip: 'Dar de Baja',
+                        onPressed: () => _confirmDeleteAdmin(context, admin, provider),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_new_process',
         onPressed: () => _showCreateProcessWithAdminModal(context, provider),
-        backgroundColor: const Color(0xFF002F6C),
+        backgroundColor: const Color(0xFF007AFF),
+        elevation: 2,
         icon: const Icon(Icons.add_business_rounded, color: Colors.white),
-        label: const Text('+ Nuevo Proceso', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('Nuevo Proceso', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       ),
     );
   }
@@ -3335,19 +3465,28 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
               final validUser = (['ALL', ...selectableUsers.map((u) => u.id)].contains(_targetUserId)) ? _targetUserId : 'ALL';
 
               return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
                     initialValue: validPlant,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Alcance Geográfico / Plantas',
-                      prefixIcon: const Icon(Icons.apartment_rounded, color: Color(0xFF002F6C)),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      prefixIcon: const Icon(Icons.apartment_rounded, color: Color(0xFF007AFF)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
                       filled: true,
                       fillColor: Colors.white,
                     ),
                     items: [
-                      const DropdownMenuItem(value: 'ALL', child: Text('Todas las Plantas (Despacho Universal)')),
-                      ...allPlants.map((p) => DropdownMenuItem(value: p.id, child: Text(p.nombre))),
+                      const DropdownMenuItem(
+                        value: 'ALL',
+                        child: Text('Todas las Plantas (Despacho Universal)', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                      ...allPlants.map((p) => DropdownMenuItem(
+                            value: p.id,
+                            child: Text(p.nombre, overflow: TextOverflow.ellipsis, maxLines: 1),
+                          )),
                     ],
                     onChanged: (val) => setState(() {
                       _targetPlanta = val ?? 'ALL';
@@ -3357,18 +3496,27 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: validUser,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Asignar a Persona o Equipo',
                       prefixIcon: const Icon(Icons.person_pin_rounded, color: Color(0xFF007AFF)),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
                       filled: true,
                       fillColor: Colors.white,
                     ),
                     items: [
-                      const DropdownMenuItem(value: 'ALL', child: Text('Todos los Operadores de la Planta / Alcance')),
+                      const DropdownMenuItem(
+                        value: 'ALL',
+                        child: Text('Todos los Operadores de la Planta / Alcance', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
                       ...selectableUsers.map((u) => DropdownMenuItem(
                             value: u.id,
-                            child: Text('${u.nombre} (${u.isSupervisor ? 'Supervisor' : 'Operador'} · ${u.plantId})'),
+                            child: Text(
+                              '${u.nombre} (${u.isSupervisor ? 'Supervisor' : 'Operador'} · ${u.plantId})',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           )),
                     ],
                     onChanged: (val) => setState(() => _targetUserId = val ?? 'ALL'),
@@ -3385,7 +3533,8 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
             decoration: InputDecoration(
               labelText: 'Nombre de la Actividad Corporativa *',
               hintText: 'Ej. Verificación de Seguridad y Arranque de Turno',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -3398,80 +3547,92 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
             decoration: InputDecoration(
               labelText: 'Descripción / Directriz Operativa *',
               hintText: 'Instrucción técnica obligatoria para los operadores...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
               filled: true,
               fillColor: Colors.white,
             ),
           ),
           const SizedBox(height: 14),
 
-          // ÁREA Y CATEGORÍA DINÁMICAS (CREADAS POR SUPER ADMIN)
+          // ÁREA Y CATEGORÍA DINÁMICAS (APILADAS CON + NUEVA ARRIBA PARA EVITAR CORTES EN MÓVIL)
           Builder(
             builder: (context) {
               final provider = context.watch<StandardWorkProvider>();
               final areaItems = <String>{'Todas las Áreas', ...provider.corporateAreas, _area}.toList();
               final catItems = <String>{'General', ...provider.corporateCategories, _categoria}.toList();
 
-              return Row(
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _area,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: 'Área Destino',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF007AFF)),
-                          tooltip: 'Nueva Área',
-                          onPressed: () => _quickAddCatalogItem(
-                            context: context,
-                            title: 'Nueva Área',
-                            hint: 'Ej. Extrusión, Calidad...',
-                            onSave: (val) async {
-                              await provider.addCorporateArea(val);
-                              setState(() => _area = val);
-                            },
-                          ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Área Destino', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
+                        onPressed: () => _quickAddCatalogItem(
+                          context: context,
+                          title: 'Nueva Área',
+                          hint: 'Ej. Extrusión, Calidad...',
+                          onSave: (val) async {
+                            await provider.addCorporateArea(val);
+                            setState(() => _area = val);
+                          },
                         ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.white,
+                        icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: Color(0xFF007AFF)),
+                        label: const Text('Nueva Área', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
                       ),
-                      items: areaItems.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _area = val);
-                      },
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _categoria,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: 'Categoría',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF007AFF)),
-                          tooltip: 'Nueva Categoría',
-                          onPressed: () => _quickAddCatalogItem(
-                            context: context,
-                            title: 'Nueva Categoría',
-                            hint: 'Ej. Seguridad EHS, 5S...',
-                            onSave: (val) async {
-                              await provider.addCorporateCategory(val);
-                              setState(() => _categoria = val);
-                            },
-                          ),
-                        ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      items: catItems.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _categoria = val);
-                      },
+                  DropdownButtonFormField<String>(
+                    initialValue: _area,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      filled: true,
+                      fillColor: Colors.white,
                     ),
+                    items: areaItems.map((a) => DropdownMenuItem(value: a, child: Text(a, overflow: TextOverflow.ellipsis, maxLines: 1))).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _area = val);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Categoría', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
+                        onPressed: () => _quickAddCatalogItem(
+                          context: context,
+                          title: 'Nueva Categoría',
+                          hint: 'Ej. Seguridad EHS, 5S...',
+                          onSave: (val) async {
+                            await provider.addCorporateCategory(val);
+                            setState(() => _categoria = val);
+                          },
+                        ),
+                        icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: Color(0xFF007AFF)),
+                        label: const Text('Nueva Categoría', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
+                      ),
+                    ],
+                  ),
+                  DropdownButtonFormField<String>(
+                    initialValue: _categoria,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    items: catItems.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis, maxLines: 1))).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _categoria = val);
+                    },
                   ),
                 ],
               );
@@ -3748,21 +3909,21 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
           const SizedBox(height: 24),
           ],
 
-          // BOTÓN DE DESPACHO
+          // BOTÓN DE DESPACHO ESTILO APPLE
           SizedBox(
             width: double.infinity,
-            height: 50,
+            height: 52,
             child: ElevatedButton.icon(
               onPressed: _dispatch,
-              icon: const Icon(Icons.send_rounded, color: Colors.white),
+              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
               label: const Text(
-                'Despachar Actividad a Todas las Plantas (Javier Julio)',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                'Crear y Asignar Actividad',
+                style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 15),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF002F6C),
+                backgroundColor: const Color(0xFF007AFF),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 3,
+                elevation: 0,
               ),
             ),
           ),
@@ -3962,24 +4123,57 @@ class _SuperAdminAuditTab extends StatelessWidget {
     final provider = Provider.of<StandardWorkProvider>(context);
     final logs = provider.auditLogs;
 
+    if (logs.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text('Sin eventos de auditoría registrados aún.', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13)),
+        ),
+      );
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: logs.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final log = logs[index];
-        return ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF002F6C).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.history_rounded, color: Color(0xFF002F6C), size: 20),
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
           ),
-          title: Text(log.action, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          subtitle: Text('${log.details}\nUsuario: ${log.userId} · ${log.timestamp.toString().substring(0, 16)}'),
-          isThreeLine: true,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF007AFF).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.history_rounded, color: Color(0xFF007AFF), size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(log.action, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF1D1D1F))),
+                    const SizedBox(height: 3),
+                    Text(log.details, style: const TextStyle(fontSize: 12, color: Color(0xFF3A3A3C))),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Usuario: ${log.userId} · ${log.timestamp.toString().substring(0, 16)}',
+                      style: const TextStyle(fontSize: 10.5, color: Color(0xFF8E8E93)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
