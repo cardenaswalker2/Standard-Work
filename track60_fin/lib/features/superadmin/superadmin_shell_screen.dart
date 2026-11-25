@@ -4109,6 +4109,8 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
   int _wizardStep = 0; // 0: Qué y Quién, 1: Horario y Plan, 2: Subtareas
   String _targetPlanta = 'ALL';
   String _targetUserId = 'ALL';
+  bool _isSaving = false;
+  String? _formError;
 
   @override
   void initState() {
@@ -4364,19 +4366,27 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
   }
 
   void _dispatch() async {
+    if (_isSaving) return;
     if (_nombreCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor escribe el nombre de la actividad corporativa')),
-      );
+      setState(() {
+        _wizardStep = 0;
+        _formError = 'Por favor escribe el nombre de la actividad corporativa en el Paso 1.';
+      });
       return;
     }
 
     if (_selectedDays.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debes seleccionar al menos un día de la semana')),
-      );
+      setState(() {
+        _wizardStep = 1;
+        _formError = 'Debes seleccionar al menos un día de la semana en el Paso 2.';
+      });
       return;
     }
+
+    setState(() {
+      _isSaving = true;
+      _formError = null;
+    });
 
     final provider = Provider.of<StandardWorkProvider>(context, listen: false);
     final sortedDays = (_selectedDays.toList()..sort()).join(',');
@@ -4390,9 +4400,40 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
         ? 'Plantilla Plan ($_planTemplate): ${_planGuiaCtrl.text.trim()}'
         : '';
 
-    if (widget.editingActivity != null) {
-      await provider.updateActivityGroup(
-        activityId: widget.editingActivity!.activityId,
+    try {
+      if (widget.editingActivity != null) {
+        await provider.updateActivityGroup(
+          activityId: widget.editingActivity!.activityId,
+          nombre: _nombreCtrl.text.trim(),
+          descripcion: fullDesc,
+          area: _area,
+          category: _categoria,
+          timeStart: _horaIniCtrl.text.trim(),
+          timeEnd: _horaFinCtrl.text.trim(),
+          fija: _fija,
+          prioridad: _prioridad,
+          tipoActividad: _tipoActividad,
+          requierePlanAccion: _requierePlanAccion || _planAccionObligatorio,
+          planAccionObligatorio: _planAccionObligatorio,
+          criteriosCumplimiento: planCriteria,
+          days: _selectedDays.toList()..sort(),
+          targetPlantId: _targetPlanta,
+          targetUserId: _targetUserId,
+          subtasks: _subtasks,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFF16A34A),
+              content: Text('¡Actividad actualizada con éxito!'),
+            ),
+          );
+          widget.onDispatched?.call();
+        }
+        return;
+      }
+
+      await provider.dispatchCorporateActivity(
         nombre: _nombreCtrl.text.trim(),
         descripcion: fullDesc,
         area: _area,
@@ -4400,57 +4441,34 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
         timeStart: _horaIniCtrl.text.trim(),
         timeEnd: _horaFinCtrl.text.trim(),
         fija: _fija,
+        dias: sortedDays,
         prioridad: _prioridad,
+        subtasks: _subtasks,
         tipoActividad: _tipoActividad,
         requierePlanAccion: _requierePlanAccion || _planAccionObligatorio,
         planAccionObligatorio: _planAccionObligatorio,
         criteriosCumplimiento: planCriteria,
-        days: _selectedDays.toList()..sort(),
-        targetPlantId: _targetPlanta,
-        targetUserId: _targetUserId,
-        subtasks: _subtasks,
+        targetPlantIds: _targetPlanta == 'ALL' ? null : [_targetPlanta],
+        targetUserIds: _targetUserId == 'ALL' ? null : [_targetUserId],
       );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: Color(0xFF16A34A),
-            content: Text('¡Actividad actualizada con éxito!'),
+            content: Text('¡Directiva Corporativa despachada con éxito!'),
           ),
         );
+        _nombreCtrl.clear();
+        _descCtrl.clear();
         widget.onDispatched?.call();
       }
-      return;
-    }
-
-    await provider.dispatchCorporateActivity(
-      nombre: _nombreCtrl.text.trim(),
-      descripcion: fullDesc,
-      area: _area,
-      category: _categoria,
-      timeStart: _horaIniCtrl.text.trim(),
-      timeEnd: _horaFinCtrl.text.trim(),
-      fija: _fija,
-      dias: sortedDays,
-      prioridad: _prioridad,
-      subtasks: _subtasks,
-      tipoActividad: _tipoActividad,
-      requierePlanAccion: _requierePlanAccion || _planAccionObligatorio,
-      planAccionObligatorio: _planAccionObligatorio,
-      criteriosCumplimiento: planCriteria,
-      targetPlantIds: _targetPlanta == 'ALL' ? null : [_targetPlanta],
-      targetUserIds: _targetUserId == 'ALL' ? null : [_targetUserId],
-    );
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF16A34A),
-          content: Text('¡Directiva Corporativa de Javier Julio despachada con éxito a todas las plantas!'),
-        ),
-      );
-      _nombreCtrl.clear();
-      _descCtrl.clear();
-      widget.onDispatched?.call();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _formError = 'No se pudo guardar la actividad: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -4515,6 +4533,33 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (_formError != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _formError!,
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF991B1B)),
+                          ),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF991B1B)),
+                          onPressed: () => setState(() => _formError = null),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (_wizardStep == 0) ...[
                   // PASO 1: PLANTILLA OPCIONAL + MODALIDAD + DESTINO + NOMBRE
                   Row(
@@ -5316,10 +5361,18 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       Expanded(
                         flex: 2,
                         child: ElevatedButton.icon(
-                          onPressed: _dispatch,
-                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 17),
+                          onPressed: _isSaving ? null : _dispatch,
+                          icon: _isSaving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.send_rounded, color: Colors.white, size: 17),
                           label: Text(
-                            widget.editingActivity != null ? 'Guardar Cambios' : 'Crear y Asignar',
+                            _isSaving
+                                ? 'Guardando...'
+                                : (widget.editingActivity != null ? 'Guardar Cambios' : 'Crear y Asignar'),
                             style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14),
                           ),
                           style: ElevatedButton.styleFrom(
