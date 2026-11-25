@@ -106,6 +106,7 @@ class StandardWorkProvider with ChangeNotifier {
   final Map<int, String> _remoteTemplateIds = {};
   final Map<int, String> _remotePlanIds = {};
   final Map<int, List<ActivitySubtaskModel>> _cloudSubtasksByActivity = {};
+  bool _cloudInstancesSyncOk = true;
 
   int _stableIntId(String remoteId) {
     final parsed = int.tryParse(remoteId);
@@ -963,11 +964,11 @@ class StandardWorkProvider with ChangeNotifier {
       }
 
       bool loadedInstancesFromCloud = false;
-      if (hasToken) {
+      if (hasToken && _cloudInstancesSyncOk) {
         try {
           final targetPlant = _currentUser!.isSuperAdmin ? 'ALL' : _currentUser!.plantId;
           final cloudInsts = await ApiClient.instance.get('/activities/instances?plantId=$targetPlant&weekKey=$_currentWeekKey');
-          if (cloudInsts is List) {
+          if (cloudInsts is List && (cloudInsts.isNotEmpty || _activities.isEmpty)) {
             _remoteInstanceIds.clear();
             _instances = cloudInsts.whereType<Map>().map((item) {
               final m = Map<String, dynamic>.from(item);
@@ -2598,8 +2599,10 @@ class StandardWorkProvider with ChangeNotifier {
             instances.map((i) => _instanceToCloudMap(i, remoteActivityId: remoteActId)).toList(),
           );
         }
+        _cloudInstancesSyncOk = true;
       }
     } catch (e) {
+      _cloudInstancesSyncOk = false;
       debugPrint('Error sincronizando actividad cloud: $e');
     }
   }
