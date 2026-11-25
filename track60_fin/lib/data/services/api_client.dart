@@ -57,7 +57,7 @@ class ApiClient {
     return _handleResponse(res, () => get(path, auth: auth), auth: auth);
   }
 
-  Future<dynamic> post(String path, Map<String, dynamic> body, {bool auth = true}) async {
+  Future<dynamic> post(String path, dynamic body, {bool auth = true}) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}$path');
     final res = await http
         .post(uri, headers: await _headers(auth: auth), body: jsonEncode(body))

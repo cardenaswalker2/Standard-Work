@@ -101,6 +101,129 @@ class StandardWorkProvider with ChangeNotifier {
   List<String> _corporateAreas = [];
   List<String> _corporateCategories = [];
 
+  final Map<int, String> _remoteActivityIds = {};
+  final Map<int, String> _remoteInstanceIds = {};
+  final Map<int, String> _remoteTemplateIds = {};
+  final Map<int, String> _remotePlanIds = {};
+  final Map<int, List<ActivitySubtaskModel>> _cloudSubtasksByActivity = {};
+
+  int _stableIntId(String remoteId) {
+    final parsed = int.tryParse(remoteId);
+    if (parsed != null && parsed > 0) return parsed;
+    int hash = 2166136261;
+    for (final unit in remoteId.codeUnits) {
+      hash ^= unit;
+      hash = (hash * 16777619) & 0x7FFFFFFF;
+    }
+    return hash == 0 ? 1 : hash;
+  }
+
+  Future<bool> _hasCloudToken() async {
+    final token = await ApiClient.instance.getAccessToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  Future<void> _syncCatalogsToCloud() async {
+    try {
+      if (await _hasCloudToken()) {
+        await ApiClient.instance.put('/config/catalogs', {
+          'areas': _corporateAreas,
+          'categories': _corporateCategories,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error sincronizando catalogos cloud: $e');
+    }
+  }
+
+  Map<String, dynamic> _activityToCloudMap(ActivityModel a) => {
+        'plantId': a.plantId,
+        'userId': a.userId,
+        'nombre': a.nombre,
+        'descripcion': a.descripcion,
+        'area': a.area,
+        'category': a.category,
+        'timeStart': a.timeStart,
+        'timeEnd': a.timeEnd,
+        'fija': a.fija,
+        'dias': a.dias,
+        'prioridad': a.prioridad,
+        'reqFoto': a.reqFoto,
+        'reqMedicion': a.reqMedicion,
+        'reqComentario': a.reqComentario,
+        'esGlobal': a.esGlobal,
+        'tipoActividad': a.tipoActividad,
+        'requierePlanAccion': a.requierePlanAccion,
+        'planAccionObligatorio': a.planAccionObligatorio,
+        'instrucciones': a.instrucciones,
+        'criteriosCumplimiento': a.criteriosCumplimiento,
+      };
+
+  Map<String, dynamic> _instanceToCloudMap(ActivityInstance i, {String? remoteActivityId}) => {
+        'activityId': remoteActivityId ?? _remoteActivityIds[i.activityId] ?? '${i.activityId}',
+        'userId': i.userId,
+        'plantId': i.plantId,
+        'weekKey': i.weekKey,
+        'nombre': i.nombre,
+        'descripcion': i.descripcion,
+        'area': i.area,
+        'category': i.category,
+        'timeStart': i.timeStart,
+        'timeEnd': i.timeEnd,
+        'prioridad': i.prioridad,
+        'day': i.day,
+        'orig': i.orig,
+        'fija': i.fija,
+        'done': i.done,
+        'state': i.state,
+        'observaciones': i.observaciones,
+        'motivoNoRealizada': i.motivoNoRealizada,
+        'subtasksTotal': i.subtasksTotal,
+        'subtasksReported': i.subtasksReported,
+        'subtasksApproved': i.subtasksApproved,
+        'tipoActividad': i.tipoActividad,
+        'requierePlanAccion': i.requierePlanAccion,
+        'planAccionObligatorio': i.planAccionObligatorio,
+        'instrucciones': i.instrucciones,
+        'criteriosCumplimiento': i.criteriosCumplimiento,
+        'reqFoto': i.reqFoto,
+        'reqMedicion': i.reqMedicion,
+        'reqComentario': i.reqComentario,
+      };
+
+  Map<String, dynamic> _subtaskToCloudMap(ActivitySubtaskModel s, String remoteActivityId) => {
+        'activityId': remoteActivityId,
+        'orden': s.orden,
+        'nombre': s.nombre,
+        'descripcion': s.descripcion,
+        'instruccion': s.instruccion,
+        'esObligatoria': s.esObligatoria,
+        'requiereFoto': s.requiereFoto,
+        'requiereComentario': s.requiereComentario,
+        'requiereMedicion': s.requiereMedicion,
+        'unidadMedida': s.unidadMedida,
+        'valorMinimo': s.valorMinimo,
+        'valorMaximo': s.valorMaximo,
+      };
+
+  Map<String, dynamic> _templateToCloudMap(ActivityTemplateModel t) => {
+        'nombre': t.nombre,
+        'descripcion': t.descripcion,
+        'area': t.area,
+        'category': t.category,
+        'prioridad': t.prioridad,
+        'fija': t.fija,
+        'reqFoto': t.reqFoto,
+        'reqMedicion': t.reqMedicion,
+        'reqComentario': t.reqComentario,
+        'tipoActividad': t.tipoActividad,
+        'requierePlanAccion': t.requierePlanAccion,
+        'planAccionObligatorio': t.planAccionObligatorio,
+        'instrucciones': t.instrucciones,
+        'criteriosCumplimiento': t.criteriosCumplimiento,
+        'subtareasJson': t.subtareasJson,
+      };
+
   List<String> get corporateAreas => List.unmodifiable(_corporateAreas);
   List<String> get corporateCategories => List.unmodifiable(_corporateCategories);
 
@@ -111,6 +234,7 @@ class StandardWorkProvider with ChangeNotifier {
       _corporateAreas.add(clean);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList('track60_corporate_areas', _corporateAreas);
+      await _syncCatalogsToCloud();
       notifyListeners();
     }
   }
@@ -119,6 +243,7 @@ class StandardWorkProvider with ChangeNotifier {
     _corporateAreas.remove(name);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('track60_corporate_areas', _corporateAreas);
+    await _syncCatalogsToCloud();
     notifyListeners();
   }
 
@@ -129,6 +254,7 @@ class StandardWorkProvider with ChangeNotifier {
       _corporateCategories.add(clean);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList('track60_corporate_categories', _corporateCategories);
+      await _syncCatalogsToCloud();
       notifyListeners();
     }
   }
@@ -137,6 +263,7 @@ class StandardWorkProvider with ChangeNotifier {
     _corporateCategories.remove(name);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('track60_corporate_categories', _corporateCategories);
+    await _syncCatalogsToCloud();
     notifyListeners();
   }
 
@@ -594,11 +721,108 @@ class StandardWorkProvider with ChangeNotifier {
     }
     _allPlants = loadedPlants;
 
+    final hasToken = await _hasCloudToken();
+
+    if (hasToken) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final catalogs = await ApiClient.instance.get('/config/catalogs');
+        if (catalogs is Map) {
+          final m = Map<String, dynamic>.from(catalogs);
+          if (m['areas'] is List) {
+            _corporateAreas = (m['areas'] as List).map((e) => e.toString()).toList();
+            await prefs.setStringList('track60_corporate_areas', _corporateAreas);
+          }
+          if (m['categories'] is List) {
+            _corporateCategories = (m['categories'] as List).map((e) => e.toString()).toList();
+            await prefs.setStringList('track60_corporate_categories', _corporateCategories);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error cargando catalogs cloud: $e');
+      }
+    }
+
     try {
-      _activities = await _db.getAllActivities();
+      bool loadedFromCloud = false;
+      if (hasToken) {
+        try {
+          final cloudActs = await ApiClient.instance.get('/activities');
+          if (cloudActs is List) {
+            _remoteActivityIds.clear();
+            _activities = cloudActs.whereType<Map>().map((item) {
+              final m = Map<String, dynamic>.from(item);
+              final rId = m['id']?.toString() ?? '';
+              final intId = _stableIntId(rId);
+              if (rId.isNotEmpty) _remoteActivityIds[intId] = rId;
+              return ActivityModel(
+                id: intId,
+                plantId: m['plantId']?.toString() ?? 'ALL',
+                userId: m['userId']?.toString() ?? 'ALL',
+                nombre: m['nombre']?.toString() ?? '',
+                descripcion: m['descripcion']?.toString() ?? '',
+                area: m['area']?.toString() ?? 'General',
+                category: m['category']?.toString() ?? 'General',
+                timeStart: m['timeStart']?.toString() ?? '08:00',
+                timeEnd: m['timeEnd']?.toString() ?? '09:00',
+                fija: m['fija'] == true,
+                dias: m['dias']?.toString() ?? '1,2,3,4,5',
+                prioridad: m['prioridad']?.toString() ?? 'Media',
+                reqFoto: m['reqFoto'] == true,
+                reqMedicion: m['reqMedicion'] == true,
+                reqComentario: m['reqComentario'] == true,
+                esGlobal: m['esGlobal'] == true,
+                tipoActividad: m['tipoActividad']?.toString() ?? 'ejecucion',
+                requierePlanAccion: m['requierePlanAccion'] == true,
+                planAccionObligatorio: m['planAccionObligatorio'] == true,
+                instrucciones: m['instrucciones']?.toString() ?? '',
+                criteriosCumplimiento: m['criteriosCumplimiento']?.toString() ?? '',
+              );
+            }).toList();
+            loadedFromCloud = true;
+          }
+        } catch (e) {
+          debugPrint('Error cargando activities cloud: $e');
+        }
+      }
+      if (!loadedFromCloud) {
+        _activities = await _db.getAllActivities();
+      }
     } catch (e) {
       debugPrint('Error cargando activities: $e');
       _activities = [];
+    }
+
+    if (hasToken) {
+      try {
+        final cloudSubs = await ApiClient.instance.get('/activities/subtasks');
+        if (cloudSubs is List) {
+          _cloudSubtasksByActivity.clear();
+          for (final item in cloudSubs.whereType<Map>()) {
+            final m = Map<String, dynamic>.from(item);
+            final actRemoteId = m['activityId']?.toString() ?? '';
+            final actIntId = _stableIntId(actRemoteId);
+            final sub = ActivitySubtaskModel(
+              id: _stableIntId(m['id']?.toString() ?? '${actIntId}_${m['orden'] ?? 0}'),
+              activityId: actIntId,
+              orden: (m['orden'] as num?)?.toInt() ?? 1,
+              nombre: m['nombre']?.toString() ?? '',
+              descripcion: m['descripcion']?.toString() ?? '',
+              instruccion: m['instruccion']?.toString() ?? '',
+              esObligatoria: m['esObligatoria'] != false,
+              requiereFoto: m['requiereFoto'] == true,
+              requiereComentario: m['requiereComentario'] == true,
+              requiereMedicion: m['requiereMedicion'] == true,
+              unidadMedida: m['unidadMedida']?.toString() ?? '',
+              valorMinimo: (m['valorMinimo'] as num?)?.toDouble(),
+              valorMaximo: (m['valorMaximo'] as num?)?.toDouble(),
+            );
+            _cloudSubtasksByActivity.putIfAbsent(actIntId, () => []).add(sub);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error cargando subtasks cloud: $e');
+      }
     }
 
     try {
@@ -611,7 +835,49 @@ class StandardWorkProvider with ChangeNotifier {
     final plantIdFilter = _currentUser!.isSuperAdmin ? null : _currentUser!.plantId;
 
     try {
-      _proPlans = await _db.getProPlans(plantId: plantIdFilter);
+      bool loadedPlansFromCloud = false;
+      if (hasToken) {
+        try {
+          final query = plantIdFilter != null ? '?plantId=$plantIdFilter' : '';
+          final cloudPlans = await ApiClient.instance.get('/action-plans$query');
+          if (cloudPlans is List) {
+            _remotePlanIds.clear();
+            _proPlans = cloudPlans.whereType<Map>().map((item) {
+              final m = Map<String, dynamic>.from(item);
+              final rId = m['id']?.toString() ?? '';
+              final intId = _stableIntId(rId);
+              if (rId.isNotEmpty) _remotePlanIds[intId] = rId;
+              return ProPlanModel(
+                id: intId,
+                plantId: m['plantId']?.toString() ?? '',
+                plan: m['plan']?.toString() ?? '',
+                responsable: m['responsable']?.toString() ?? '',
+                area: m['area']?.toString() ?? 'General',
+                fechaCompromiso: m['fechaCompromiso']?.toString() ?? '',
+                estado: m['estado']?.toString() ?? 'Pendiente',
+                porcentajeAvance: (m['porcentajeAvance'] as num?)?.toDouble() ?? 0.0,
+                comentarios: m['comentarios']?.toString() ?? '',
+                evidencia: m['evidencia']?.toString() ?? '',
+                creadoPor: m['creadoPor']?.toString() ?? 'Admin',
+                fechaCreacion: m['fechaCreacion'] != null
+                    ? DateTime.tryParse(m['fechaCreacion'].toString()) ?? DateTime.now()
+                    : DateTime.now(),
+                activityInstanceId: m['activityInstanceId'] != null ? _stableIntId(m['activityInstanceId'].toString()) : null,
+                activityId: m['activityId'] != null ? _stableIntId(m['activityId'].toString()) : null,
+                activityNombre: m['activityNombre']?.toString(),
+                descripcionSituacion: m['descripcionSituacion']?.toString(),
+                requiereRevision: m['requiereRevision'] == true,
+              );
+            }).toList();
+            loadedPlansFromCloud = true;
+          }
+        } catch (e) {
+          debugPrint('Error cargando action-plans cloud: $e');
+        }
+      }
+      if (!loadedPlansFromCloud) {
+        _proPlans = await _db.getProPlans(plantId: plantIdFilter);
+      }
     } catch (e) {
       debugPrint('Error cargando proPlans: $e');
       _proPlans = [];
@@ -639,25 +905,121 @@ class StandardWorkProvider with ChangeNotifier {
     }
 
     try {
-      _templates = await _db.getAllTemplates();
+      bool loadedTemplatesFromCloud = false;
+      if (hasToken) {
+        try {
+          final cloudTpls = await ApiClient.instance.get('/templates');
+          if (cloudTpls is List) {
+            _remoteTemplateIds.clear();
+            _templates = cloudTpls.whereType<Map>().map((item) {
+              final m = Map<String, dynamic>.from(item);
+              final rId = m['id']?.toString() ?? '';
+              final intId = _stableIntId(rId);
+              if (rId.isNotEmpty) _remoteTemplateIds[intId] = rId;
+              return ActivityTemplateModel(
+                id: intId,
+                nombre: m['nombre']?.toString() ?? '',
+                descripcion: m['descripcion']?.toString() ?? '',
+                area: m['area']?.toString() ?? 'Producción',
+                category: m['category']?.toString() ?? 'Operación',
+                prioridad: m['prioridad']?.toString() ?? 'Alta',
+                fija: m['fija'] == true,
+                reqFoto: m['reqFoto'] == true,
+                reqMedicion: m['reqMedicion'] == true,
+                reqComentario: m['reqComentario'] != false,
+                tipoActividad: m['tipoActividad']?.toString() ?? 'ejecucion',
+                requierePlanAccion: m['requierePlanAccion'] == true,
+                planAccionObligatorio: m['planAccionObligatorio'] == true,
+                instrucciones: m['instrucciones']?.toString() ?? '',
+                criteriosCumplimiento: m['criteriosCumplimiento']?.toString() ?? '',
+                subtareasJson: m['subtareasJson']?.toString() ?? '[]',
+                fechaCreacion: m['createdAt']?.toString() ?? DateTime.now().toIso8601String(),
+              );
+            }).toList();
+            loadedTemplatesFromCloud = true;
+          }
+        } catch (e) {
+          debugPrint('Error cargando templates cloud: $e');
+        }
+      }
+      if (!loadedTemplatesFromCloud) {
+        _templates = await _db.getAllTemplates();
+      }
     } catch (e) {
       debugPrint('Error cargando templates: $e');
       _templates = [];
     }
 
-    // Planta actual
+    // Planta actual e instancias
     try {
       if (_currentUser!.isSuperAdmin) {
         _currentPlant = _allPlants.isNotEmpty ? _allPlants.first : null;
-        _instances = await _db.getInstancesForPlant('ALL', _currentWeekKey);
       } else {
         try {
           _currentPlant = _allPlants.firstWhere((p) => p.id == _currentUser!.plantId);
         } catch (_) {
           _currentPlant = null;
         }
+      }
 
-        if (_currentUser!.isOperator) {
+      bool loadedInstancesFromCloud = false;
+      if (hasToken) {
+        try {
+          final targetPlant = _currentUser!.isSuperAdmin ? 'ALL' : _currentUser!.plantId;
+          final cloudInsts = await ApiClient.instance.get('/activities/instances?plantId=$targetPlant&weekKey=$_currentWeekKey');
+          if (cloudInsts is List) {
+            _remoteInstanceIds.clear();
+            _instances = cloudInsts.whereType<Map>().map((item) {
+              final m = Map<String, dynamic>.from(item);
+              final rId = m['id']?.toString() ?? '';
+              final intId = _stableIntId(rId);
+              if (rId.isNotEmpty) _remoteInstanceIds[intId] = rId;
+              final actRemoteId = m['activityId']?.toString() ?? '';
+              return ActivityInstance(
+                id: intId,
+                activityId: _stableIntId(actRemoteId),
+                userId: m['userId']?.toString() ?? 'UNASSIGNED',
+                plantId: m['plantId']?.toString() ?? targetPlant,
+                weekKey: m['weekKey']?.toString() ?? _currentWeekKey,
+                nombre: m['nombre']?.toString() ?? '',
+                descripcion: m['descripcion']?.toString() ?? '',
+                area: m['area']?.toString() ?? 'General',
+                category: m['category']?.toString() ?? 'General',
+                timeStart: m['timeStart']?.toString() ?? '08:00',
+                timeEnd: m['timeEnd']?.toString() ?? '09:00',
+                prioridad: m['prioridad']?.toString() ?? 'Media',
+                day: (m['day'] as num?)?.toInt() ?? 1,
+                orig: (m['orig'] as num?)?.toInt() ?? ((m['day'] as num?)?.toInt() ?? 1),
+                fija: m['fija'] == true,
+                done: m['done'] == true,
+                state: m['state']?.toString() ?? 'Pendiente',
+                completedAt: m['completedAt'] != null ? DateTime.tryParse(m['completedAt'].toString()) : null,
+                observaciones: m['observaciones']?.toString(),
+                motivoNoRealizada: m['motivoNoRealizada']?.toString(),
+                subtasksTotal: (m['subtasksTotal'] as num?)?.toInt() ?? 0,
+                subtasksReported: (m['subtasksReported'] as num?)?.toInt() ?? 0,
+                subtasksApproved: (m['subtasksApproved'] as num?)?.toInt() ?? 0,
+                tipoActividad: m['tipoActividad']?.toString() ?? 'ejecucion',
+                requierePlanAccion: m['requierePlanAccion'] == true,
+                planAccionObligatorio: m['planAccionObligatorio'] == true,
+                instrucciones: m['instrucciones']?.toString() ?? '',
+                criteriosCumplimiento: m['criteriosCumplimiento']?.toString() ?? '',
+                reqFoto: m['reqFoto'] == true,
+                reqMedicion: m['reqMedicion'] == true,
+                reqComentario: m['reqComentario'] == true,
+              );
+            }).toList();
+            loadedInstancesFromCloud = true;
+          }
+        } catch (e) {
+          debugPrint('Error cargando instances cloud: $e');
+        }
+      }
+
+      if (!loadedInstancesFromCloud) {
+        if (_currentUser!.isSuperAdmin) {
+          _instances = await _db.getInstancesForPlant('ALL', _currentWeekKey);
+        } else if (_currentUser!.isOperator) {
           _instances = await _db.getInstancesForUserAndWeek(_currentUser!.id, _currentWeekKey);
         } else {
           _instances = await _db.getInstancesForPlant(_currentUser!.plantId, _currentWeekKey);
@@ -770,6 +1132,19 @@ class StandardWorkProvider with ChangeNotifier {
       // Operación atómica con compensación
       await _db.savePlant(plant);
       try {
+        if (await _hasCloudToken()) {
+          await ApiClient.instance.post('/plants', {
+            'id': plant.id,
+            'codigo': plant.codigo,
+            'nombre': plant.nombre,
+            'descripcion': plant.ubicacion,
+            'activa': plant.activa,
+          });
+        }
+      } catch (e) {
+        debugPrint('Error creando planta cloud: $e');
+      }
+      try {
         await _db.saveUser(admin);
     try {
       await ApiClient.instance.post('/users', {
@@ -821,36 +1196,46 @@ class StandardWorkProvider with ChangeNotifier {
   /// Crea una nueva plantilla de actividad
   Future<void> createTemplate(ActivityTemplateModel template) async {
     await _db.insertTemplate(template);
-    _templates = await _db.getAllTemplates();
-    await _db.logAudit(AuditLogModel(
-      userId: _currentUser?.id ?? 'JJ',
-      action: 'CREAR_PLANTILLA',
-      entity: 'PLANTILLA',
-      details: 'Nueva plantilla creada: "${template.nombre}" (${template.area})',
-      timestamp: DateTime.now(),
-    ));
-    notifyListeners();
+    try {
+      if (await _hasCloudToken()) {
+        final created = await ApiClient.instance.post('/templates', _templateToCloudMap(template));
+        if (created is Map && created['id'] != null) {
+          final rId = created['id'].toString();
+          _remoteTemplateIds[_stableIntId(rId)] = rId;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error creando plantilla cloud: $e');
+    }
+    await refreshData();
   }
 
   /// Edita una plantilla sin modificar retroactivamente actividades pasadas
   Future<void> updateTemplate(ActivityTemplateModel template) async {
     await _db.updateTemplate(template);
-    _templates = await _db.getAllTemplates();
-    await _db.logAudit(AuditLogModel(
-      userId: _currentUser?.id ?? 'JJ',
-      action: 'EDITAR_PLANTILLA',
-      entity: 'PLANTILLA',
-      details: 'Plantilla #${template.id} actualizada: "${template.nombre}"',
-      timestamp: DateTime.now(),
-    ));
-    notifyListeners();
+    try {
+      final rId = template.id != null ? _remoteTemplateIds[template.id!] : null;
+      if (rId != null && await _hasCloudToken()) {
+        await ApiClient.instance.put('/templates/$rId', _templateToCloudMap(template));
+      }
+    } catch (e) {
+      debugPrint('Error actualizando plantilla cloud: $e');
+    }
+    await refreshData();
   }
 
   /// Elimina una plantilla
   Future<void> deleteTemplate(int id) async {
     await _db.deleteTemplate(id);
-    _templates = await _db.getAllTemplates();
-    notifyListeners();
+    try {
+      final rId = _remoteTemplateIds[id];
+      if (rId != null && await _hasCloudToken()) {
+        await ApiClient.instance.delete('/templates/$rId');
+      }
+    } catch (e) {
+      debugPrint('Error eliminando plantilla cloud: $e');
+    }
+    await refreshData();
   }
 
   /// Crea una nueva planta industrial
@@ -873,6 +1258,19 @@ class StandardWorkProvider with ChangeNotifier {
     );
 
     await _db.savePlant(plant);
+    try {
+      if (await _hasCloudToken()) {
+        await ApiClient.instance.post('/plants', {
+          'id': plant.id,
+          'codigo': plant.codigo,
+          'nombre': plant.nombre,
+          'descripcion': plant.ubicacion,
+          'activa': plant.activa,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error creando planta cloud: $e');
+    }
     await _db.logAudit(AuditLogModel(
       userId: _currentUser!.id,
       action: 'CREAR_PLANTA',
@@ -996,9 +1394,11 @@ class StandardWorkProvider with ChangeNotifier {
     final actId = await _db.insertActivity(act);
 
     // 2. Insertar subtareas si es modalidad ejecución
+    final orderedSubtasks = <ActivitySubtaskModel>[];
     for (int i = 0; i < subtasks.length; i++) {
-      final s = subtasks[i];
-      await _db.insertSubtask(s.copyWith(activityId: actId, orden: i + 1));
+      final s = subtasks[i].copyWith(activityId: actId, orden: i + 1);
+      orderedSubtasks.add(s);
+      await _db.insertSubtask(s);
     }
 
     // 3. Crear instancias para los destinatarios objetivo (fusionando usuarios de nube y locales)
@@ -1018,6 +1418,7 @@ class StandardWorkProvider with ChangeNotifier {
       return true;
     }).toList();
     final diasList = dias.split(',').map((s) => int.parse(s.trim())).toList();
+    final createdInstances = <ActivityInstance>[];
 
     if (operators.isEmpty) {
       final fallbackPlants = (targetPlantIds != null && targetPlantIds.isNotEmpty && !targetPlantIds.contains('ALL'))
@@ -1025,7 +1426,7 @@ class StandardWorkProvider with ChangeNotifier {
           : (_allPlants.isNotEmpty ? _allPlants.map((p) => p.id).toList() : ['ALL']);
       for (final pId in fallbackPlants) {
         for (final d in diasList) {
-          await _db.insertInstance(ActivityInstance(
+          final inst = ActivityInstance(
             activityId: actId,
             userId: 'UNASSIGNED',
             plantId: pId,
@@ -1050,14 +1451,16 @@ class StandardWorkProvider with ChangeNotifier {
             planAccionObligatorio: planAccionObligatorio,
             instrucciones: instrucciones,
             criteriosCumplimiento: criteriosCumplimiento,
-          ));
+          );
+          createdInstances.add(inst);
+          await _db.insertInstance(inst);
         }
       }
     }
 
     for (final op in operators) {
       for (final d in diasList) {
-        await _db.insertInstance(ActivityInstance(
+        final inst = ActivityInstance(
           activityId: actId,
           userId: op.id,
           plantId: op.plantId,
@@ -1082,7 +1485,9 @@ class StandardWorkProvider with ChangeNotifier {
           planAccionObligatorio: planAccionObligatorio,
           instrucciones: instrucciones,
           criteriosCumplimiento: criteriosCumplimiento,
-        ));
+        );
+        createdInstances.add(inst);
+        await _db.insertInstance(inst);
       }
 
       // Notificación universal con la firma de Javier Julio
@@ -1095,6 +1500,8 @@ class StandardWorkProvider with ChangeNotifier {
         isRead: false,
       ));
     }
+
+    await _syncNewActivityToCloud(act, actId, orderedSubtasks, createdInstances);
 
     await _db.logAudit(AuditLogModel(
       userId: _currentUser!.id,
@@ -1260,15 +1667,18 @@ class StandardWorkProvider with ChangeNotifier {
     final actId = await _db.insertActivity(act);
 
     // Guardar subtareas
+    final orderedSubtasks = <ActivitySubtaskModel>[];
     for (int i = 0; i < subtasks.length; i++) {
-      final s = subtasks[i];
-      await _db.insertSubtask(s.copyWith(activityId: actId, orden: i + 1));
+      final s = subtasks[i].copyWith(activityId: actId, orden: i + 1);
+      orderedSubtasks.add(s);
+      await _db.insertSubtask(s);
     }
 
     // Generar instancias
     final diasList = dias.split(',').map((s) => int.parse(s.trim())).toList();
+    final createdInstances = <ActivityInstance>[];
     for (final d in diasList) {
-      await _db.insertInstance(ActivityInstance(
+      final inst = ActivityInstance(
         activityId: actId,
         userId: userId,
         plantId: _currentUser!.plantId,
@@ -1293,8 +1703,12 @@ class StandardWorkProvider with ChangeNotifier {
         planAccionObligatorio: planAccionObligatorio,
         instrucciones: instrucciones,
         criteriosCumplimiento: criteriosCumplimiento,
-      ));
+      );
+      createdInstances.add(inst);
+      await _db.insertInstance(inst);
     }
+
+    await _syncNewActivityToCloud(act, actId, orderedSubtasks, createdInstances);
 
     // Notificar al operador asignado
     await _db.insertNotification(NotificationModel(
@@ -1434,6 +1848,15 @@ class StandardWorkProvider with ChangeNotifier {
     ].join(' · ');
 
     await _db.updateInstanceStatus(instanceId, true, state: 'Reportada', obs: obsFinal.isNotEmpty ? obsFinal : null);
+    try {
+      final rId = _remoteInstanceIds[instanceId];
+      if (rId != null && await _hasCloudToken()) {
+        final query = obsFinal.isNotEmpty ? '?observaciones=${Uri.encodeComponent(obsFinal)}' : '';
+        await ApiClient.instance.patch('/activities/instances/$rId/complete$query');
+      }
+    } catch (e) {
+      debugPrint('Error completando instancia cloud: $e');
+    }
 
     await _db.logAudit(AuditLogModel(
       userId: _currentUser?.id ?? 'OPERADOR',
@@ -1532,6 +1955,31 @@ class StandardWorkProvider with ChangeNotifier {
     );
 
     final id = await _db.insertProPlan(newPlan);
+    try {
+      if (await _hasCloudToken()) {
+        final created = await ApiClient.instance.post('/action-plans', {
+          'plantId': newPlan.plantId,
+          'plan': newPlan.plan,
+          'responsable': newPlan.responsable,
+          'area': newPlan.area,
+          'fechaCompromiso': newPlan.fechaCompromiso,
+          'estado': newPlan.estado,
+          'porcentajeAvance': newPlan.porcentajeAvance,
+          'comentarios': newPlan.comentarios,
+          'evidencia': newPlan.evidencia,
+          'creadoPor': newPlan.creadoPor,
+          'activityNombre': newPlan.activityNombre,
+          'descripcionSituacion': newPlan.descripcionSituacion,
+          'requiereRevision': newPlan.requiereRevision,
+        });
+        if (created is Map && created['id'] != null) {
+          final rId = created['id'].toString();
+          _remotePlanIds[_stableIntId(rId)] = rId;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error creando plan cloud: $e');
+    }
     await refreshData();
     return id;
   }
@@ -1554,6 +2002,17 @@ class StandardWorkProvider with ChangeNotifier {
         comentarios: comentarios ?? current.comentarios,
       );
       await _db.updateProPlan(updated);
+      try {
+        final rId = _remotePlanIds[planId];
+        if (rId != null && await _hasCloudToken()) {
+          final obs = comentarios ?? updated.comentarios ?? '';
+          await ApiClient.instance.patch(
+            '/action-plans/$rId/status?estado=${Uri.encodeComponent(nuevoEstado)}&observaciones=${Uri.encodeComponent(obs)}',
+          );
+        }
+      } catch (e) {
+        debugPrint('Error actualizando plan cloud: $e');
+      }
       await refreshData();
     }
   }
@@ -1863,6 +2322,14 @@ class StandardWorkProvider with ChangeNotifier {
 
   Future<void> deleteProPlan(int planId) async {
     await _db.deleteProPlan(planId);
+    try {
+      final rId = _remotePlanIds[planId];
+      if (rId != null && await _hasCloudToken()) {
+        await ApiClient.instance.delete('/action-plans/$rId');
+      }
+    } catch (e) {
+      debugPrint('Error eliminando plan cloud: $e');
+    }
     await refreshData();
   }
 
@@ -1897,11 +2364,29 @@ class StandardWorkProvider with ChangeNotifier {
   // --- CRUD COMPLETO GENÉRICO TOTAL ---
   Future<void> deletePlant(String plantId) async {
     await _db.deletePlant(plantId);
+    try {
+      if (await _hasCloudToken()) {
+        await ApiClient.instance.delete('/plants/$plantId');
+      }
+    } catch (e) {
+      debugPrint('Error eliminando planta cloud: $e');
+    }
     await refreshData();
   }
 
   Future<void> updatePlant(PlantModel plant) async {
     await _db.updatePlant(plant);
+    try {
+      if (await _hasCloudToken()) {
+        await ApiClient.instance.put('/plants/${plant.id}', {
+          'nombre': plant.nombre,
+          'descripcion': plant.ubicacion,
+          'activa': plant.activa,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error actualizando planta cloud: $e');
+    }
     await refreshData();
   }
 
@@ -2088,13 +2573,55 @@ class StandardWorkProvider with ChangeNotifier {
     await refreshData();
   }
 
+  Future<void> _syncNewActivityToCloud(
+    ActivityModel act,
+    int localActId,
+    List<ActivitySubtaskModel> subtasks,
+    List<ActivityInstance> instances,
+  ) async {
+    try {
+      if (!await _hasCloudToken()) return;
+      final createdAct = await ApiClient.instance.post('/activities', _activityToCloudMap(act));
+      if (createdAct is Map && createdAct['id'] != null) {
+        final remoteActId = createdAct['id'].toString();
+        _remoteActivityIds[localActId] = remoteActId;
+        _remoteActivityIds[_stableIntId(remoteActId)] = remoteActId;
+        if (subtasks.isNotEmpty) {
+          await ApiClient.instance.post(
+            '/activities/$remoteActId/subtasks/batch',
+            subtasks.map((s) => _subtaskToCloudMap(s, remoteActId)).toList(),
+          );
+        }
+        if (instances.isNotEmpty) {
+          await ApiClient.instance.post(
+            '/activities/instances/batch',
+            instances.map((i) => _instanceToCloudMap(i, remoteActivityId: remoteActId)).toList(),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error sincronizando actividad cloud: $e');
+    }
+  }
+
   Future<void> deleteActivity(int activityId) async {
     await _db.deleteActivity(activityId);
+    try {
+      final rId = _remoteActivityIds[activityId];
+      if (rId != null && await _hasCloudToken()) {
+        await ApiClient.instance.delete('/activities/$rId');
+      }
+    } catch (e) {
+      debugPrint('Error eliminando actividad cloud: $e');
+    }
     await refreshData();
   }
 
-  Future<List<ActivitySubtaskModel>> getSubtasksForActivity(int activityId) =>
-      _db.getSubtasksForActivity(activityId);
+  Future<List<ActivitySubtaskModel>> getSubtasksForActivity(int activityId) async {
+    final cloudSubs = _cloudSubtasksByActivity[activityId];
+    if (cloudSubs != null && cloudSubs.isNotEmpty) return cloudSubs;
+    return _db.getSubtasksForActivity(activityId);
+  }
 
   Future<void> updateActivityGroup({
     required int activityId,
@@ -2117,12 +2644,75 @@ class StandardWorkProvider with ChangeNotifier {
   }) async {
     final existing = _instances.where((i) => i.activityId == activityId).toList();
     final subCount = subtasks != null ? subtasks.length : (existing.isNotEmpty ? existing.first.subtasksTotal : 0);
+    final remoteActId = _remoteActivityIds[activityId];
+    final hasToken = await _hasCloudToken();
+
+    if (remoteActId != null && hasToken) {
+      try {
+        final actModel = _activities.firstWhere(
+          (a) => a.id == activityId,
+          orElse: () => ActivityModel(
+            id: activityId,
+            plantId: targetPlantId ?? (existing.isNotEmpty ? existing.first.plantId : 'ALL'),
+            userId: targetUserId ?? (existing.isNotEmpty ? existing.first.userId : 'ALL'),
+            nombre: nombre,
+            descripcion: descripcion,
+            area: area,
+            category: category,
+            timeStart: timeStart,
+            timeEnd: timeEnd,
+            fija: fija,
+            dias: days != null && days.isNotEmpty ? days.join(',') : '1,2,3,4,5',
+            prioridad: prioridad,
+            esGlobal: true,
+            tipoActividad: tipoActividad,
+            requierePlanAccion: requierePlanAccion,
+            planAccionObligatorio: planAccionObligatorio,
+            criteriosCumplimiento: criteriosCumplimiento ?? '',
+          ),
+        );
+        await ApiClient.instance.put('/activities/$remoteActId', _activityToCloudMap(actModel.copyWith(
+          nombre: nombre,
+          descripcion: descripcion,
+          area: area,
+          category: category,
+          timeStart: timeStart,
+          timeEnd: timeEnd,
+          fija: fija,
+          prioridad: prioridad,
+          dias: days != null && days.isNotEmpty ? days.join(',') : actModel.dias,
+          tipoActividad: tipoActividad,
+          requierePlanAccion: requierePlanAccion,
+          planAccionObligatorio: planAccionObligatorio,
+          criteriosCumplimiento: criteriosCumplimiento ?? actModel.criteriosCumplimiento,
+          plantId: targetPlantId ?? actModel.plantId,
+          userId: targetUserId ?? actModel.userId,
+        )));
+        if (subtasks != null) {
+          final ordered = [
+            for (int i = 0; i < subtasks.length; i++) subtasks[i].copyWith(activityId: activityId, orden: i + 1),
+          ];
+          await ApiClient.instance.post(
+            '/activities/$remoteActId/subtasks/batch',
+            ordered.map((s) => _subtaskToCloudMap(s, remoteActId)).toList(),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error actualizando actividad cloud: $e');
+      }
+    }
 
     // Si cambiaron los días o el alcance de planta/usuario, reconstruir las instancias pendientes conservando las completadas
     if (days != null && days.isNotEmpty && (targetPlantId != null || targetUserId != null)) {
       for (final inst in existing) {
         if (!inst.done && inst.id != null) {
           await _db.deleteInstance(inst.id!);
+          final rInstId = _remoteInstanceIds[inst.id!];
+          if (rInstId != null && hasToken) {
+            try {
+              await ApiClient.instance.delete('/activities/instances/$rInstId');
+            } catch (_) {}
+          }
         }
       }
       final dbUsers = await _db.getAllUsers();
@@ -2141,13 +2731,14 @@ class StandardWorkProvider with ChangeNotifier {
         return true;
       }).toList();
 
+      final newCloudInstances = <ActivityInstance>[];
       if (operators.isEmpty) {
         final fallbackPlants = (targetPlantId != null && targetPlantId != 'ALL')
             ? [targetPlantId]
             : (_allPlants.isNotEmpty ? _allPlants.map((p) => p.id).toList() : ['ALL']);
         for (final pId in fallbackPlants) {
           for (final d in days) {
-            await _db.insertInstance(ActivityInstance(
+            final newInst = ActivityInstance(
               activityId: activityId,
               userId: 'UNASSIGNED',
               plantId: pId,
@@ -2171,7 +2762,9 @@ class StandardWorkProvider with ChangeNotifier {
               requierePlanAccion: requierePlanAccion,
               planAccionObligatorio: planAccionObligatorio,
               criteriosCumplimiento: criteriosCumplimiento ?? '',
-            ));
+            );
+            newCloudInstances.add(newInst);
+            await _db.insertInstance(newInst);
           }
         }
       } else {
@@ -2179,7 +2772,7 @@ class StandardWorkProvider with ChangeNotifier {
           for (final d in days) {
             final alreadyDone = existing.any((e) => e.done && e.userId == op.id && e.day == d);
             if (alreadyDone) continue;
-            await _db.insertInstance(ActivityInstance(
+            final newInst = ActivityInstance(
               activityId: activityId,
               userId: op.id,
               plantId: op.plantId,
@@ -2203,8 +2796,20 @@ class StandardWorkProvider with ChangeNotifier {
               requierePlanAccion: requierePlanAccion,
               planAccionObligatorio: planAccionObligatorio,
               criteriosCumplimiento: criteriosCumplimiento ?? '',
-            ));
+            );
+            newCloudInstances.add(newInst);
+            await _db.insertInstance(newInst);
           }
+        }
+      }
+      if (remoteActId != null && hasToken && newCloudInstances.isNotEmpty) {
+        try {
+          await ApiClient.instance.post(
+            '/activities/instances/batch',
+            newCloudInstances.map((i) => _instanceToCloudMap(i, remoteActivityId: remoteActId)).toList(),
+          );
+        } catch (e) {
+          debugPrint('Error batch instancias cloud: $e');
         }
       }
     } else {

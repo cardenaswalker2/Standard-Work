@@ -8,5 +8,8 @@ public interface ActivityInstanceRepository extends MongoRepository<ActivityInst
     List<ActivityInstanceDocument> findByPlantIdAndWeekKey(String plantId, String weekKey);
     List<ActivityInstanceDocument> findByUserIdAndWeekKey(String userId, String weekKey);
     List<ActivityInstanceDocument> findByPlantId(String plantId);
+    List<ActivityInstanceDocument> findByWeekKey(String weekKey);
+    List<ActivityInstanceDocument> findByActivityId(String activityId);
+    void deleteByActivityId(String activityId);
 }
 

@@ -69,6 +69,15 @@ class Track60SecurityAndApiTests {
     @MockBean
     private com.track60.repository.NotificationRepository notificationRepository;
 
+    @MockBean
+    private com.track60.repository.SubtaskRepository subtaskRepository;
+
+    @MockBean
+    private com.track60.repository.ActivityTemplateRepository activityTemplateRepository;
+
+    @MockBean
+    private com.track60.repository.AppConfigRepository appConfigRepository;
+
     @Test
     void unauthenticatedRequestToProtectedEndpointIsRejected() throws Exception {
         mockMvc.perform(get("/api/v1/users"))

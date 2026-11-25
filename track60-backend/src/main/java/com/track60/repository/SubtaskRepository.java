@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface SubtaskRepository extends MongoRepository<SubtaskDocument, String> {
     List<SubtaskDocument> findByActivityIdOrderByOrdenAsc(String activityId);
+    void deleteByActivityId(String activityId);
 }
 

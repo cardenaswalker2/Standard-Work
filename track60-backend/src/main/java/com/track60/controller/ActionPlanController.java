@@ -52,5 +52,14 @@ public class ActionPlanController {
         }
         return ApiResponse.ok(planRepository.save(plan), "Estado del plan actualizado");
     }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable String id) {
+        ActionPlanDocument plan = planRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Plan de acción no encontrado"));
+        scope.requirePlantAccess(plan.getPlantId());
+        planRepository.deleteById(id);
+        return ApiResponse.ok(null, "Plan de acción eliminado");
+    }
 }
 

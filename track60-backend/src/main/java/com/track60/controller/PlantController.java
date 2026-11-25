@@ -53,5 +53,15 @@ public class PlantController {
         existing.setActiva(req.isActiva());
         return ApiResponse.ok(plantRepository.save(existing), "Proceso actualizado");
     }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable String id) {
+        scope.requireSuperAdmin();
+        if (!plantRepository.existsById(id)) {
+            throw ApiException.notFound("Proceso no encontrado");
+        }
+        plantRepository.deleteById(id);
+        return ApiResponse.ok(null, "Proceso eliminado");
+    }
 }
 
