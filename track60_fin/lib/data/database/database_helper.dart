@@ -1129,9 +1129,21 @@ class DatabaseHelper {
   Future<List<ActivityInstance>> getInstancesForPlant(String plantId, String weekKey) async {
     if (kIsWeb) {
       await _ensureWebInitialized();
+      if (plantId == 'ALL') {
+        return _webInstances.where((i) => i.weekKey == weekKey).toList();
+      }
       return _webInstances.where((i) => (i.plantId == plantId || i.plantId == "ALL") && i.weekKey == weekKey).toList();
     }
     final db = await database;
+    if (plantId == 'ALL') {
+      final res = await db.query(
+        'instances',
+        where: 'weekKey = ?',
+        whereArgs: [weekKey],
+        orderBy: 'day ASC, timeStart ASC',
+      );
+      return res.map((m) => ActivityInstance.fromMap(m)).toList();
+    }
     final res = await db.query(
       'instances',
       where: '(plantId = ? OR plantId = "ALL") AND weekKey = ?',
