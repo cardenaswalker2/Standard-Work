@@ -2386,31 +2386,94 @@ class _SuperAdminPlantAdminsTab extends StatelessWidget {
   void _showEditAdminDialog(BuildContext context, UserProfile admin, StandardWorkProvider provider) {
     final nombreCtrl = TextEditingController(text: admin.nombre);
     final cargoCtrl = TextEditingController(text: admin.cargo);
+    final cedulaCtrl = TextEditingController(text: admin.cedula);
+    final emailCtrl = TextEditingController(text: admin.email);
     final pinCtrl = TextEditingController();
+    String selectedPlantId = admin.plantId;
+    bool activo = admin.activo;
     bool saving = false;
+
+    final plantIds = provider.allPlants.map((p) => p.id).toList();
+    if (!plantIds.contains(selectedPlantId) && plantIds.isNotEmpty) {
+      selectedPlantId = plantIds.first;
+    }
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: Text('Editar ${admin.nombre}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
             children: [
-              TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre Completo')),
-              const SizedBox(height: 8),
-              TextField(controller: cargoCtrl, decoration: const InputDecoration(labelText: 'Cargo')),
-              const SizedBox(height: 8),
-              TextField(
-                controller: pinCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Nuevo PIN de Acceso',
-                  hintText: 'Dejar vacío para mantener el actual (mín. 4 dígitos)',
-                ),
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: const Color(0xFF002F6C).withValues(alpha: 0.12),
+                child: Text(admin.iniciales, style: const TextStyle(color: Color(0xFF002F6C), fontWeight: FontWeight.w800, fontSize: 13)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Editar ${admin.nombre}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               ),
             ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nombreCtrl,
+                  decoration: InputDecoration(labelText: 'Nombre Completo', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), isDense: true),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: cargoCtrl,
+                  decoration: InputDecoration(labelText: 'Cargo', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), isDense: true),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: cedulaCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Cédula / Documento', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), isDense: true),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(labelText: 'Correo Corporativo', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), isDense: true),
+                ),
+                const SizedBox(height: 10),
+                if (provider.allPlants.isNotEmpty)
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedPlantId,
+                    isExpanded: true,
+                    decoration: InputDecoration(labelText: 'Planta / Proceso Asignado', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), isDense: true),
+                    items: provider.allPlants
+                        .map((p) => DropdownMenuItem(value: p.id, child: Text('${p.nombre} (${p.codigo})', overflow: TextOverflow.ellipsis)))
+                        .toList(),
+                    onChanged: (v) => setModalState(() => selectedPlantId = v ?? selectedPlantId),
+                  ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: pinCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Nuevo PIN de Acceso (opcional)',
+                    hintText: 'Dejar vacío para mantener el actual',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: const Text('Usuario Activo', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  value: activo,
+                  activeThumbColor: const Color(0xFF34C759),
+                  onChanged: (v) => setModalState(() => activo = v),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(onPressed: saving ? null : () => Navigator.pop(ctx), child: const Text('Cancelar')),
@@ -2429,14 +2492,14 @@ class _SuperAdminPlantAdminsTab extends StatelessWidget {
                       try {
                         await provider.updateFullUser(
                           userId: admin.id,
-                          cedula: admin.cedula,
+                          cedula: cedulaCtrl.text.trim(),
                           nombre: nombreCtrl.text.trim(),
                           cargo: cargoCtrl.text.trim(),
                           area: admin.area,
-                          email: admin.email,
+                          email: emailCtrl.text.trim(),
                           rol: admin.rol,
-                          plantId: admin.plantId,
-                          activo: admin.activo,
+                          plantId: selectedPlantId,
+                          activo: activo,
                           newPin: newPin.isNotEmpty ? newPin : null,
                         );
                         if (ctx.mounted) Navigator.pop(ctx);
@@ -2551,8 +2614,22 @@ class _SuperAdminPlantAdminsTab extends StatelessWidget {
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(color: const Color(0xFF007AFF).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(999)),
-                                  child: Text('PIN: ${admin.pin}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
+                                  decoration: BoxDecoration(color: const Color(0xFF002F6C).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(999)),
+                                  child: Text(
+                                    admin.pin.isNotEmpty ? 'PIN: ${admin.pin}' : 'PIN activo',
+                                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF002F6C)),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: (admin.activo ? const Color(0xFF34C759) : const Color(0xFFFF3B30)).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    admin.activo ? 'Activo' : 'Inactivo',
+                                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: admin.activo ? const Color(0xFF16A34A) : const Color(0xFFFF3B30)),
+                                  ),
                                 ),
                               ],
                             ),

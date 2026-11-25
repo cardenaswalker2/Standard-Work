@@ -288,7 +288,7 @@ class _TemplatesModalState extends State<TemplatesModal> {
                   setState(() => _activeView = 1);
                 },
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('+ Nueva Plantilla', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                label: const Text('Nueva Plantilla', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -351,6 +351,32 @@ class _TemplatesModalState extends State<TemplatesModal> {
                                     setState(() => _activeView = 1);
                                   },
                                 ),
+                                if (t.id != null)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFFF3B30)),
+                                    tooltip: 'Eliminar plantilla',
+                                    onPressed: () async {
+                                      final ok = await showDialog<bool>(
+                                        context: context,
+                                        builder: (dCtx) => AlertDialog(
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                          title: const Text('Eliminar Plantilla', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                          content: Text('¿Deseas eliminar la plantilla "${t.nombre}"?'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF3B30)),
+                                              onPressed: () => Navigator.pop(dCtx, true),
+                                              child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (ok == true && context.mounted) {
+                                        await context.read<StandardWorkProvider>().deleteTemplate(t.id!);
+                                      }
+                                    },
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 8),
