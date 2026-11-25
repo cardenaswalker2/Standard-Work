@@ -3166,126 +3166,291 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
     );
   }
 
+  Future<void> _confirmDeleteGroup(BuildContext context, List<ActivityInstance> group) async {
+    final first = group.first;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Eliminar Actividad', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: Text('¿Deseas eliminar "${first.nombre}" y todas sus asignaciones?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF3B30)),
+            onPressed: () => Navigator.pop(dCtx, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && context.mounted) {
+      await Provider.of<StandardWorkProvider>(context, listen: false).deleteActivity(first.activityId);
+    }
+  }
+
   void _openGroupDetailSheet(BuildContext context, List<ActivityInstance> group, Map<String, UserProfile> usersById) {
     final first = group.first;
     final doneCount = group.where((i) => i.done).length;
     const dayLabels = {1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb'};
+    String sheetPlant = 'ALL';
+    int sheetDay = 0;
+    String sheetStatus = 'ALL'; // ALL, PENDING, DONE
+
+    final plantOptions = <String>{
+      for (final inst in group) (usersById[inst.userId]?.plantId ?? inst.plantId),
+    }.where((p) => p.isNotEmpty).toList()
+      ..sort();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => Container(
-        height: MediaQuery.of(sheetCtx).size.height * 0.82,
-        decoration: const BoxDecoration(
-          color: Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(999)),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) {
+          final filteredGroup = group.where((inst) {
+            final ownerPlant = usersById[inst.userId]?.plantId ?? inst.plantId;
+            if (sheetPlant != 'ALL' && ownerPlant != sheetPlant) return false;
+            if (sheetDay != 0 && inst.day != sheetDay) return false;
+            if (sheetStatus == 'PENDING' && inst.done) return false;
+            if (sheetStatus == 'DONE' && !inst.done) return false;
+            return true;
+          }).toList();
+
+          return Container(
+            height: MediaQuery.of(sheetCtx).size.height * 0.86,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF5F5F7),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 12, 10, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(first.nombre, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${first.area} · ${first.timeStart}-${first.timeEnd} · $doneCount/${group.length} completadas',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.of(sheetCtx).pop(),
-                  ),
-                ],
-              ),
-            ),
-            if (first.descripcion.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE5E5EA)),
-                  ),
-                  child: Text(first.descripcion, style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(999)),
                 ),
-              ),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: group.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (_, i) {
-                  final inst = group[i];
-                  final owner = usersById[inst.userId];
-                  final statusColor = inst.done ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: statusColor.withValues(alpha: 0.35)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          inst.done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                          color: statusColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                owner?.nombre ?? 'Sin asignar',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F)),
-                              ),
-                              Text(
-                                '${owner?.plantId ?? inst.plantId} · ${dayLabels[inst.day] ?? 'Día ${inst.day}'}',
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                              ),
-                            ],
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(18, 12, 10, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(first.nombre, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${first.area} · ${first.timeStart}-${first.timeEnd} · $doneCount/${group.length} completadas',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF86868B)),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                          IconButton(
+                            tooltip: 'Editar Actividad',
+                            icon: const Icon(Icons.edit_outlined, color: Color(0xFF002F6C), size: 20),
+                            onPressed: () {
+                              Navigator.of(sheetCtx).pop();
+                              _openCreateDispatchSheet(context, editingActivity: first);
+                            },
+                          ),
+                          IconButton(
+                            tooltip: 'Eliminar Actividad',
+                            icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF3B30), size: 20),
+                            onPressed: () {
+                              Navigator.of(sheetCtx).pop();
+                              _confirmDeleteGroup(context, group);
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () => Navigator.of(sheetCtx).pop(),
+                          ),
+                        ],
+                      ),
+                      if (first.descripcion.isNotEmpty) ...[
+                        const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
+                            color: const Color(0xFFF5F5F7),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text(
-                            inst.done ? 'Completada' : 'Pendiente',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor),
-                          ),
+                          child: Text(first.descripcion, style: const TextStyle(fontSize: 12, color: Color(0xFF3A3A3C))),
                         ),
                       ],
-                    ),
-                  );
-                },
-              ),
+                      const SizedBox(height: 10),
+                      // FILTROS POR PLANTA, DÍA Y ESTADO
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ChoiceChip(
+                                label: Text('Todas (${group.length})', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: sheetPlant == 'ALL' ? Colors.white : const Color(0xFF1D1D1F))),
+                                selected: sheetPlant == 'ALL',
+                                selectedColor: const Color(0xFF002F6C),
+                                backgroundColor: const Color(0xFFF5F5F7),
+                                visualDensity: VisualDensity.compact,
+                                onSelected: (_) => setSheetState(() => sheetPlant = 'ALL'),
+                              ),
+                            ),
+                            ...plantOptions.map((pl) {
+                              final sel = sheetPlant == pl;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: ChoiceChip(
+                                  label: Text(pl, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: sel ? Colors.white : const Color(0xFF1D1D1F))),
+                                  selected: sel,
+                                  selectedColor: const Color(0xFF002F6C),
+                                  backgroundColor: const Color(0xFFF5F5F7),
+                                  visualDensity: VisualDensity.compact,
+                                  onSelected: (_) => setSheetState(() => sheetPlant = pl),
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            ...[
+                              (0, 'Todos días'),
+                              (1, 'Lun'),
+                              (2, 'Mar'),
+                              (3, 'Mié'),
+                              (4, 'Jue'),
+                              (5, 'Vie'),
+                              (6, 'Sáb'),
+                            ].map((d) {
+                              final sel = sheetDay == d.$1;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: ChoiceChip(
+                                  label: Text(d.$2, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: sel ? Colors.white : const Color(0xFF1D1D1F))),
+                                  selected: sel,
+                                  selectedColor: const Color(0xFF007AFF),
+                                  backgroundColor: const Color(0xFFF5F5F7),
+                                  visualDensity: VisualDensity.compact,
+                                  onSelected: (_) => setSheetState(() => sheetDay = d.$1),
+                                ),
+                              );
+                            }),
+                            const SizedBox(width: 6),
+                            ...[
+                              ('ALL', 'Todos'),
+                              ('PENDING', 'Pendientes'),
+                              ('DONE', 'Completadas'),
+                            ].map((s) {
+                              final sel = sheetStatus == s.$1;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: ChoiceChip(
+                                  label: Text(s.$2, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: sel ? Colors.white : const Color(0xFF1D1D1F))),
+                                  selected: sel,
+                                  selectedColor: const Color(0xFF34C759),
+                                  backgroundColor: const Color(0xFFF5F5F7),
+                                  visualDensity: VisualDensity.compact,
+                                  onSelected: (_) => setSheetState(() => sheetStatus = s.$1),
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Mostrando ${filteredGroup.length} de ${group.length} asignaciones', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF86868B))),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: filteredGroup.isEmpty
+                      ? const Center(child: Text('No hay asignaciones con estos filtros.', style: TextStyle(color: Color(0xFF86868B))))
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
+                          itemCount: filteredGroup.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (_, i) {
+                            final inst = filteredGroup[i];
+                            final owner = usersById[inst.userId];
+                            final ownerLabel = (owner != null && owner.nombre.isNotEmpty)
+                                ? owner.nombre
+                                : (inst.userId == 'UNASSIGNED' ? 'Sin asignar' : inst.userId);
+                            final initials = owner?.iniciales ?? (ownerLabel == 'Sin asignar' ? 'SA' : ownerLabel.substring(0, 1).toUpperCase());
+                            final statusColor = inst.done ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFE5E5EA)),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 17,
+                                    backgroundColor: const Color(0xFF002F6C).withValues(alpha: 0.1),
+                                    child: Text(initials, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF002F6C))),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          ownerLabel,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F)),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${owner?.plantId ?? inst.plantId} · ${dayLabels[inst.day] ?? 'Día ${inst.day}'}',
+                                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF86868B)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: statusColor.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      inst.done ? 'Completada' : 'Pendiente',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -3563,6 +3728,29 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
       _tipoActividad = e.tipoActividad;
       _requierePlanAccion = e.requierePlanAccion || e.planAccionObligatorio;
       _planAccionObligatorio = e.planAccionObligatorio;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final prov = context.read<StandardWorkProvider>();
+        final sameGroup = prov.instances.where((i) => i.activityId == e.activityId).toList();
+        final subs = await prov.getSubtasksForActivity(e.activityId);
+        if (!mounted) return;
+        setState(() {
+          if (sameGroup.isNotEmpty) {
+            _selectedDays
+              ..clear()
+              ..addAll(sameGroup.map((i) => i.day));
+            final plants = sameGroup.map((i) => i.plantId).toSet();
+            if (plants.length == 1) _targetPlanta = plants.first;
+            final users = sameGroup.map((i) => i.userId).toSet();
+            if (users.length == 1 && users.first != 'UNASSIGNED') _targetUserId = users.first;
+          }
+          if (subs.isNotEmpty) {
+            _subtasks
+              ..clear()
+              ..addAll(subs);
+          }
+        });
+      });
     }
   }
   final Set<int> _selectedDays = {1, 2, 3, 4, 5}; // Lun-Vie por defecto
@@ -3818,6 +4006,11 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
         tipoActividad: _tipoActividad,
         requierePlanAccion: _requierePlanAccion || _planAccionObligatorio,
         planAccionObligatorio: _planAccionObligatorio,
+        criteriosCumplimiento: planCriteria,
+        days: _selectedDays.toList()..sort(),
+        targetPlantId: _targetPlanta,
+        targetUserId: _targetUserId,
+        subtasks: _subtasks,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

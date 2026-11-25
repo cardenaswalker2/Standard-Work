@@ -2093,6 +2093,9 @@ class StandardWorkProvider with ChangeNotifier {
     await refreshData();
   }
 
+  Future<List<ActivitySubtaskModel>> getSubtasksForActivity(int activityId) =>
+      _db.getSubtasksForActivity(activityId);
+
   Future<void> updateActivityGroup({
     required int activityId,
     required String nombre,
@@ -2106,22 +2109,124 @@ class StandardWorkProvider with ChangeNotifier {
     required String tipoActividad,
     required bool requierePlanAccion,
     required bool planAccionObligatorio,
+    String? criteriosCumplimiento,
+    List<int>? days,
+    String? targetPlantId,
+    String? targetUserId,
+    List<ActivitySubtaskModel>? subtasks,
   }) async {
-    for (final inst in _instances.where((i) => i.activityId == activityId)) {
-      await _db.updateInstance(inst.copyWith(
-        nombre: nombre,
-        descripcion: descripcion,
-        area: area,
-        category: category,
-        timeStart: timeStart,
-        timeEnd: timeEnd,
-        fija: fija,
-        prioridad: prioridad,
-        tipoActividad: tipoActividad,
-        requierePlanAccion: requierePlanAccion,
-        planAccionObligatorio: planAccionObligatorio,
-      ));
+    final existing = _instances.where((i) => i.activityId == activityId).toList();
+    final subCount = subtasks != null ? subtasks.length : (existing.isNotEmpty ? existing.first.subtasksTotal : 0);
+
+    // Si cambiaron los días o el alcance de planta/usuario, reconstruir las instancias pendientes conservando las completadas
+    if (days != null && days.isNotEmpty && (targetPlantId != null || targetUserId != null)) {
+      for (final inst in existing) {
+        if (!inst.done && inst.id != null) {
+          await _db.deleteInstance(inst.id!);
+        }
+      }
+      final dbUsers = await _db.getAllUsers();
+      final Map<String, UserProfile> mergedUsers = {
+        for (final u in dbUsers) u.id: u,
+        for (final u in _allUsers) u.id: u,
+      };
+      final operators = mergedUsers.values.where((u) {
+        if (targetUserId != null && targetUserId != 'ALL') {
+          return u.id == targetUserId;
+        }
+        if (!u.isOperator) return false;
+        if (targetPlantId != null && targetPlantId != 'ALL') {
+          return u.plantId == targetPlantId;
+        }
+        return true;
+      }).toList();
+
+      if (operators.isEmpty) {
+        final fallbackPlants = (targetPlantId != null && targetPlantId != 'ALL')
+            ? [targetPlantId]
+            : (_allPlants.isNotEmpty ? _allPlants.map((p) => p.id).toList() : ['ALL']);
+        for (final pId in fallbackPlants) {
+          for (final d in days) {
+            await _db.insertInstance(ActivityInstance(
+              activityId: activityId,
+              userId: 'UNASSIGNED',
+              plantId: pId,
+              weekKey: _currentWeekKey,
+              nombre: nombre,
+              descripcion: descripcion,
+              area: area,
+              category: category,
+              timeStart: timeStart,
+              timeEnd: timeEnd,
+              prioridad: prioridad,
+              day: d,
+              orig: d,
+              fija: fija,
+              done: false,
+              state: 'Pendiente',
+              subtasksTotal: subCount,
+              subtasksReported: 0,
+              subtasksApproved: 0,
+              tipoActividad: tipoActividad,
+              requierePlanAccion: requierePlanAccion,
+              planAccionObligatorio: planAccionObligatorio,
+              criteriosCumplimiento: criteriosCumplimiento ?? '',
+            ));
+          }
+        }
+      } else {
+        for (final op in operators) {
+          for (final d in days) {
+            final alreadyDone = existing.any((e) => e.done && e.userId == op.id && e.day == d);
+            if (alreadyDone) continue;
+            await _db.insertInstance(ActivityInstance(
+              activityId: activityId,
+              userId: op.id,
+              plantId: op.plantId,
+              weekKey: _currentWeekKey,
+              nombre: nombre,
+              descripcion: descripcion,
+              area: area,
+              category: category,
+              timeStart: timeStart,
+              timeEnd: timeEnd,
+              prioridad: prioridad,
+              day: d,
+              orig: d,
+              fija: fija,
+              done: false,
+              state: 'Pendiente',
+              subtasksTotal: subCount,
+              subtasksReported: 0,
+              subtasksApproved: 0,
+              tipoActividad: tipoActividad,
+              requierePlanAccion: requierePlanAccion,
+              planAccionObligatorio: planAccionObligatorio,
+              criteriosCumplimiento: criteriosCumplimiento ?? '',
+            ));
+          }
+        }
+      }
+    } else {
+      for (final inst in existing) {
+        await _db.updateInstance(inst.copyWith(
+          nombre: nombre,
+          descripcion: descripcion,
+          area: area,
+          category: category,
+          timeStart: timeStart,
+          timeEnd: timeEnd,
+          fija: fija,
+          prioridad: prioridad,
+          tipoActividad: tipoActividad,
+          requierePlanAccion: requierePlanAccion,
+          planAccionObligatorio: planAccionObligatorio,
+          criteriosCumplimiento: criteriosCumplimiento ?? inst.criteriosCumplimiento,
+          subtasksTotal: subCount,
+        ));
+      }
     }
+
     await refreshData();
   }
 }
