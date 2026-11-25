@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/config/api_config.dart';
+import 'safe_prefs.dart';
 
 class ApiExceptionClient implements Exception {
   final int statusCode;
@@ -21,20 +21,17 @@ class ApiClient {
   static const _refreshTokenKey = 'track60_refresh_token';
 
   Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_accessTokenKey);
+    return SafePrefs.instance.getString(_accessTokenKey);
   }
 
   Future<void> saveTokens(String access, String refresh) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, access);
-    await prefs.setString(_refreshTokenKey, refresh);
+    await SafePrefs.instance.setString(_accessTokenKey, access);
+    await SafePrefs.instance.setString(_refreshTokenKey, refresh);
   }
 
   Future<void> clearTokens() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_accessTokenKey);
-    await prefs.remove(_refreshTokenKey);
+    await SafePrefs.instance.remove(_accessTokenKey);
+    await SafePrefs.instance.remove(_refreshTokenKey);
   }
 
   Future<Map<String, String>> _headers({bool auth = true}) async {
@@ -114,8 +111,7 @@ class ApiClient {
 
   Future<bool> _tryRefresh() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final refresh = prefs.getString(_refreshTokenKey);
+      final refresh = await SafePrefs.instance.getString(_refreshTokenKey);
       if (refresh == null || refresh.isEmpty) return false;
       final uri = Uri.parse('${ApiConfig.baseUrl}/auth/refresh');
       final res = await http

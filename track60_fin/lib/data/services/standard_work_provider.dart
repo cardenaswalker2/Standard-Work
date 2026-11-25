@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'safe_prefs.dart';
 import '../models/app_models.dart';
 import '../database/database_helper.dart';
 import 'api_client.dart';
@@ -232,7 +232,7 @@ class StandardWorkProvider with ChangeNotifier {
     if (clean.isEmpty) return;
     if (!_corporateAreas.any((a) => a.toLowerCase() == clean.toLowerCase())) {
       _corporateAreas.add(clean);
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = SafePrefs.instance;
       await prefs.setStringList('track60_corporate_areas', _corporateAreas);
       await _syncCatalogsToCloud();
       notifyListeners();
@@ -241,7 +241,7 @@ class StandardWorkProvider with ChangeNotifier {
 
   Future<void> removeCorporateArea(String name) async {
     _corporateAreas.remove(name);
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = SafePrefs.instance;
     await prefs.setStringList('track60_corporate_areas', _corporateAreas);
     await _syncCatalogsToCloud();
     notifyListeners();
@@ -252,7 +252,7 @@ class StandardWorkProvider with ChangeNotifier {
     if (clean.isEmpty) return;
     if (!_corporateCategories.any((c) => c.toLowerCase() == clean.toLowerCase())) {
       _corporateCategories.add(clean);
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = SafePrefs.instance;
       await prefs.setStringList('track60_corporate_categories', _corporateCategories);
       await _syncCatalogsToCloud();
       notifyListeners();
@@ -261,7 +261,7 @@ class StandardWorkProvider with ChangeNotifier {
 
   Future<void> removeCorporateCategory(String name) async {
     _corporateCategories.remove(name);
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = SafePrefs.instance;
     await prefs.setStringList('track60_corporate_categories', _corporateCategories);
     await _syncCatalogsToCloud();
     notifyListeners();
@@ -654,9 +654,9 @@ class StandardWorkProvider with ChangeNotifier {
     if (_currentUser == null) return;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _corporateAreas = List<String>.from(prefs.getStringList('track60_corporate_areas') ?? []);
-      _corporateCategories = List<String>.from(prefs.getStringList('track60_corporate_categories') ?? []);
+      final prefs = SafePrefs.instance;
+      _corporateAreas = List<String>.from((await prefs.getStringList('track60_corporate_areas')) ?? []);
+      _corporateCategories = List<String>.from((await prefs.getStringList('track60_corporate_categories')) ?? []);
     } catch (_) {}
 
     List<UserProfile> loadedUsers = [];
@@ -725,7 +725,7 @@ class StandardWorkProvider with ChangeNotifier {
 
     if (hasToken) {
       try {
-        final prefs = await SharedPreferences.getInstance();
+        final prefs = SafePrefs.instance;
         final catalogs = await ApiClient.instance.get('/config/catalogs');
         if (catalogs is Map) {
           final m = Map<String, dynamic>.from(catalogs);

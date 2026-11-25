@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
-import 'package:shared_preferences/shared_preferences.dart';
+import '../services/safe_prefs.dart';
 import '../models/app_models.dart';
 
 class DatabaseHelper {
@@ -39,9 +39,9 @@ class DatabaseHelper {
 
   Future<void> _doEnsureWebInitialized() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedInstances = prefs.getString('web_instances_v1');
-      final savedUsers = prefs.getString('web_users_v1');
+      final prefs = SafePrefs.instance;
+      final savedInstances = await prefs.getString('web_instances_v1');
+      final savedUsers = await prefs.getString('web_users_v1');
 
       if (savedUsers != null && savedInstances != null) {
         // Cargar estado persistente previo del navegador
@@ -53,70 +53,70 @@ class DatabaseHelper {
         _webInstances.clear();
         _webInstances.addAll(iList.map((m) => ActivityInstance.fromMap(m)));
 
-        final savedPlants = prefs.getString('web_plants_v1');
+        final savedPlants = await prefs.getString('web_plants_v1');
         if (savedPlants != null) {
           final List plList = jsonDecode(savedPlants);
           _webPlants.clear();
           _webPlants.addAll(plList.map((m) => PlantModel.fromMap(m)));
         }
 
-        final savedActivities = prefs.getString('web_activities_v1');
+        final savedActivities = await prefs.getString('web_activities_v1');
         if (savedActivities != null) {
           final List aList = jsonDecode(savedActivities);
           _webActivities.clear();
           _webActivities.addAll(aList.map((m) => ActivityModel.fromMap(m)));
         }
 
-        final savedProPlans = prefs.getString('web_proplans_v1');
+        final savedProPlans = await prefs.getString('web_proplans_v1');
         if (savedProPlans != null) {
           final List pList = jsonDecode(savedProPlans);
           _webProPlans.clear();
           _webProPlans.addAll(pList.map((m) => ProPlanModel.fromMap(m)));
         }
 
-        final savedStandards = prefs.getString('web_photo_standards_v1');
+        final savedStandards = await prefs.getString('web_photo_standards_v1');
         if (savedStandards != null) {
           final List sList = jsonDecode(savedStandards);
           _webPhotoStandards.clear();
           _webPhotoStandards.addAll(sList.map((m) => PlantPhotoStandardModel.fromMap(m)));
         }
 
-        final savedExecutions = prefs.getString('web_executions_v1');
+        final savedExecutions = await prefs.getString('web_executions_v1');
         if (savedExecutions != null) {
           final List eList = jsonDecode(savedExecutions);
           _webExecutions.clear();
           _webExecutions.addAll(eList.map((m) => SubtaskExecutionModel.fromMap(m)));
         }
 
-        final savedExtra = prefs.getString('web_extra_requests_v1');
+        final savedExtra = await prefs.getString('web_extra_requests_v1');
         if (savedExtra != null) {
           final List exList = jsonDecode(savedExtra);
           _webExtraRequests.clear();
           _webExtraRequests.addAll(exList.map((m) => ExtraTaskRequestModel.fromMap(m)));
         }
 
-        final savedSubtasks = prefs.getString('web_subtasks_v1');
+        final savedSubtasks = await prefs.getString('web_subtasks_v1');
         if (savedSubtasks != null) {
           final List stList = jsonDecode(savedSubtasks);
           _webSubtasks.clear();
           _webSubtasks.addAll(stList.map((m) => ActivitySubtaskModel.fromMap(m)));
         }
 
-        final savedNotifications = prefs.getString('web_notifications_v1');
+        final savedNotifications = await prefs.getString('web_notifications_v1');
         if (savedNotifications != null) {
           final List nList = jsonDecode(savedNotifications);
           _webNotifications.clear();
           _webNotifications.addAll(nList.map((m) => NotificationModel.fromMap(m)));
         }
 
-        final savedMeetings = prefs.getString('web_meetings_v1');
+        final savedMeetings = await prefs.getString('web_meetings_v1');
         if (savedMeetings != null) {
           final List mList = jsonDecode(savedMeetings);
           _webMeetingRecords.clear();
           _webMeetingRecords.addAll(mList.map((m) => MeetingRecordModel.fromMap(m)));
         }
 
-        final savedTemplates = prefs.getString('web_templates_v1');
+        final savedTemplates = await prefs.getString('web_templates_v1');
         if (savedTemplates != null) {
           final List tList = jsonDecode(savedTemplates);
           _webTemplates.clear();
@@ -124,7 +124,7 @@ class DatabaseHelper {
         }
 
         // Purga única de registros demo sembrados en versiones anteriores (conserva todo lo creado por el usuario)
-        final purgedV2 = prefs.getBool('track60_demo_purged_v2') ?? false;
+        final purgedV2 = (await prefs.getBool('track60_demo_purged_v2')) ?? false;
         if (!purgedV2) {
           const demoActivityTitle = 'Auditoría Mensual de Seguridad EHS Grupo Darnel';
           _webActivities.removeWhere((a) => a.nombre == demoActivityTitle);
@@ -229,7 +229,7 @@ class DatabaseHelper {
   Future<void> _persistWebState() async {
     if (!kIsWeb) return;
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = SafePrefs.instance;
       await prefs.setString('web_users_v1', jsonEncode(_webUsers.map((u) => u.toMap()).toList()));
       await prefs.setString('web_plants_v1', jsonEncode(_webPlants.map((p) => p.toMap()).toList()));
       await prefs.setString('web_activities_v1', jsonEncode(_webActivities.map((a) => a.toMap()).toList()));
