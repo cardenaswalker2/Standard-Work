@@ -961,9 +961,13 @@ class StandardWorkProvider with ChangeNotifier {
       await _db.insertSubtask(s.copyWith(activityId: actId, orden: i + 1));
     }
 
-    // 3. Crear instancias para los destinatarios objetivo (persona específica o equipo operativo de planta)
-    final allUsers = await _db.getAllUsers();
-    final operators = allUsers.where((u) {
+    // 3. Crear instancias para los destinatarios objetivo (fusionando usuarios de nube y locales)
+    final dbUsers = await _db.getAllUsers();
+    final Map<String, UserProfile> mergedUsers = {
+      for (final u in dbUsers) u.id: u,
+      for (final u in _allUsers) u.id: u,
+    };
+    final operators = mergedUsers.values.where((u) {
       if (targetUserIds != null && targetUserIds.isNotEmpty) {
         return targetUserIds.contains(u.id);
       }

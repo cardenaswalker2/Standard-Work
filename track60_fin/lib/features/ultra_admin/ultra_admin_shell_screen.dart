@@ -738,6 +738,19 @@ class _UltraAdminShellScreenState extends State<UltraAdminShellScreen> {
             height: 165,
             child: LineChart(
               LineChartData(
+                lineTouchData: LineTouchData(
+                  handleBuiltInTouches: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (_) => const Color(0xFF1D1D1F),
+                    tooltipBorderRadius: BorderRadius.circular(8),
+                    getTooltipItems: (spots) => spots
+                        .map((s) => LineTooltipItem(
+                              '${s.y.toInt()} ms',
+                              const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11),
+                            ))
+                        .toList(),
+                  ),
+                ),
                 gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (_) => const FlLine(color: _border, strokeWidth: 1)),
                 titlesData: const FlTitlesData(
                   topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),

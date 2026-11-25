@@ -30,6 +30,8 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
   // 2: Planes (Planes de acción en pantalla dedicada)
   // 3: Indicadores (Métricas personales)
   int _currentScreenIndex = 0;
+  int _touchedOpPieIndex = -1;
+  int? _selectedOpChartDay;
 
   String _selectedActivityFilter = 'Todas'; // 'Todas', 'Pendientes', 'Completadas'
   String _searchQuery = '';
@@ -995,6 +997,16 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                         children: [
                           PieChart(
                             PieChartData(
+                              pieTouchData: PieTouchData(
+                                touchCallback: (event, resp) {
+                                  if (!event.isInterestedForInteractions || resp == null || resp.touchedSection == null) {
+                                    if (_touchedOpPieIndex != -1) setState(() => _touchedOpPieIndex = -1);
+                                    return;
+                                  }
+                                  final idx = resp.touchedSection!.touchedSectionIndex;
+                                  if (_touchedOpPieIndex != idx) setState(() => _touchedOpPieIndex = idx);
+                                },
+                              ),
                               startDegreeOffset: -90,
                               sectionsSpace: 3,
                               centerSpaceRadius: 35,
@@ -1002,13 +1014,13 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                                 PieChartSectionData(
                                   value: weekDone == 0 && weekPending == 0 ? 1 : weekDone.toDouble(),
                                   color: const Color(0xFF34C759),
-                                  radius: 14,
+                                  radius: _touchedOpPieIndex == 0 ? 18 : 14,
                                   showTitle: false,
                                 ),
                                 PieChartSectionData(
                                   value: weekPending.toDouble(),
                                   color: Colors.white.withValues(alpha: 0.22),
-                                  radius: 12,
+                                  radius: _touchedOpPieIndex == 1 ? 16 : 12,
                                   showTitle: false,
                                 ),
                               ],
@@ -1017,8 +1029,18 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('$weekPct%', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
-                              const Text('Semana', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                              Text(
+                                _touchedOpPieIndex == 0
+                                    ? '$weekDone'
+                                    : (_touchedOpPieIndex == 1 ? '$weekPending' : '$weekPct%'),
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
+                              ),
+                              Text(
+                                _touchedOpPieIndex == 0
+                                    ? 'Hechas'
+                                    : (_touchedOpPieIndex == 1 ? 'Pend.' : 'Semana'),
+                                style: const TextStyle(fontSize: 10, color: Colors.white70),
+                              ),
                             ],
                           ),
                         ],
@@ -1125,7 +1147,21 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                   children: [
                     const Text('Cumplimiento por Día (Lun–Vie)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
                     const SizedBox(height: 4),
-                    const Text('Porcentaje de rutinas completadas cada día', style: TextStyle(fontSize: 12, color: Color(0xFF86868B))),
+                    Text(
+                      _selectedOpChartDay == null
+                          ? 'Toca cualquier barra para ver el detalle de ese día'
+                          : () {
+                              const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                              final dList = weekTasks.where((t) => t.day == _selectedOpChartDay!).toList();
+                              final dDone = dList.where((t) => t.done).length;
+                              return '${dayNames[_selectedOpChartDay! - 1]}: $dDone de ${dList.length} completadas';
+                            }(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: _selectedOpChartDay == null ? FontWeight.normal : FontWeight.w700,
+                        color: _selectedOpChartDay == null ? const Color(0xFF86868B) : const Color(0xFF007AFF),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     SizedBox(
                       height: 165,
@@ -1133,6 +1169,28 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                         BarChartData(
                           alignment: BarChartAlignment.spaceAround,
                           maxY: 100,
+                          barTouchData: BarTouchData(
+                            enabled: true,
+                            touchCallback: (event, resp) {
+                              if (event is FlTapUpEvent && resp?.spot != null) {
+                                final d = resp!.spot!.touchedBarGroupIndex + 1;
+                                setState(() => _selectedOpChartDay = _selectedOpChartDay == d ? null : d);
+                              }
+                            },
+                            touchTooltipData: BarTouchTooltipData(
+                              getTooltipColor: (_) => const Color(0xFF1D1D1F),
+                              tooltipBorderRadius: BorderRadius.circular(10),
+                              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                                final dList = weekTasks.where((t) => t.day == group.x + 1).toList();
+                                final dDone = dList.where((t) => t.done).length;
+                                return BarTooltipItem(
+                                  '${days[group.x]}\n${rod.toY.toStringAsFixed(0)}% ($dDone/${dList.length})',
+                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11),
+                                );
+                              },
+                            ),
+                          ),
                           gridData: FlGridData(
                             show: true,
                             drawVerticalLine: false,

@@ -29,6 +29,8 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
   // 3: Planes (Planes de acción en pantalla dedicada)
   // 4: Indicadores (Métricas personales y de equipo)
   int _currentScreenIndex = 0;
+  int _touchedSupPieIndex = -1;
+  int? _selectedSupChartDay;
 
   List<SubtaskExecutionModel> _allExecutions = [];
   bool _loading = true;
@@ -1421,20 +1423,30 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
                         children: [
                           PieChart(
                             PieChartData(
+                              pieTouchData: PieTouchData(
+                                touchCallback: (event, resp) {
+                                  if (!event.isInterestedForInteractions || resp == null || resp.touchedSection == null) {
+                                    if (_touchedSupPieIndex != -1) setState(() => _touchedSupPieIndex = -1);
+                                    return;
+                                  }
+                                  final idx = resp.touchedSection!.touchedSectionIndex;
+                                  if (_touchedSupPieIndex != idx) setState(() => _touchedSupPieIndex = idx);
+                                },
+                              ),
                               startDegreeOffset: -90,
                               sectionsSpace: 3,
                               centerSpaceRadius: 36,
                               sections: [
                                 PieChartSectionData(
-                                  value: teamDone.toDouble() == 0 && teamPending == 0 ? 1 : teamDone.toDouble(),
+                                  value: teamDone == 0 && teamPending == 0 ? 1 : teamDone.toDouble(),
                                   color: const Color(0xFF34C759),
-                                  radius: 14,
+                                  radius: _touchedSupPieIndex == 0 ? 18 : 14,
                                   showTitle: false,
                                 ),
                                 PieChartSectionData(
                                   value: teamPending.toDouble(),
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  radius: 12,
+                                  color: Colors.white.withValues(alpha: 0.22),
+                                  radius: _touchedSupPieIndex == 1 ? 16 : 12,
                                   showTitle: false,
                                 ),
                               ],
@@ -1443,8 +1455,18 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('$teamPct%', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
-                              const Text('Equipo', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                              Text(
+                                _touchedSupPieIndex == 0
+                                    ? '$teamDone'
+                                    : (_touchedSupPieIndex == 1 ? '$teamPending' : '$teamPct%'),
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
+                              ),
+                              Text(
+                                _touchedSupPieIndex == 0
+                                    ? 'Hechas'
+                                    : (_touchedSupPieIndex == 1 ? 'Pend.' : 'Equipo'),
+                                style: const TextStyle(fontSize: 10, color: Colors.white70),
+                              ),
                             ],
                           ),
                         ],
@@ -1555,7 +1577,21 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
                   children: [
                     const Text('Cumplimiento Diario del Equipo (Lun–Vie)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
                     const SizedBox(height: 4),
-                    const Text('Porcentaje de actividades completadas por día', style: TextStyle(fontSize: 12, color: Color(0xFF86868B))),
+                    Text(
+                      _selectedSupChartDay == null
+                          ? 'Toca cualquier barra para inspeccionar ese día'
+                          : () {
+                              const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                              final dList = teamAll.where((t) => t.day == _selectedSupChartDay!).toList();
+                              final dDone = dList.where((t) => t.done).length;
+                              return '${dayNames[_selectedSupChartDay! - 1]}: $dDone de ${dList.length} completadas';
+                            }(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: _selectedSupChartDay == null ? FontWeight.normal : FontWeight.w700,
+                        color: _selectedSupChartDay == null ? const Color(0xFF86868B) : const Color(0xFF007AFF),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     SizedBox(
                       height: 170,
@@ -1563,6 +1599,28 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
                         BarChartData(
                           alignment: BarChartAlignment.spaceAround,
                           maxY: 100,
+                          barTouchData: BarTouchData(
+                            enabled: true,
+                            touchCallback: (event, resp) {
+                              if (event is FlTapUpEvent && resp?.spot != null) {
+                                final d = resp!.spot!.touchedBarGroupIndex + 1;
+                                setState(() => _selectedSupChartDay = _selectedSupChartDay == d ? null : d);
+                              }
+                            },
+                            touchTooltipData: BarTouchTooltipData(
+                              getTooltipColor: (_) => const Color(0xFF1D1D1F),
+                              tooltipBorderRadius: BorderRadius.circular(10),
+                              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                                final dList = teamAll.where((t) => t.day == group.x + 1).toList();
+                                final dDone = dList.where((t) => t.done).length;
+                                return BarTooltipItem(
+                                  '${days[group.x]}\n${rod.toY.toStringAsFixed(0)}% ($dDone/${dList.length})',
+                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11),
+                                );
+                              },
+                            ),
+                          ),
                           gridData: FlGridData(
                             show: true,
                             drawVerticalLine: false,

@@ -278,20 +278,35 @@ class WeeklyTrendLineCard extends StatelessWidget {
   final List<double> values;
   final String title;
   final String subtitle;
+  final void Function(int dayIndex)? onDayTap;
 
   const WeeklyTrendLineCard({
     super.key,
     required this.values,
     this.title = 'Tendencia Semanal de Cumplimiento',
-    this.subtitle = 'Evolución de rutinas Lunes a Viernes',
+    this.subtitle = 'Toca un día para ver el detalle real (Lun–Vie)',
+    this.onDayTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final safeValues = values.length >= 5
+        ? values.take(5).toList()
+        : [...values, ...List.filled(5 - values.length, 0.0)];
     final spots = List.generate(
-      values.length,
-      (index) => FlSpot(index.toDouble(), values[index]),
+      safeValues.length,
+      (index) => FlSpot(index.toDouble(), safeValues[index].clamp(0.0, 100.0)),
     );
+
+    final nonZero = safeValues.where((v) => v > 0).toList();
+    final hasData = nonZero.isNotEmpty;
+    final double delta = safeValues.length >= 2 ? (safeValues.last - safeValues.first) : 0.0;
+    final deltaStr = !hasData
+        ? 'Sin datos'
+        : '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%';
+    final deltaColor = !hasData
+        ? const Color(0xFF64748B)
+        : (delta >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626));
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -300,12 +315,12 @@ class WeeklyTrendLineCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF002F6C).withValues(alpha: 0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: const Color(0xFFE5E5EA)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,49 +328,80 @@ class WeeklyTrendLineCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF002F6C)),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF86868B)),
+                    ),
+                  ],
+                ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: deltaColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Row(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.trending_up_rounded, color: Color(0xFF16A34A), size: 14),
-                    SizedBox(width: 4),
-                    Text('+4.2%', style: TextStyle(color: Color(0xFF16A34A), fontSize: 11, fontWeight: FontWeight.bold)),
+                    Icon(
+                      !hasData
+                          ? Icons.remove_rounded
+                          : (delta >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded),
+                      color: deltaColor,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(deltaStr, style: TextStyle(color: deltaColor, fontSize: 11, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           SizedBox(
-            height: 160,
+            height: 170,
             child: LineChart(
               LineChartData(
-                minY: 50,
+                minY: 0,
                 maxY: 100,
+                lineTouchData: LineTouchData(
+                  handleBuiltInTouches: true,
+                  touchCallback: (event, resp) {
+                    if (event is FlTapUpEvent && resp?.lineBarSpots != null && resp!.lineBarSpots!.isNotEmpty) {
+                      onDayTap?.call(resp.lineBarSpots!.first.x.toInt());
+                    }
+                  },
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (_) => const Color(0xFF1D1D1F),
+                    tooltipBorderRadius: BorderRadius.circular(10),
+                    getTooltipItems: (touchedSpots) {
+                      const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                      return touchedSpots.map((spot) {
+                        final idx = spot.x.toInt().clamp(0, 4);
+                        return LineTooltipItem(
+                          '${days[idx]}\n${spot.y.toStringAsFixed(1)}%',
+                          const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: 10,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: Colors.grey.shade200,
+                  horizontalInterval: 25,
+                  getDrawingHorizontalLine: (value) => const FlLine(
+                    color: Color(0xFFF2F2F7),
                     strokeWidth: 1,
                   ),
                 ),
@@ -365,11 +411,11 @@ class WeeklyTrendLineCard extends StatelessWidget {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 32,
-                      interval: 20,
+                      reservedSize: 34,
+                      interval: 25,
                       getTitlesWidget: (val, meta) => Text(
                         '${val.toInt()}%',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
+                        style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 10),
                       ),
                     ),
                   ),
@@ -384,7 +430,7 @@ class WeeklyTrendLineCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
                               days[idx],
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF475569)),
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Color(0xFF3A3A3C)),
                             ),
                           );
                         }
@@ -398,17 +444,17 @@ class WeeklyTrendLineCard extends StatelessWidget {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    curveSmoothness: 0.35,
-                    color: const Color(0xFF0284C7),
+                    curveSmoothness: 0.32,
+                    color: const Color(0xFF007AFF),
                     barWidth: 3.5,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
                       show: true,
                       getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                        radius: 4,
+                        radius: 4.5,
                         color: Colors.white,
                         strokeWidth: 3,
-                        strokeColor: const Color(0xFF002F6C),
+                        strokeColor: const Color(0xFF007AFF),
                       ),
                     ),
                     belowBarData: BarAreaData(
@@ -417,8 +463,8 @@ class WeeklyTrendLineCard extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          const Color(0xFF0284C7).withValues(alpha: 0.3),
-                          const Color(0xFF0284C7).withValues(alpha: 0.0),
+                          const Color(0xFF007AFF).withValues(alpha: 0.25),
+                          const Color(0xFF007AFF).withValues(alpha: 0.0),
                         ],
                       ),
                     ),
@@ -448,9 +494,13 @@ class Radar5SChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avgScore = scores.isNotEmpty
-        ? (scores.values.reduce((a, b) => a + b) / scores.length).toStringAsFixed(1)
-        : '94.0';
+    final avgNum = scores.isNotEmpty
+        ? (scores.values.reduce((a, b) => a + b) / scores.length)
+        : 0.0;
+    final avgScore = avgNum.toStringAsFixed(1);
+    final avgColor = avgNum >= 80
+        ? const Color(0xFF34C759)
+        : (avgNum >= 50 ? const Color(0xFF007AFF) : (avgNum > 0 ? const Color(0xFFFF3B30) : const Color(0xFF64748B)));
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -459,12 +509,12 @@ class Radar5SChartCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF002F6C).withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE5E5EA)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,10 +527,10 @@ class Radar5SChartCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF002F6C).withValues(alpha: 0.1),
+                      color: const Color(0xFF007AFF).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.radar_rounded, color: Color(0xFF002F6C), size: 20),
+                    child: const Icon(Icons.radar_rounded, color: Color(0xFF007AFF), size: 20),
                   ),
                   const SizedBox(width: 10),
                   const Column(
@@ -488,11 +538,11 @@ class Radar5SChartCard extends StatelessWidget {
                     children: [
                       Text(
                         'EVALUACIÓN RADAR 5S & DISCIPLINA',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF002F6C), letterSpacing: 0.3),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: 0.2),
                       ),
                       Text(
-                        'Madurez operativa y auditoría de puesto en planta',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        'Toca un pilar para ver el detalle real',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF86868B)),
                       ),
                     ],
                   ),
@@ -501,18 +551,18 @@ class Radar5SChartCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.3)),
+                  color: avgColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: avgColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.verified_rounded, color: Color(0xFF16A34A), size: 14),
+                    Icon(Icons.verified_rounded, color: avgColor, size: 14),
                     const SizedBox(width: 4),
                     Text(
                       'Promedio: $avgScore%',
-                      style: const TextStyle(color: Color(0xFF16A34A), fontSize: 11, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: avgColor, fontSize: 11, fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -536,15 +586,15 @@ class Radar5SChartCard extends StatelessWidget {
               final scorecard = Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _scorecardRow('Calidad', scores['Calidad'] ?? 95.0, Icons.verified_outlined, const Color(0xFF0284C7), 'Cero defectos y tolerancias'),
+                  _scorecardRow('Calidad', scores['Calidad'] ?? 0.0, Icons.verified_outlined, const Color(0xFF007AFF), 'Inspecciones y tolerancias'),
                   const SizedBox(height: 8),
-                  _scorecardRow('Seguridad', scores['Seguridad'] ?? 98.0, Icons.health_and_safety_rounded, const Color(0xFF16A34A), 'EPP y guardas operativas'),
+                  _scorecardRow('Seguridad', scores['Seguridad'] ?? 0.0, Icons.health_and_safety_rounded, const Color(0xFF34C759), 'EHS, EPP y guardas'),
                   const SizedBox(height: 8),
-                  _scorecardRow('5S Piso', scores['5S Piso'] ?? 92.0, Icons.cleaning_services_rounded, const Color(0xFFF59E0B), 'Auditoría Gemba Walk'),
+                  _scorecardRow('5S Piso', scores['5S Piso'] ?? 0.0, Icons.cleaning_services_rounded, const Color(0xFFFF9500), 'Rondas Gemba Walk reales'),
                   const SizedBox(height: 8),
-                  _scorecardRow('OEE', scores['OEE'] ?? 94.0, Icons.precision_manufacturing_rounded, const Color(0xFF7C3AED), 'Disponibilidad y velocidad'),
+                  _scorecardRow('OEE', scores['OEE'] ?? 0.0, Icons.precision_manufacturing_rounded, const Color(0xFFAF52DE), 'Estándares fijos de línea'),
                   const SizedBox(height: 8),
-                  _scorecardRow('Disciplina', scores['Disciplina'] ?? 91.0, Icons.timer_outlined, const Color(0xFF002F6C), 'Cumplimiento de estándares'),
+                  _scorecardRow('Disciplina', scores['Disciplina'] ?? 0.0, Icons.timer_outlined, const Color(0xFF002F6C), 'Cumplimiento global real'),
                 ],
               );
 
@@ -574,47 +624,54 @@ class Radar5SChartCard extends StatelessWidget {
   }
 
   Widget _scorecardRow(String name, double val, IconData icon, Color color, String desc) {
-    final intVal = val.toInt();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: color),
+    final intVal = val.round();
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onPillarTap == null ? null : () => onPillarTap!(name, val),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E5EA)),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                Text(desc, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-              ],
-            ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 16, color: color),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                    Text(desc, style: const TextStyle(fontSize: 10, color: Color(0xFF86868B))),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$intVal%',
+                  style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              '$intVal%',
-              style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

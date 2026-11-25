@@ -185,19 +185,19 @@ class _PlantAdminDashboardTab extends StatelessWidget {
     final reportedTasks = instances.where((i) => i.done).length;
     final complianceRate = totalTasks > 0 ? ((reportedTasks / totalTasks) * 100).toStringAsFixed(1) : '0.0';
 
-    // Métricas dinámicas reales
+    // Métricas 100% reales (sin datos maquillados ni valores de relleno)
     final todayTasks = provider.tasksForSelectedDay;
     final completedToday = todayTasks.where((i) => i.done).length;
-    final totalToday = todayTasks.isNotEmpty ? todayTasks.length : 10;
+    final totalToday = todayTasks.length;
 
     final altaTasks = instances.where((i) => i.prioridad.toLowerCase().contains('alta') || i.fija).length;
     final mediaTasks = instances.where((i) => i.prioridad.toLowerCase().contains('media') || (!i.fija && i.requierePlanAccion)).length;
-    final bajaTasks = (instances.length - altaTasks - mediaTasks).clamp(1, 9999);
+    final bajaTasks = (instances.length - altaTasks - mediaTasks).clamp(0, 9999);
 
     final weeklyTrend = List.generate(5, (index) {
       final day = index + 1;
       final dayInst = instances.where((i) => i.day == day).toList();
-      if (dayInst.isEmpty) return 90.0 + (index * 1.5);
+      if (dayInst.isEmpty) return 0.0;
       final dayDone = dayInst.where((i) => i.done).length;
       return double.parse(((dayDone / dayInst.length) * 100).toStringAsFixed(1));
     });
@@ -206,13 +206,21 @@ class _PlantAdminDashboardTab extends StatelessWidget {
     final vencidasCount = instances.where((i) => !i.done && i.day < provider.selectedDay).length;
     final pendientesCount = (instances.length - completadasCount - vencidasCount).clamp(0, 9999);
 
-    final compNum = double.tryParse(complianceRate) ?? 94.5;
+    double realAxisPct(bool Function(ActivityInstance) test, double fallback) {
+      final sub = instances.where(test).toList();
+      if (sub.isEmpty) return fallback;
+      return (sub.where((i) => i.done).length / sub.length) * 100.0;
+    }
+
+    final realGlobalPct = totalTasks > 0 ? (reportedTasks / totalTasks) * 100.0 : 0.0;
     final radarScores = {
-      'Calidad': (compNum * 0.98).clamp(75.0, 99.0),
-      'Seguridad': 98.0,
-      '5S Piso': provider.gembaLogs.isNotEmpty ? (provider.gembaLogs.first['score'] as num).toDouble() : 92.0,
-      'OEE': (compNum * 0.96).clamp(70.0, 98.0),
-      'Disciplina': totalTasks > 0 ? ((reportedTasks / totalTasks) * 100).clamp(70.0, 98.0) : 91.0,
+      'Calidad': realAxisPct((i) => i.category.toLowerCase().contains('calidad') || i.area.toLowerCase().contains('calidad'), realGlobalPct),
+      'Seguridad': realAxisPct((i) => i.category.toLowerCase().contains('ehs') || i.category.toLowerCase().contains('seguridad') || i.area.toLowerCase().contains('seguridad'), realGlobalPct),
+      '5S Piso': provider.gembaLogs.isNotEmpty
+          ? (provider.gembaLogs.first['score'] as num).toDouble()
+          : realAxisPct((i) => i.nombre.toLowerCase().contains('5s') || i.category.toLowerCase().contains('5s'), realGlobalPct),
+      'OEE': realAxisPct((i) => i.fija, realGlobalPct),
+      'Disciplina': realGlobalPct,
     };
 
     double areaPct(String keyword) {
@@ -452,9 +460,18 @@ class _PlantAdminDashboardTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // FILA RESPONSIVA 3: RADAR 5S & DISCIPLINA
+          // FILA RESPONSIVA 3: RADAR 5S & DISCIPLINA (INTERACTIVO)
           Radar5SChartCard(
             scores: radarScores,
+            onPillarTap: (pillar, score) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: const Color(0xFF1D1D1F),
+                  content: Text('$pillar: ${score.toStringAsFixed(1)}% real en planta'),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
 
