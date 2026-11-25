@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_models.dart';
 import '../database/database_helper.dart';
 import 'api_client.dart';
@@ -92,19 +93,52 @@ class StandardWorkProvider with ChangeNotifier {
   String _emergencyAlertMessage = '';
   String? _observingPlantId;
 
-  final List<Map<String, dynamic>> _announcements = [
-    {
-      'id': 1,
-      'title': 'Meta Corporativa Q4: Cero Desperdicio de Resina',
-      'body': 'Dirección General establece meta del 96% de estándar para todas las líneas de extrusión y formado.',
-      'author': 'Javier Julio · Superadmin',
-      'date': '2026-11-04',
-      'type': 'DIRECTIVA',
-    },
-  ];
+  final List<Map<String, dynamic>> _announcements = [];
 
   final List<Map<String, dynamic>> _gembaLogs = [];
   final List<Map<String, dynamic>> _machineDowntimes = [];
+
+  List<String> _corporateAreas = [];
+  List<String> _corporateCategories = [];
+
+  List<String> get corporateAreas => List.unmodifiable(_corporateAreas);
+  List<String> get corporateCategories => List.unmodifiable(_corporateCategories);
+
+  Future<void> addCorporateArea(String name) async {
+    final clean = name.trim();
+    if (clean.isEmpty) return;
+    if (!_corporateAreas.any((a) => a.toLowerCase() == clean.toLowerCase())) {
+      _corporateAreas.add(clean);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('track60_corporate_areas', _corporateAreas);
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeCorporateArea(String name) async {
+    _corporateAreas.remove(name);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('track60_corporate_areas', _corporateAreas);
+    notifyListeners();
+  }
+
+  Future<void> addCorporateCategory(String name) async {
+    final clean = name.trim();
+    if (clean.isEmpty) return;
+    if (!_corporateCategories.any((c) => c.toLowerCase() == clean.toLowerCase())) {
+      _corporateCategories.add(clean);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('track60_corporate_categories', _corporateCategories);
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeCorporateCategory(String name) async {
+    _corporateCategories.remove(name);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('track60_corporate_categories', _corporateCategories);
+    notifyListeners();
+  }
 
   bool get emergencyAlertActive => _emergencyAlertActive;
   String get emergencyAlertMessage => _emergencyAlertMessage;
@@ -491,6 +525,12 @@ class StandardWorkProvider with ChangeNotifier {
 
   Future<void> _loadUserData() async {
     if (_currentUser == null) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _corporateAreas = List<String>.from(prefs.getStringList('track60_corporate_areas') ?? []);
+      _corporateCategories = List<String>.from(prefs.getStringList('track60_corporate_categories') ?? []);
+    } catch (_) {}
 
     List<UserProfile> loadedUsers = [];
     try {

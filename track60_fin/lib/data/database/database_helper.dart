@@ -122,8 +122,25 @@ class DatabaseHelper {
           _webTemplates.clear();
           _webTemplates.addAll(tList.map((m) => ActivityTemplateModel.fromMap(m)));
         }
-        if (_webTemplates.isEmpty) {
-          _seedDefaultTemplatesWeb();
+
+        // Purga única de registros demo sembrados en versiones anteriores (conserva todo lo creado por el usuario)
+        final purgedV2 = prefs.getBool('track60_demo_purged_v2') ?? false;
+        if (!purgedV2) {
+          const demoActivityTitle = 'Auditoría Mensual de Seguridad EHS Grupo Darnel';
+          _webActivities.removeWhere((a) => a.nombre == demoActivityTitle);
+          _webInstances.removeWhere((i) =>
+              i.nombre == demoActivityTitle ||
+              i.userId == 'ALL' ||
+              i.userId == 'AR' ||
+              i.userId == 'DM');
+          _webProPlans.removeWhere((p) =>
+              p.plan == 'Alineación de sensor de tensión en cabezal 02' ||
+              p.plan == 'Limpieza de tolva de resina virgen');
+          _webPhotoStandards.removeWhere((s) => s.titulo == 'Bobina Alineada y Sin Arrugas');
+          _webNotifications.removeWhere((n) =>
+              n.title == 'Bienvenida a TRACK60' || n.title == 'Actividad Corporativa Global');
+          await prefs.setBool('track60_demo_purged_v2', true);
+          await _persistWebState();
         }
 
         // Blindaje de PINs y Roles directivos para evitar bloqueos por caché desactualizada

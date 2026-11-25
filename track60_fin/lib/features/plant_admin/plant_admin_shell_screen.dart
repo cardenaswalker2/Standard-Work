@@ -1592,30 +1592,33 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
                             ),
                           ],
                         ),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              ActionChip(
-                                avatar: const Icon(Icons.bolt_rounded, size: 15, color: Color(0xFF002F6C)),
-                                label: const Text('Plantilla 5S Extrusión', style: TextStyle(fontSize: 11)),
-                                onPressed: () {
-                                  _loadTemplate('5s_extrusion');
-                                  setSheetState(() {});
-                                },
-                              ),
-                              const SizedBox(width: 8),
-                              ActionChip(
-                                avatar: const Icon(Icons.speed_rounded, size: 15, color: Color(0xFF0284C7)),
-                                label: const Text('Plantilla Calidad Termo', style: TextStyle(fontSize: 11)),
-                                onPressed: () {
-                                  _loadTemplate('calidad_termoformado');
-                                  setSheetState(() {});
-                                },
-                              ),
-                            ],
+                        if (provider.templates.isNotEmpty)
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: provider.templates.map((tmpl) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ActionChip(
+                                  avatar: const Icon(Icons.bolt_rounded, size: 15, color: Color(0xFF002F6C)),
+                                  label: Text(tmpl.nombre, style: const TextStyle(fontSize: 11)),
+                                  onPressed: () {
+                                    setState(() {
+                                      _nombreCtrl.text = tmpl.nombre;
+                                      _descCtrl.text = tmpl.descripcion;
+                                      _areaCtrl.text = tmpl.area;
+                                      _catCtrl.text = tmpl.category;
+                                      _fija = tmpl.fija;
+                                      _tipoActividad = tmpl.tipoActividad;
+                                      _planAccionObligatorio = tmpl.planAccionObligatorio;
+                                      _subtasks.clear();
+                                      _subtasks.addAll(tmpl.subtasks.map((s) => s.copyWith(activityId: 0)));
+                                    });
+                                    setSheetState(() {});
+                                  },
+                                ),
+                              )).toList(),
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 12),
                         const Text('Modalidad de la Actividad:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
                         const SizedBox(height: 6),

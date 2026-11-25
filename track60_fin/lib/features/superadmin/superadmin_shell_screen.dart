@@ -2150,6 +2150,20 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               FloatingActionButton.extended(
+                heroTag: 'superadmin_catalogs_fab',
+                onPressed: () => _openCatalogsManagerSheet(context),
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF007AFF),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0xFFBFDBFE)),
+                ),
+                icon: const Icon(Icons.category_rounded, size: 18),
+                label: const Text('Áreas y Categorías', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton.extended(
                 heroTag: 'superadmin_templates_fab',
                 onPressed: () {
                   TemplatesModal.show(
@@ -2426,6 +2440,168 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
       ),
     );
   }
+
+  void _openCatalogsManagerSheet(BuildContext context) {
+    final areaCtrl = TextEditingController();
+    final catCtrl = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) {
+          final provider = Provider.of<StandardWorkProvider>(sheetCtx);
+          return Container(
+            height: MediaQuery.of(sheetCtx).size.height * 0.80,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(999)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 10, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Gestión de Áreas y Categorías', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                            Text('Crea y administra los catálogos reales de tu operación', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ),
+                      IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.of(sheetCtx).pop()),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      const Text('Áreas Operativas', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: areaCtrl,
+                              decoration: InputDecoration(
+                                hintText: 'Ej. Extrusión, Calidad, Empaque...',
+                                isDense: true,
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              if (areaCtrl.text.trim().isEmpty) return;
+                              await provider.addCorporateArea(areaCtrl.text);
+                              areaCtrl.clear();
+                              setSheetState(() {});
+                            },
+                            icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+                            label: const Text('Crear', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF007AFF),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      if (provider.corporateAreas.isEmpty)
+                        const Text('Aún no has creado áreas. Agrega la primera arriba.', style: TextStyle(fontSize: 12, color: Color(0xFF86868B)))
+                      else
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: provider.corporateAreas
+                              .map((a) => Chip(
+                                    label: Text(a, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                    backgroundColor: Colors.white,
+                                    deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                                    onDeleted: () async {
+                                      await provider.removeCorporateArea(a);
+                                      setSheetState(() {});
+                                    },
+                                  ))
+                              .toList(),
+                        ),
+                      const SizedBox(height: 22),
+                      const Text('Categorías de Actividades', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: catCtrl,
+                              decoration: InputDecoration(
+                                hintText: 'Ej. Seguridad EHS, 5S, Mantenimiento...',
+                                isDense: true,
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              if (catCtrl.text.trim().isEmpty) return;
+                              await provider.addCorporateCategory(catCtrl.text);
+                              catCtrl.clear();
+                              setSheetState(() {});
+                            },
+                            icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+                            label: const Text('Crear', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF002F6C),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      if (provider.corporateCategories.isEmpty)
+                        const Text('Aún no has creado categorías. Agrega la primera arriba.', style: TextStyle(fontSize: 12, color: Color(0xFF86868B)))
+                      else
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: provider.corporateCategories
+                              .map((c) => Chip(
+                                    label: Text(c, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                    backgroundColor: Colors.white,
+                                    deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                                    onDeleted: () async {
+                                      await provider.removeCorporateCategory(c);
+                                      setSheetState(() {});
+                                    },
+                                  ))
+                              .toList(),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _SuperAdminCorporateDispatchForm extends StatefulWidget {
@@ -2443,7 +2619,7 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
   final _horaFinCtrl = TextEditingController(text: '09:00');
 
   String _area = 'Todas las Áreas';
-  String _categoria = 'Seguridad y Salud EHS';
+  String _categoria = 'General';
   String _prioridad = 'Alta';
   bool _fija = true;
   String _tipoActividad = 'ejecucion'; // 'ejecucion' o 'registro'
@@ -2768,17 +2944,39 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
             ],
           ),
           const SizedBox(height: 6),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildTemplateChip('🛡️ EHS Seguridad', () => _loadTemplate('ehs')),
-                const SizedBox(width: 8),
-                _buildTemplateChip('⭐ 5S & Orden Gemba', () => _loadTemplate('5s')),
-                const SizedBox(width: 8),
-                _buildTemplateChip('🔬 Calidad Q4', () => _loadTemplate('calidad')),
-              ],
-            ),
+          // PLANTILLAS CREADAS POR EL USUARIO (SIN PLANTILLAS FALSAS)
+          Builder(
+            builder: (context) {
+              final realTemplates = context.watch<StandardWorkProvider>().templates;
+              if (realTemplates.isEmpty) {
+                return const Text(
+                  'Sin plantillas guardadas aún. Toca "Nueva Plantilla / Catálogo" para crear una.',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF86868B)),
+                );
+              }
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: realTemplates.map((tmpl) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _buildTemplateChip(tmpl.nombre, () {
+                      setState(() {
+                        _nombreCtrl.text = tmpl.nombre;
+                        _descCtrl.text = tmpl.descripcion;
+                        _area = tmpl.area;
+                        _categoria = tmpl.categoria;
+                        _prioridad = tmpl.prioridad;
+                        _fija = tmpl.fija;
+                        _tipoActividad = tmpl.tipoActividad;
+                        _planAccionObligatorio = tmpl.planAccionObligatorio;
+                        _subtasks.clear();
+                        _subtasks.addAll(tmpl.subtasks.map((s) => s.copyWith(activityId: 0)));
+                      });
+                    }),
+                  )).toList(),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
 
@@ -3025,57 +3223,77 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
           ),
           const SizedBox(height: 14),
 
-          // ÁREA Y CATEGORÍA
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _area,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: 'Área Destino',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.white,
+          // ÁREA Y CATEGORÍA DINÁMICAS (CREADAS POR SUPER ADMIN)
+          Builder(
+            builder: (context) {
+              final provider = context.watch<StandardWorkProvider>();
+              final areaItems = <String>{'Todas las Áreas', ...provider.corporateAreas, _area}.toList();
+              final catItems = <String>{'General', ...provider.corporateCategories, _categoria}.toList();
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _area,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: 'Área Destino',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF007AFF)),
+                          tooltip: 'Nueva Área',
+                          onPressed: () => _quickAddCatalogItem(
+                            context: context,
+                            title: 'Nueva Área',
+                            hint: 'Ej. Extrusión, Calidad...',
+                            onSave: (val) async {
+                              await provider.addCorporateArea(val);
+                              setState(() => _area = val);
+                            },
+                          ),
+                        ),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      items: areaItems.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _area = val);
+                      },
+                    ),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'Todas las Áreas', child: Text('Todas las Áreas')),
-                    DropdownMenuItem(value: 'Extrusión', child: Text('Extrusión')),
-                    DropdownMenuItem(value: 'Termoformado', child: Text('Termoformado')),
-                    DropdownMenuItem(value: 'Inyección', child: Text('Inyección')),
-                    DropdownMenuItem(value: 'Calidad y Laboratorio', child: Text('Calidad y Laboratorio')),
-                    DropdownMenuItem(value: 'Seguridad EHS', child: Text('Seguridad EHS')),
-                    DropdownMenuItem(value: 'Mantenimiento', child: Text('Mantenimiento')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setState(() => _area = val);
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _categoria,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: 'Categoría',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.white,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _categoria,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: 'Categoría',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF007AFF)),
+                          tooltip: 'Nueva Categoría',
+                          onPressed: () => _quickAddCatalogItem(
+                            context: context,
+                            title: 'Nueva Categoría',
+                            hint: 'Ej. Seguridad EHS, 5S...',
+                            onSave: (val) async {
+                              await provider.addCorporateCategory(val);
+                              setState(() => _categoria = val);
+                            },
+                          ),
+                        ),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      items: catItems.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _categoria = val);
+                      },
+                    ),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'Seguridad y Salud EHS', child: Text('Seguridad y Salud EHS')),
-                    DropdownMenuItem(value: 'Calidad y Tolerancias', child: Text('Calidad y Tolerancias')),
-                    DropdownMenuItem(value: '5S y Orden Gemba', child: Text('5S y Orden Gemba')),
-                    DropdownMenuItem(value: 'Operativa de Máquina', child: Text('Operativa de Máquina')),
-                    DropdownMenuItem(value: 'Mantenimiento Autónomo', child: Text('Mantenimiento Autónomo')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setState(() => _categoria = val);
-                  },
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: 14),
 
@@ -3360,6 +3578,46 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
       backgroundColor: const Color(0xFF002F6C).withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onPressed: onTap,
+    );
+  }
+
+  Future<void> _quickAddCatalogItem({
+    required BuildContext context,
+    required String title,
+    required String hint,
+    required Future<void> Function(String val) onSave,
+  }) async {
+    final ctrl = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: hint,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dlgCtx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final v = ctrl.text.trim();
+              if (v.isEmpty) return;
+              await onSave(v);
+              if (dlgCtx.mounted) Navigator.of(dlgCtx).pop();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007AFF)),
+            child: const Text('Guardar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
     );
   }
 
