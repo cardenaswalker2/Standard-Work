@@ -46,13 +46,15 @@ class _SuperAdminShellScreenState extends State<SuperAdminShellScreen> {
 
     final bodyContent = IndexedStack(
       index: _currentTabIndex,
-      children: const [
-        _SuperAdminControlTowerTab(),
-        _SuperAdminCorporateDispatchTab(),
-        _SuperAdminPlantAdminsTab(),
-        _SuperAdminExtraTasksApprovalTab(),
-        _SuperAdminReportsTab(),
-        _SuperAdminAuditTab(),
+      children: [
+        _SuperAdminControlTowerTab(
+          onNavigateTab: (idx) => setState(() => _currentTabIndex = idx),
+        ),
+        const _SuperAdminCorporateDispatchTab(),
+        const _SuperAdminPlantAdminsTab(),
+        const _SuperAdminExtraTasksApprovalTab(),
+        const _SuperAdminReportsTab(),
+        const _SuperAdminAuditTab(),
       ],
     );
 
@@ -333,7 +335,8 @@ class _SuperAdminShellScreenState extends State<SuperAdminShellScreen> {
 
 /// TAB 1: TORRE DE CONTROL CON SEMÁFORO, GRÁFICAS Y GOBERNANZA OPERATIVA
 class _SuperAdminControlTowerTab extends StatefulWidget {
-  const _SuperAdminControlTowerTab();
+  final ValueChanged<int>? onNavigateTab;
+  const _SuperAdminControlTowerTab({this.onNavigateTab});
 
   @override
   State<_SuperAdminControlTowerTab> createState() => _SuperAdminControlTowerTabState();
@@ -874,17 +877,18 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
           ),
           const SizedBox(height: 14),
 
-          // TARJETAS KPI ESTILO APPLE iOS 18
+          // TARJETAS KPI ESTILO APPLE iOS 18 (TODAS TOCABLES)
           Row(
             children: [
               Expanded(
                 child: _build3DMetricCard(
                   title: 'Plantas Activas',
                   value: '${plants.length}',
-                  subtitle: 'Sedes operativas',
+                  subtitle: 'Toca para ver sedes',
                   icon: Icons.factory_rounded,
                   color: const Color(0xFF007AFF),
                   accentColor: const Color(0xFF007AFF),
+                  onTap: () => widget.onNavigateTab?.call(2),
                 ),
               ),
               const SizedBox(width: 12),
@@ -892,10 +896,11 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 child: _build3DMetricCard(
                   title: 'Admins Planta',
                   value: '${admins.length}',
-                  subtitle: 'Líderes asignados',
+                  subtitle: 'Toca para gestionar',
                   icon: Icons.admin_panel_settings_rounded,
                   color: const Color(0xFF5856D6),
                   accentColor: const Color(0xFF5856D6),
+                  onTap: () => widget.onNavigateTab?.call(2),
                 ),
               ),
             ],
@@ -907,10 +912,11 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 child: _build3DMetricCard(
                   title: 'Colaboradores',
                   value: '${operators.length}',
-                  subtitle: 'En líneas Darnel',
+                  subtitle: 'Toca para ver detalle',
                   icon: Icons.groups_rounded,
                   color: const Color(0xFF34C759),
                   accentColor: const Color(0xFF34C759),
+                  onTap: () => _showUsersListSheet(context, provider, 'Colaboradores Activos', operators),
                 ),
               ),
               const SizedBox(width: 12),
@@ -918,13 +924,60 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 child: _build3DMetricCard(
                   title: 'Cumplimiento',
                   value: '$complianceRate%',
-                  subtitle: 'Meta corporativa 95%',
+                  subtitle: '$completedInstances/$totalInstances tareas',
                   icon: Icons.verified_rounded,
                   color: const Color(0xFFAF52DE),
                   accentColor: const Color(0xFFAF52DE),
+                  onTap: () => _showFilteredTasksSheet(
+                    context,
+                    provider,
+                    title: 'Todas las Actividades',
+                  ),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 14),
+
+          // PULSO DE HOY VS SEMANA (TOCABLE)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Pulso Operativo (Toca para filtrar)', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _buildPulseTile(
+                      label: 'Hoy (Día ${provider.selectedDay})',
+                      value: '${instances.where((i) => i.day == provider.selectedDay).length}',
+                      color: const Color(0xFF002F6C),
+                      onTap: () => _showFilteredTasksSheet(context, provider, title: 'Actividades de Hoy'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildPulseTile(
+                      label: 'Vencidas',
+                      value: '$vencidasCount',
+                      color: const Color(0xFFFF3B30),
+                      onTap: () => _showFilteredTasksSheet(context, provider, title: 'Actividades Vencidas', statusFilter: 'VENCIDA'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildPulseTile(
+                      label: 'Con Plan',
+                      value: '${instances.where((i) => i.requierePlanAccion || i.planAccionObligatorio).length}',
+                      color: const Color(0xFFFF9500),
+                      onTap: () => _showPlansSheet(context, provider),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -1194,7 +1247,13 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
           ),
           const SizedBox(height: 20),
 
-          // TABLERO DE GOBERNANZA OPERATIVA REAL (APPLE DARK GLASS)
+          // CUMPLIMIENTO POR ÁREA + PLANES DE ACCIÓN EN VIVO (100% REALES Y TOCABLES)
+          _buildAreaComplianceCard(context, provider),
+          const SizedBox(height: 16),
+          _buildActionPlansLiveCard(context, provider),
+          const SizedBox(height: 16),
+
+          // TABLERO DE GOBERNANZA OPERATIVA REAL (APPLE DARK GLASS · TOCABLE)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1247,29 +1306,38 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                 Row(
                   children: [
                     Expanded(
-                      child: _buildRealMetricBox(
-                        'Solicitudes >10',
-                        '${provider.extraTaskRequests.where((r) => r.estado == 'Pendiente').length}',
-                        'Por autorizar',
-                        const Color(0xFFFF9F0A),
+                      child: GestureDetector(
+                        onTap: () => widget.onNavigateTab?.call(3),
+                        child: _buildRealMetricBox(
+                          'Solicitudes >10',
+                          '${provider.extraTaskRequests.where((r) => r.estado == 'Pendiente').length}',
+                          'Toca para revisar',
+                          const Color(0xFFFF9F0A),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _buildRealMetricBox(
-                        'Directivas',
-                        '${provider.announcements.length}',
-                        'Publicadas',
-                        const Color(0xFF0A84FF),
+                      child: GestureDetector(
+                        onTap: () => _showDirectivesSheet(context, provider),
+                        child: _buildRealMetricBox(
+                          'Directivas',
+                          '${provider.announcements.length}',
+                          'Toca para gestionar',
+                          const Color(0xFF0A84FF),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _buildRealMetricBox(
-                        'Auditorías',
-                        '${provider.auditLogs.length}',
-                        'Trazadas',
-                        const Color(0xFF30D158),
+                      child: GestureDetector(
+                        onTap: () => widget.onNavigateTab?.call(5),
+                        child: _buildRealMetricBox(
+                          'Auditorías',
+                          '${provider.auditLogs.length}',
+                          'Toca para ver logs',
+                          const Color(0xFF30D158),
+                        ),
                       ),
                     ),
                   ],
@@ -1338,12 +1406,16 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
                           : (st.rate >= 50 ? const Color(0xFF007AFF) : const Color(0xFFFF9500));
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
-                        child: _buildBenchmarkingRow(
-                          badge,
-                          st.plant.nombre,
-                          '${st.rate.toStringAsFixed(1)}%',
-                          '${st.done}/${st.total} tareas · ${st.ops} op.',
-                          c,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _inspectPlant(context, st.plant, users),
+                          child: _buildBenchmarkingRow(
+                            badge,
+                            st.plant.nombre,
+                            '${st.rate.toStringAsFixed(1)}%',
+                            '${st.done}/${st.total} tareas · ${st.ops} op.',
+                            c,
+                          ),
                         ),
                       );
                     });
@@ -1512,47 +1584,355 @@ class _SuperAdminControlTowerTabState extends State<_SuperAdminControlTowerTab> 
     required IconData icon,
     required Color color,
     required Color accentColor,
+    VoidCallback? onTap,
   }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF8E8E93)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(9)),
+                    child: Icon(icon, size: 15, color: color),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.5)),
+              const SizedBox(height: 2),
+              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, color: Color(0xFF8E8E93))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPulseTile({required String label, required String value, required Color color, required VoidCallback onTap}) {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
+          ),
+          child: Column(
+            children: [
+              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
+              const SizedBox(height: 2),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAreaComplianceCard(BuildContext context, StandardWorkProvider provider) {
+    final Map<String, List<ActivityInstance>> byArea = {};
+    for (final i in provider.instances) {
+      final a = i.area.trim().isEmpty ? 'General' : i.area.trim();
+      byArea.putIfAbsent(a, () => []).add(i);
+    }
+    final entries = byArea.entries.toList()..sort((a, b) => b.value.length.compareTo(a.value.length));
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
+          const Text('Cumplimiento por Área (Real)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+          const SizedBox(height: 2),
+          const Text('Toca un área para ver sus actividades', style: TextStyle(fontSize: 11.5, color: Color(0xFF8E8E93))),
+          const SizedBox(height: 12),
+          if (entries.isEmpty)
+            const Text('Sin áreas con actividades registradas aún.', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)))
+          else
+            ...entries.take(6).map((e) {
+              final done = e.value.where((x) => x.done).length;
+              final pct = e.value.isEmpty ? 0.0 : (done / e.value.length);
+              final color = pct >= 0.9 ? const Color(0xFF34C759) : (pct >= 0.5 ? const Color(0xFF007AFF) : const Color(0xFFFF9500));
+              return InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => _showFilteredTasksSheet(context, provider, title: 'Área: ${e.key}'),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(child: Text(e.key, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F)))),
+                          Text('$done/${e.value.length} (${(pct * 100).toStringAsFixed(0)}%)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: color)),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          minHeight: 7,
+                          backgroundColor: const Color(0xFFF2F2F7),
+                          valueColor: AlwaysStoppedAnimation<Color>(color),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionPlansLiveCard(BuildContext context, StandardWorkProvider provider) {
+    final plans = provider.proPlans;
+    final pend = plans.where((p) => p.estado == 'Pendiente').length;
+    final proc = plans.where((p) => p.estado == 'En Proceso' || p.estado == 'En Revisión').length;
+    final done = plans.where((p) => p.estado == 'Cumplido').length;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => _showPlansSheet(context, provider),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Planes de Acción en Vivo', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F))),
+                ),
+                Text('Ver todos (${plans.length}) ›', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _buildPulseTile(label: 'Pendientes', value: '$pend', color: const Color(0xFFFF3B30), onTap: () => _showPlansSheet(context, provider)),
+                const SizedBox(width: 8),
+                _buildPulseTile(label: 'En Proceso', value: '$proc', color: const Color(0xFFFF9500), onTap: () => _showPlansSheet(context, provider)),
+                const SizedBox(width: 8),
+                _buildPulseTile(label: 'Cumplidos', value: '$done', color: const Color(0xFF34C759), onTap: () => _showPlansSheet(context, provider)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUsersListSheet(BuildContext context, StandardWorkProvider provider, String title, List<UserProfile> users) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.7),
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text('$title (${users.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const Divider(),
+            if (users.isEmpty)
+              const Padding(padding: EdgeInsets.symmetric(vertical: 28), child: Center(child: Text('Sin usuarios registrados.')))
+            else
               Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF8E8E93)),
+                child: ListView.separated(
+                  itemCount: users.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final u = users[i];
+                    return ListTile(
+                      leading: CircleAvatar(backgroundColor: const Color(0xFF002F6C), child: Text(u.iniciales, style: const TextStyle(color: Colors.white, fontSize: 12))),
+                      title: Text(u.nombre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      subtitle: Text('${u.cargo} · Planta: ${u.plantId}'),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF3B30)),
+                        tooltip: 'Eliminar usuario',
+                        onPressed: () async {
+                          await provider.deleteUserFromCloud(u.id);
+                          if (ctx.mounted) Navigator.pop(ctx);
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(9)),
-                child: Icon(icon, size: 15, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPlansSheet(BuildContext context, StandardWorkProvider provider) {
+    final plans = provider.proPlans;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.72),
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text('Planes de Acción (${plans.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const Divider(),
+            if (plans.isEmpty)
+              const Padding(padding: EdgeInsets.symmetric(vertical: 28), child: Center(child: Text('No hay planes de acción creados aún.')))
+            else
+              Expanded(
+                child: ListView.separated(
+                  itemCount: plans.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) {
+                    final p = plans[i];
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: const Color(0xFFF5F5F7), borderRadius: BorderRadius.circular(12)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(p.plan, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                          const SizedBox(height: 4),
+                          Text('Planta: ${p.plantId} · Resp: ${p.responsable} · ${p.estado} (${p.porcentajeAvance.toStringAsFixed(0)}%)', style: const TextStyle(fontSize: 11.5, color: Color(0xFF86868B))),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDirectivesSheet(BuildContext context, StandardWorkProvider provider) {
+    final titleCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
+          padding: EdgeInsets.fromLTRB(20, 18, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(child: Text('Directivas Corporativas', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Título de la Directiva', isDense: true)),
+              const SizedBox(height: 8),
+              TextField(controller: bodyCtrl, maxLines: 2, decoration: const InputDecoration(labelText: 'Mensaje oficial', isDense: true)),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C)),
+                  onPressed: () {
+                    if (titleCtrl.text.trim().isEmpty || bodyCtrl.text.trim().isEmpty) return;
+                    provider.postAnnouncement(
+                      title: titleCtrl.text.trim(),
+                      body: bodyCtrl.text.trim(),
+                      author: provider.currentUser?.nombre ?? 'Super Admin',
+                    );
+                    titleCtrl.clear();
+                    bodyCtrl.clear();
+                    setSheetState(() {});
+                  },
+                  child: const Text('Publicar Directiva', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const Divider(height: 22),
+              Expanded(
+                child: provider.announcements.isEmpty
+                    ? const Center(child: Text('Sin directivas publicadas.', style: TextStyle(color: Color(0xFF86868B))))
+                    : ListView.separated(
+                        itemCount: provider.announcements.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final a = provider.announcements[i];
+                          return ListTile(
+                            tileColor: const Color(0xFFF5F5F7),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            title: Text('${a['title'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                            subtitle: Text('${a['body'] ?? ''}', style: const TextStyle(fontSize: 12)),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: -0.5)),
-          const SizedBox(height: 2),
-          Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, color: Color(0xFF8E8E93))),
-        ],
+        ),
       ),
     );
   }
@@ -2217,6 +2597,8 @@ class _SuperAdminCorporateDispatchTab extends StatefulWidget {
 class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDispatchTab> {
   String _search = '';
   String _plantFilter = 'ALL';
+  int _dayFilter = 0; // 0 = Todos, 1..6 = Lun..Sáb
+  bool _scheduleView = false; // false = Lista, true = Horario / Calendario
 
   void _openCreateDispatchSheet(BuildContext context, {ActivityInstance? editingActivity}) {
     showModalBottomSheet(
@@ -2288,7 +2670,8 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
 
     final filtered = provider.instances.where((inst) {
       final owner = usersById[inst.userId];
-      if (_plantFilter != 'ALL' && owner?.plantId != _plantFilter) return false;
+      if (_plantFilter != 'ALL' && inst.plantId != _plantFilter && owner?.plantId != _plantFilter) return false;
+      if (_dayFilter != 0 && inst.day != _dayFilter) return false;
       if (_search.isNotEmpty) {
         final q = _search.toLowerCase();
         final ownerName = (owner?.nombre ?? '').toLowerCase();
@@ -2301,13 +2684,14 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
       return true;
     }).toList();
 
-    // Agrupar actividades repetidas por nombre + horario para evitar listas repetitivas
+    // Agrupar actividades repetidas por nombre + horario y ordenar cronológicamente
     final Map<String, List<ActivityInstance>> groupedMap = {};
     for (final inst in filtered) {
       final key = '${inst.nombre}__${inst.timeStart}__${inst.timeEnd}';
       groupedMap.putIfAbsent(key, () => []).add(inst);
     }
-    final groups = groupedMap.values.toList();
+    final groups = groupedMap.values.toList()
+      ..sort((a, b) => a.first.timeStart.compareTo(b.first.timeStart));
 
     return Container(
       color: const Color(0xFFF2F2F7),
@@ -2456,6 +2840,67 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                         ],
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    // FILTRO POR DÍA + MODO LISTA / HORARIO
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                (0, 'Todos'),
+                                (1, 'Lun'),
+                                (2, 'Mar'),
+                                (3, 'Mié'),
+                                (4, 'Jue'),
+                                (5, 'Vie'),
+                                (6, 'Sáb'),
+                              ].map((d) {
+                                final sel = _dayFilter == d.$1;
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: ChoiceChip(
+                                    label: Text(d.$2, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: sel ? Colors.white : const Color(0xFF1D1D1F))),
+                                    selected: sel,
+                                    selectedColor: const Color(0xFF002F6C),
+                                    backgroundColor: Colors.white,
+                                    visualDensity: VisualDensity.compact,
+                                    side: BorderSide(color: sel ? const Color(0xFF002F6C) : const Color(0xFFE5E5EA)),
+                                    onSelected: (_) => setState(() => _dayFilter = d.$1),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE5E5EA),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _viewToggleBtn(
+                                icon: Icons.view_agenda_outlined,
+                                label: 'Lista',
+                                active: !_scheduleView,
+                                onTap: () => setState(() => _scheduleView = false),
+                              ),
+                              _viewToggleBtn(
+                                icon: Icons.calendar_view_day_rounded,
+                                label: 'Horario',
+                                active: _scheduleView,
+                                onTap: () => setState(() => _scheduleView = true),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -2471,7 +2916,67 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                           ],
                         ),
                       )
-                    : LayoutBuilder(
+                    : _scheduleView
+                        ? ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 125),
+                            itemCount: groups.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (_, idx) {
+                              final grp = groups[idx];
+                              final first = grp.first;
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => _openGroupDetailSheet(context, grp, usersById),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: const Color(0xFFE5E5EA)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 68,
+                                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF002F6C).withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Text(first.timeStart, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF002F6C))),
+                                            Text(first.timeEnd, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(first.nombre, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${first.area} · ${first.plantId} · ${grp.length} asig.',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF8E8E93)),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF002F6C)),
+                                        onPressed: () => _openCreateDispatchSheet(context, editingActivity: first),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : LayoutBuilder(
                         builder: (ctx, constraints) {
                           final isWide = constraints.maxWidth >= 720;
                           if (isWide) {
@@ -2778,6 +3283,35 @@ class _SuperAdminCorporateDispatchTabState extends State<_SuperAdminCorporateDis
                   );
                 },
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _viewToggleBtn({
+    required IconData icon,
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF002F6C) : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: active ? Colors.white : const Color(0xFF3A3A3C)),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: active ? Colors.white : const Color(0xFF3A3A3C)),
             ),
           ],
         ),
@@ -3791,9 +4325,23 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       Expanded(
                         child: TextField(
                           controller: _horaIniCtrl,
+                          readOnly: true,
+                          onTap: () async {
+                            final parts = _horaIniCtrl.text.split(':');
+                            final init = TimeOfDay(
+                              hour: int.tryParse(parts.first) ?? 8,
+                              minute: parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0,
+                            );
+                            final picked = await showTimePicker(context: context, initialTime: init);
+                            if (picked != null) {
+                              setState(() {
+                                _horaIniCtrl.text = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                              });
+                            }
+                          },
                           decoration: InputDecoration(
-                            labelText: 'Hora Inicio',
-                            prefixIcon: const Icon(Icons.access_time_rounded, size: 18),
+                            labelText: 'Hora Inicio (toca)',
+                            prefixIcon: const Icon(Icons.access_time_rounded, size: 18, color: Color(0xFF002F6C)),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             filled: true,
                             fillColor: Colors.white,
@@ -3804,9 +4352,23 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       Expanded(
                         child: TextField(
                           controller: _horaFinCtrl,
+                          readOnly: true,
+                          onTap: () async {
+                            final parts = _horaFinCtrl.text.split(':');
+                            final init = TimeOfDay(
+                              hour: int.tryParse(parts.first) ?? 9,
+                              minute: parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0,
+                            );
+                            final picked = await showTimePicker(context: context, initialTime: init);
+                            if (picked != null) {
+                              setState(() {
+                                _horaFinCtrl.text = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                              });
+                            }
+                          },
                           decoration: InputDecoration(
-                            labelText: 'Hora Fin',
-                            prefixIcon: const Icon(Icons.timer_off_outlined, size: 18),
+                            labelText: 'Hora Fin (toca)',
+                            prefixIcon: const Icon(Icons.timer_off_outlined, size: 18, color: Color(0xFF002F6C)),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             filled: true,
                             fillColor: Colors.white,
@@ -3814,6 +4376,46 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  // CALENDARIO / HORARIO RÁPIDO DEL DÍA DENTRO DE HORARIO
+                  Builder(
+                    builder: (context) {
+                      final allInst = context.watch<StandardWorkProvider>().instances;
+                      final existing = <String, ActivityInstance>{};
+                      for (final i in allInst) {
+                        if (!_selectedDays.contains(i.day)) continue;
+                        if (_targetPlanta != 'ALL' && i.plantId != _targetPlanta) continue;
+                        existing.putIfAbsent('${i.nombre}__${i.timeStart}', () => i);
+                      }
+                      final list = existing.values.toList()..sort((a, b) => a.timeStart.compareTo(b.timeStart));
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE5E5EA)),
+                        ),
+                        child: ExpansionTile(
+                          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+                          leading: const Icon(Icons.calendar_today_rounded, size: 17, color: Color(0xFF002F6C)),
+                          title: Text('Ver horario actual (${list.length} actividades)', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
+                          children: [
+                            if (list.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.fromLTRB(14, 0, 14, 12),
+                                child: Text('No hay actividades programadas aún en estos días.', style: TextStyle(fontSize: 11.5, color: Color(0xFF86868B))),
+                              )
+                            else
+                              ...list.take(8).map((a) => ListTile(
+                                    dense: true,
+                                    leading: Text('${a.timeStart}-${a.timeEnd}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF002F6C))),
+                                    title: Text(a.nombre, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                    subtitle: Text('${a.area} · ${a.plantId}', style: const TextStyle(fontSize: 10.5)),
+                                  )),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
 

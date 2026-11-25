@@ -1019,6 +1019,42 @@ class StandardWorkProvider with ChangeNotifier {
     }).toList();
     final diasList = dias.split(',').map((s) => int.parse(s.trim())).toList();
 
+    if (operators.isEmpty) {
+      final fallbackPlants = (targetPlantIds != null && targetPlantIds.isNotEmpty && !targetPlantIds.contains('ALL'))
+          ? targetPlantIds
+          : (_allPlants.isNotEmpty ? _allPlants.map((p) => p.id).toList() : ['ALL']);
+      for (final pId in fallbackPlants) {
+        for (final d in diasList) {
+          await _db.insertInstance(ActivityInstance(
+            activityId: actId,
+            userId: 'UNASSIGNED',
+            plantId: pId,
+            weekKey: _currentWeekKey,
+            nombre: nombre,
+            descripcion: descripcion,
+            area: area,
+            category: category,
+            timeStart: timeStart,
+            timeEnd: timeEnd,
+            prioridad: prioridad,
+            day: d,
+            orig: d,
+            fija: fija,
+            done: false,
+            state: 'Pendiente',
+            subtasksTotal: subtasks.length,
+            subtasksReported: 0,
+            subtasksApproved: 0,
+            tipoActividad: tipoActividad,
+            requierePlanAccion: requierePlanAccion,
+            planAccionObligatorio: planAccionObligatorio,
+            instrucciones: instrucciones,
+            criteriosCumplimiento: criteriosCumplimiento,
+          ));
+        }
+      }
+    }
+
     for (final op in operators) {
       for (final d in diasList) {
         await _db.insertInstance(ActivityInstance(

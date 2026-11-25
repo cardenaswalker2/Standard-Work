@@ -539,14 +539,14 @@ class Radar5SChartCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'EVALUACIÓN RADAR 5S & DISCIPLINA',
-                            maxLines: 1,
+                            'Radar 5S & Disciplina',
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F), letterSpacing: 0.2),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1D1D1F)),
                           ),
                           Text(
-                            'Toca un pilar para ver el detalle real',
-                            maxLines: 1,
+                            'Toca un pilar para ver detalle',
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 11, color: Color(0xFF86868B)),
                           ),
