@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../../data/services/standard_work_provider.dart';
 import '../../data/services/excel_service.dart';
+import '../../data/services/ultra_report_service.dart';
 import '../../data/models/app_models.dart';
 import '../../core/widgets/help_guide_modal.dart';
 import '../../core/theme/app_theme.dart';
@@ -21,182 +22,293 @@ class SuperAdminShellScreen extends StatefulWidget {
 class _SuperAdminShellScreenState extends State<SuperAdminShellScreen> {
   int _currentTabIndex = 0;
 
+  static const _darnelNavy = Color(0xFF002F6C);
+  static const _bg = Color(0xFFF5F5F7);
+  static const _sidebarBg = Color(0xFFECECEE);
+  static const _border = Color(0xFFE5E5EA);
+  static const _ink = Color(0xFF1D1D1F);
+  static const _muted = Color(0xFF86868B);
+
+  static const _navItems = [
+    (label: 'Torre', icon: Icons.space_dashboard_rounded),
+    (label: 'Asignar', icon: Icons.add_task_rounded),
+    (label: 'Procesos', icon: Icons.business_rounded),
+    (label: 'Alertas', icon: Icons.notifications_active_outlined),
+    (label: 'Reportes', icon: Icons.analytics_rounded),
+    (label: 'Logs', icon: Icons.history_rounded),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<StandardWorkProvider>(context);
     final user = provider.currentUser;
+    final isWide = MediaQuery.of(context).size.width >= 860;
+
+    final bodyContent = IndexedStack(
+      index: _currentTabIndex,
+      children: const [
+        _SuperAdminControlTowerTab(),
+        _SuperAdminCorporateDispatchTab(),
+        _SuperAdminPlantAdminsTab(),
+        _SuperAdminExtraTasksApprovalTab(),
+        _SuperAdminReportsTab(),
+        _SuperAdminAuditTab(),
+      ],
+    );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
-      body: Column(
+      backgroundColor: _bg,
+      body: Row(
         children: [
-          // HERO HEADER CORPORATIVO ESTILO APPLE EXECUTIVE
-          Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF002F6C),
-                  Color(0xFF0A2540),
-                  Color(0xFF111827),
-                ],
+          if (isWide)
+            Container(
+              width: 236,
+              decoration: const BoxDecoration(
+                color: _sidebarBg,
+                border: Border(right: BorderSide(color: _border, width: 0.9)),
               ),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 10, 14, 16),
+              child: SafeArea(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 0.8),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: _darnelNavy,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.shield_rounded, color: Colors.white, size: 18),
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.shield_rounded, color: Color(0xFF60A5FA), size: 13),
-                              SizedBox(width: 6),
-                              Text(
-                                'TORRE DE CONTROL · SUPERADMIN',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.6,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('TRACK60', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _darnelNavy, letterSpacing: 0.3)),
+                                Text('Grupo Darnel · Dirección', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: _muted)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: _border),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        itemCount: _navItems.length,
+                        itemBuilder: (context, i) {
+                          final item = _navItems[i];
+                          final active = _currentTabIndex == i;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Material(
+                              color: active ? _darnelNavy : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () => setState(() => _currentTabIndex = i),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  child: Row(
+                                    children: [
+                                      Icon(item.icon, size: 18, color: active ? Colors.white : _ink),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        item.label,
+                                        style: TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                                          color: active ? Colors.white : _ink,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const Divider(height: 1, color: _border),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 17,
+                            backgroundColor: _darnelNavy.withValues(alpha: 0.12),
+                            child: Text(user?.iniciales ?? 'JJ', style: const TextStyle(color: _darnelNavy, fontWeight: FontWeight.w800, fontSize: 12)),
                           ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _headerIconBtn(
-                              tooltip: 'Guía',
-                              icon: Icons.help_outline_rounded,
-                              onPressed: () => HelpGuideModal.show(context),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(user?.nombre ?? 'Javier Julio', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _ink)),
+                                const Text('Super Admin', style: TextStyle(fontSize: 10.5, color: _muted)),
+                              ],
                             ),
-                            const SizedBox(width: 6),
-                            _headerIconBtn(
-                              tooltip: 'Exportar Excel',
-                              icon: Icons.file_download_rounded,
-                              onPressed: () async {
-                                try {
-                                  await ExcelService.instance.exportAndShare();
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                                  }
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 6),
-                            _headerIconBtn(
-                              tooltip: 'Cerrar Sesión',
-                              icon: Icons.logout_rounded,
-                              onPressed: () {
-                                provider.logout();
-                                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      user?.nombre ?? 'Javier Julio',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -0.5,
+                          ),
+                          IconButton(
+                            tooltip: 'Cerrar Sesión',
+                            icon: const Icon(Icons.logout_rounded, size: 18, color: _muted),
+                            onPressed: () {
+                              provider.logout();
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Dirección General · Gobierno Operativo Grupo Darnel',
-                      style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.72), fontWeight: FontWeight.w500),
-                    ),
-                    if (provider.emergencyAlertActive) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF3B30),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 14),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                'ALERTA ROJA EHS: ${provider.emergencyAlertMessage}',
-                                style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
             ),
-          ),
-
-          // TABS DE NAVEGACIÓN
           Expanded(
-            child: IndexedStack(
-              index: _currentTabIndex,
-              children: const [
-                _SuperAdminControlTowerTab(),
-                _SuperAdminCorporateDispatchTab(),
-                _SuperAdminPlantAdminsTab(),
-                _SuperAdminExtraTasksApprovalTab(),
-                _SuperAdminAuditTab(),
+            child: Column(
+              children: [
+                // BARRA SUPERIOR LIMPIA ESTILO APPLE + DARNEL AZUL Y BLANCO
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(bottom: BorderSide(color: _border, width: 0.8)),
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _darnelNavy,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.shield_rounded, color: Colors.white, size: 12),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      'SUPERADMIN',
+                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _navItems[_currentTabIndex].label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _ink, letterSpacing: -0.3),
+                                    ),
+                                    Text(
+                                      '${user?.nombre ?? 'Javier Julio'} · Grupo Darnel',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 11, color: _muted),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              _headerIconBtn(
+                                tooltip: 'Guía',
+                                icon: Icons.help_outline_rounded,
+                                onPressed: () => HelpGuideModal.show(context),
+                              ),
+                              const SizedBox(width: 6),
+                              _headerIconBtn(
+                                tooltip: 'Reportes',
+                                icon: Icons.analytics_outlined,
+                                onPressed: () => setState(() => _currentTabIndex = 4),
+                              ),
+                              if (!isWide) ...[
+                                const SizedBox(width: 6),
+                                _headerIconBtn(
+                                  tooltip: 'Cerrar Sesión',
+                                  icon: Icons.logout_rounded,
+                                  onPressed: () {
+                                    provider.logout();
+                                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                                  },
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (provider.emergencyAlertActive) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF3B30),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 14),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'ALERTA ROJA EHS: ${provider.emergencyAlertMessage}',
+                                      style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(child: bodyContent),
               ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentTabIndex,
-          onTap: (index) => setState(() => _currentTabIndex = index),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          selectedItemColor: const Color(0xFF007AFF),
-          unselectedItemColor: const Color(0xFF8E8E93),
-          selectedLabelStyle: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
-          unselectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Torre'),
-            BottomNavigationBarItem(icon: Icon(Icons.add_task_rounded), label: 'Asignar'),
-            BottomNavigationBarItem(icon: Icon(Icons.business_rounded), label: 'Procesos'),
-            BottomNavigationBarItem(icon: Icon(Icons.notifications_active_outlined), label: 'Alertas'),
-            BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Logs'),
-          ],
-        ),
-      ),
+      bottomNavigationBar: isWide
+          ? null
+          : Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: _border, width: 0.8)),
+              ),
+              child: BottomNavigationBar(
+                currentIndex: _currentTabIndex,
+                onTap: (index) => setState(() => _currentTabIndex = index),
+                backgroundColor: Colors.white,
+                elevation: 0,
+                selectedItemColor: _darnelNavy,
+                unselectedItemColor: const Color(0xFF8E8E93),
+                selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                unselectedLabelStyle: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w500),
+                type: BottomNavigationBarType.fixed,
+                items: _navItems
+                    .map((item) => BottomNavigationBarItem(icon: Icon(item.icon), label: item.label))
+                    .toList(),
+              ),
+            ),
     );
   }
 
@@ -204,14 +316,14 @@ class _SuperAdminShellScreenState extends State<SuperAdminShellScreen> {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        color: _bg,
+        borderRadius: BorderRadius.circular(10),
         child: InkWell(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(10),
           onTap: onPressed,
           child: Padding(
             padding: const EdgeInsets.all(8),
-            child: Icon(icon, color: Colors.white, size: 18),
+            child: Icon(icon, color: _darnelNavy, size: 18),
           ),
         ),
       ),
@@ -2893,6 +3005,11 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
   String _reunionLugar = 'Sala de Planta';
   bool _planAccionObligatorio = false;
   bool _requierePlanAccion = false;
+  String _planTemplate = 'Estándar 5W1H';
+  final _planGuiaCtrl = TextEditingController(
+    text: 'Hallazgo · Causa Raíz · Acción Correctiva · Responsable · Fecha Compromiso',
+  );
+  int _wizardStep = 0; // 0: Qué y Quién, 1: Horario y Plan, 2: Subtareas
   String _targetPlanta = 'ALL';
   String _targetUserId = 'ALL';
 
@@ -2943,6 +3060,8 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
     _descCtrl.dispose();
     _horaIniCtrl.dispose();
     _horaFinCtrl.dispose();
+    _reunionHoraCtrl.dispose();
+    _planGuiaCtrl.dispose();
     super.dispose();
   }
 
@@ -3147,6 +3266,9 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
     final fullDesc = isMeetingMode
         ? '${baseDesc.isNotEmpty ? "$baseDesc\n" : ""}[REUNIÓN PROGRAMADA: ${_reunionHoraCtrl.text.trim()} · $_reunionLugar]'
         : baseDesc;
+    final planCriteria = _requierePlanAccion
+        ? 'Plantilla Plan ($_planTemplate): ${_planGuiaCtrl.text.trim()}'
+        : '';
 
     if (widget.editingActivity != null) {
       await provider.updateActivityGroup(
@@ -3175,13 +3297,6 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
       return;
     }
 
-    if (_tipoActividad == 'ejecucion' && _subtasks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('En actividad de ejecución, agrega al menos una subtarea para guiar al colaborador')),
-      );
-      return;
-    }
-
     await provider.dispatchCorporateActivity(
       nombre: _nombreCtrl.text.trim(),
       descripcion: fullDesc,
@@ -3192,10 +3307,11 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
       fija: _fija,
       dias: sortedDays,
       prioridad: _prioridad,
-      subtasks: isMeetingMode ? [] : _subtasks,
+      subtasks: _subtasks,
       tipoActividad: _tipoActividad,
       requierePlanAccion: _requierePlanAccion || _planAccionObligatorio,
       planAccionObligatorio: _planAccionObligatorio,
+      criteriosCumplimiento: planCriteria,
       targetPlantIds: _targetPlanta == 'ALL' ? null : [_targetPlanta],
       targetUserIds: _targetUserId == 'ALL' ? null : [_targetUserId],
     );
@@ -3216,720 +3332,820 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
   @override
   Widget build(BuildContext context) {
     const dayNames = {1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb'};
+    const stepLabels = ['1. Qué y Quién', '2. Horario y Plan', '3. Subtareas'];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // PLANTILLAS RÁPIDAS Y GESTOR DE PLANTILLAS
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Plantillas y Estándares:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-              TextButton.icon(
-                onPressed: () {
-                  TemplatesModal.show(
-                    context: context,
-                    onSelectTemplate: (tmpl) {
-                      setState(() {
-                        _nombreCtrl.text = tmpl.nombre;
-                        _descCtrl.text = tmpl.descripcion;
-                        _area = tmpl.area;
-                        _categoria = tmpl.categoria;
-                        _prioridad = tmpl.prioridad;
-                        _fija = tmpl.fija;
-                        _tipoActividad = tmpl.tipoActividad;
-                        _planAccionObligatorio = tmpl.planAccionObligatorio;
-                        _subtasks.clear();
-                        _subtasks.addAll(tmpl.subtasks.map((s) => s.copyWith(activityId: 0)));
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Plantilla "${tmpl.nombre}" aplicada al despacho'), backgroundColor: const Color(0xFF002F6C)),
-                      );
-                    },
-                  );
-                },
-                icon: const Icon(Icons.auto_stories_rounded, size: 16, color: Color(0xFF002F6C)),
-                label: const Text('Nueva Plantilla / Catálogo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF002F6C))),
-              ),
-            ],
+    return Column(
+      children: [
+        // BARRA DE PASOS LIMPIA ESTILO APPLE + DARNEL AZUL
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF5F5F7),
+            border: Border(bottom: BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
           ),
-          const SizedBox(height: 6),
-          // PLANTILLAS CREADAS POR EL USUARIO (SIN PLANTILLAS FALSAS)
-          Builder(
-            builder: (context) {
-              final realTemplates = context.watch<StandardWorkProvider>().templates;
-              if (realTemplates.isEmpty) {
-                return const Text(
-                  'Sin plantillas guardadas aún. Toca "Nueva Plantilla / Catálogo" para crear una.',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF86868B)),
-                );
-              }
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: realTemplates.map((tmpl) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _buildTemplateChip(tmpl.nombre, () {
-                      setState(() {
-                        _nombreCtrl.text = tmpl.nombre;
-                        _descCtrl.text = tmpl.descripcion;
-                        _area = tmpl.area;
-                        _categoria = tmpl.categoria;
-                        _prioridad = tmpl.prioridad;
-                        _fija = tmpl.fija;
-                        _tipoActividad = tmpl.tipoActividad;
-                        _planAccionObligatorio = tmpl.planAccionObligatorio;
-                        _subtasks.clear();
-                        _subtasks.addAll(tmpl.subtasks.map((s) => s.copyWith(activityId: 0)));
-                      });
-                    }),
-                  )).toList(),
+          child: Row(
+            children: List.generate(3, (idx) {
+              final active = _wizardStep == idx;
+              final done = _wizardStep > idx;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: idx < 2 ? 6 : 0),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _wizardStep = idx),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                      decoration: BoxDecoration(
+                        color: active
+                            ? const Color(0xFF002F6C)
+                            : (done ? const Color(0xFF002F6C).withValues(alpha: 0.12) : Colors.white),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: active ? const Color(0xFF002F6C) : const Color(0xFFE5E5EA),
+                        ),
+                      ),
+                      child: Text(
+                        stepLabels[idx],
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: active
+                              ? Colors.white
+                              : (done ? const Color(0xFF002F6C) : const Color(0xFF86868B)),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               );
-            },
+            }),
           ),
-          const SizedBox(height: 16),
-
-          // MODALIDAD DE ACTIVIDAD (ESTILO APPLE SEGMENTADO)
-          const Text('Modalidad de la Actividad:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE5E5EA),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() {
-                      _tipoActividad = 'ejecucion';
-                      _incluyeReunion = false;
-                    }),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _tipoActividad == 'ejecucion' ? const Color(0xFF007AFF) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.engineering_rounded, size: 16, color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF3A3A3C)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Actividad de Ejecución',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF3A3A3C),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() {
-                      _tipoActividad = 'registro';
-                      _incluyeReunion = true;
-                    }),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _tipoActividad == 'registro' ? const Color(0xFF007AFF) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.edit_note_rounded, size: 16, color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF3A3A3C)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Registro / Reunión',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF3A3A3C),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // SOLO EN MODO REGISTRO / REUNIÓN SE MUESTRA EL BLOQUE DE REUNIÓN Y MINUTA
-          if (_tipoActividad == 'registro') ...[
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF93C5FD)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
+                if (_wizardStep == 0) ...[
+                  // PASO 1: PLANTILLA OPCIONAL + MODALIDAD + DESTINO + NOMBRE
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.groups_rounded, size: 18, color: Color(0xFF007AFF)),
-                      SizedBox(width: 8),
-                      Text(
-                        'Configuración de Reunión / Minuta',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      const Text('Plantilla (opcional):', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF1D1D1F))),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                        onPressed: () {
+                          TemplatesModal.show(
+                            context: context,
+                            onSelectTemplate: (tmpl) {
+                              setState(() {
+                                _nombreCtrl.text = tmpl.nombre;
+                                _descCtrl.text = tmpl.descripcion;
+                                _area = tmpl.area;
+                                _categoria = tmpl.categoria;
+                                _prioridad = tmpl.prioridad;
+                                _fija = tmpl.fija;
+                                _tipoActividad = tmpl.tipoActividad;
+                                _planAccionObligatorio = tmpl.planAccionObligatorio;
+                                _requierePlanAccion = tmpl.planAccionObligatorio;
+                                _subtasks.clear();
+                                _subtasks.addAll(tmpl.subtasks.map((s) => s.copyWith(activityId: 0)));
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Plantilla "${tmpl.nombre}" aplicada'), backgroundColor: const Color(0xFF002F6C)),
+                              );
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.auto_stories_rounded, size: 15, color: Color(0xFF002F6C)),
+                        label: const Text('Catálogo / Nueva', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'El responsable registrará participantes, acuerdos y notas de comité en lugar de subtareas operativas.',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                  Builder(
+                    builder: (context) {
+                      final realTemplates = context.watch<StandardWorkProvider>().templates;
+                      if (realTemplates.isEmpty) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: realTemplates
+                                .map((tmpl) => Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: _buildTemplateChip(tmpl.nombre, () {
+                                        setState(() {
+                                          _nombreCtrl.text = tmpl.nombre;
+                                          _descCtrl.text = tmpl.descripcion;
+                                          _area = tmpl.area;
+                                          _categoria = tmpl.categoria;
+                                          _prioridad = tmpl.prioridad;
+                                          _fija = tmpl.fija;
+                                          _tipoActividad = tmpl.tipoActividad;
+                                          _planAccionObligatorio = tmpl.planAccionObligatorio;
+                                          _requierePlanAccion = tmpl.planAccionObligatorio;
+                                          _subtasks.clear();
+                                          _subtasks.addAll(tmpl.subtasks.map((s) => s.copyWith(activityId: 0)));
+                                        });
+                                      }),
+                                    ))
+                                .toList(),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 10),
+
+                  const Text('Modalidad de la Actividad', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF1D1D1F))),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5E5EA),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() {
+                              _tipoActividad = 'ejecucion';
+                              _incluyeReunion = false;
+                            }),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _tipoActividad == 'ejecucion' ? const Color(0xFF002F6C) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.engineering_rounded, size: 16, color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF3A3A3C)),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Ejecución',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _tipoActividad == 'ejecucion' ? Colors.white : const Color(0xFF3A3A3C)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() {
+                              _tipoActividad = 'registro';
+                              _incluyeReunion = true;
+                            }),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _tipoActividad == 'registro' ? const Color(0xFF002F6C) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.groups_rounded, size: 16, color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF3A3A3C)),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Registro / Reunión',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _tipoActividad == 'registro' ? Colors.white : const Color(0xFF3A3A3C)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  if (_tipoActividad == 'registro') ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Datos de la Reunión / Comité', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _reunionHoraCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: 'Hora Reunión',
+                                    isDense: true,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  initialValue: _reunionLugar,
+                                  isExpanded: true,
+                                  decoration: InputDecoration(
+                                    labelText: 'Lugar',
+                                    isDense: true,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(value: 'Sala de Planta', child: Text('Sala de Planta', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'Piso / Gemba', child: Text('Piso / Gemba', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'Virtual / Teams', child: Text('Virtual / Teams', overflow: TextOverflow.ellipsis)),
+                                  ],
+                                  onChanged: (v) => setState(() => _reunionLugar = v ?? 'Sala de Planta'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  Builder(
+                    builder: (context) {
+                      final provider = context.watch<StandardWorkProvider>();
+                      final allPlants = provider.allPlants;
+                      final validPlant = (['ALL', ...allPlants.map((p) => p.id)].contains(_targetPlanta)) ? _targetPlanta : 'ALL';
+                      final selectableUsers = provider.allUsers.where((u) {
+                        if (!u.isOperator && !u.isSupervisor) return false;
+                        if (validPlant != 'ALL' && u.plantId != validPlant) return false;
+                        return true;
+                      }).toList();
+                      final validUser = (['ALL', ...selectableUsers.map((u) => u.id)].contains(_targetUserId)) ? _targetUserId : 'ALL';
+
+                      return Column(
+                        children: [
+                          DropdownButtonFormField<String>(
+                            initialValue: validPlant,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              labelText: 'Planta Destino',
+                              prefixIcon: const Icon(Icons.apartment_rounded, color: Color(0xFF002F6C)),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            items: [
+                              const DropdownMenuItem(value: 'ALL', child: Text('Todas las Plantas', overflow: TextOverflow.ellipsis, maxLines: 1)),
+                              ...allPlants.map((p) => DropdownMenuItem(value: p.id, child: Text(p.nombre, overflow: TextOverflow.ellipsis, maxLines: 1))),
+                            ],
+                            onChanged: (val) => setState(() {
+                              _targetPlanta = val ?? 'ALL';
+                              _targetUserId = 'ALL';
+                            }),
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            initialValue: validUser,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              labelText: 'Asignar a Persona o Equipo',
+                              prefixIcon: const Icon(Icons.person_pin_rounded, color: Color(0xFF002F6C)),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            items: [
+                              const DropdownMenuItem(value: 'ALL', child: Text('Todos en la planta seleccionada', overflow: TextOverflow.ellipsis, maxLines: 1)),
+                              ...selectableUsers.map((u) => DropdownMenuItem(
+                                    value: u.id,
+                                    child: Text('${u.nombre} (${u.isSupervisor ? 'Supervisor' : 'Operador'} · ${u.plantId})', overflow: TextOverflow.ellipsis, maxLines: 1),
+                                  )),
+                            ],
+                            onChanged: (val) => setState(() => _targetUserId = val ?? 'ALL'),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: _nombreCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre de la Actividad *',
+                      hintText: 'Ej. Reunión Diaria de Arranque / Auditoría 5S',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _descCtrl,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Descripción / Objetivo *',
+                      hintText: 'Instrucción clara para el responsable...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => setState(() => _wizardStep = 1),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF002F6C),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Siguiente: Horario y Plan de Acción →', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ] else if (_wizardStep == 1) ...[
+                  // PASO 2: ÁREA, CATEGORÍA, CRITICIDAD, HORARIO, DÍAS Y PLAN DE ACCIÓN
+                  Builder(
+                    builder: (context) {
+                      final provider = context.watch<StandardWorkProvider>();
+                      final areaItems = <String>{'Todas las Áreas', ...provider.corporateAreas, _area}.toList();
+                      final catItems = <String>{'General', ...provider.corporateCategories, _categoria}.toList();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Área Destino', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                              TextButton.icon(
+                                style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                                onPressed: () => _quickAddCatalogItem(
+                                  context: context,
+                                  title: 'Nueva Área',
+                                  hint: 'Ej. Extrusión, Calidad...',
+                                  onSave: (val) async {
+                                    await provider.addCorporateArea(val);
+                                    setState(() => _area = val);
+                                  },
+                                ),
+                                icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: Color(0xFF002F6C)),
+                                label: const Text('Nueva Área', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
+                              ),
+                            ],
+                          ),
+                          DropdownButtonFormField<String>(
+                            initialValue: _area,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            items: areaItems.map((a) => DropdownMenuItem(value: a, child: Text(a, overflow: TextOverflow.ellipsis, maxLines: 1))).toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => _area = val);
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Categoría', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                              TextButton.icon(
+                                style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                                onPressed: () => _quickAddCatalogItem(
+                                  context: context,
+                                  title: 'Nueva Categoría',
+                                  hint: 'Ej. Seguridad EHS, 5S...',
+                                  onSave: (val) async {
+                                    await provider.addCorporateCategory(val);
+                                    setState(() => _categoria = val);
+                                  },
+                                ),
+                                icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: Color(0xFF002F6C)),
+                                label: const Text('Nueva Categoría', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
+                              ),
+                            ],
+                          ),
+                          DropdownButtonFormField<String>(
+                            initialValue: _categoria,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            items: catItems.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis, maxLines: 1))).toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => _categoria = val);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+
+                  const Text('Nivel de Criticidad', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _buildPriorityChoice('Alta', const Color(0xFFFF3B30)),
+                      const SizedBox(width: 8),
+                      _buildPriorityChoice('Media', const Color(0xFFFF9500)),
+                      const SizedBox(width: 8),
+                      _buildPriorityChoice('Baja', const Color(0xFF007AFF)),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
                   Row(
                     children: [
                       Expanded(
                         child: TextField(
-                          controller: _reunionHoraCtrl,
+                          controller: _horaIniCtrl,
                           decoration: InputDecoration(
-                            labelText: 'Hora de la Reunión',
-                            hintText: 'Ej. 08:00 AM',
-                            prefixIcon: const Icon(Icons.schedule_rounded, size: 18, color: Color(0xFF0284C7)),
-                            isDense: true,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            labelText: 'Hora Inicio',
+                            prefixIcon: const Icon(Icons.access_time_rounded, size: 18),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             filled: true,
                             fillColor: Colors.white,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _reunionLugar,
-                          decoration: InputDecoration(
-                            labelText: 'Lugar / Modalidad',
-                            isDense: true,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            filled: true,
-                            fillColor: Colors.white,
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: 'Sala de Planta', child: Text('Sala de Planta')),
-                            DropdownMenuItem(value: 'Piso / Gemba', child: Text('Piso / Gemba')),
-                            DropdownMenuItem(value: 'Virtual / Teams', child: Text('Virtual / Teams')),
-                          ],
-                          onChanged: (v) => setState(() => _reunionLugar = v ?? 'Sala de Planta'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: ['07:00 AM', '08:00 AM', '10:00 AM', '02:00 PM', '04:00 PM']
-                        .map((h) => ActionChip(
-                              label: Text(h, style: const TextStyle(fontSize: 11)),
-                              visualDensity: VisualDensity.compact,
-                              onPressed: () => setState(() => _reunionHoraCtrl.text = h),
-                            ))
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-          ],
-
-          // PLANTA Y PERSONA OBJETIVO
-          Builder(
-            builder: (context) {
-              final provider = context.watch<StandardWorkProvider>();
-              final allPlants = provider.allPlants;
-              final validPlant = (['ALL', ...allPlants.map((p) => p.id)].contains(_targetPlanta)) ? _targetPlanta : 'ALL';
-              final selectableUsers = provider.allUsers.where((u) {
-                if (!u.isOperator && !u.isSupervisor) return false;
-                if (validPlant != 'ALL' && u.plantId != validPlant) return false;
-                return true;
-              }).toList();
-              final validUser = (['ALL', ...selectableUsers.map((u) => u.id)].contains(_targetUserId)) ? _targetUserId : 'ALL';
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: validPlant,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: 'Alcance Geográfico / Plantas',
-                      prefixIcon: const Icon(Icons.apartment_rounded, color: Color(0xFF007AFF)),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    items: [
-                      const DropdownMenuItem(
-                        value: 'ALL',
-                        child: Text('Todas las Plantas (Despacho Universal)', overflow: TextOverflow.ellipsis, maxLines: 1),
-                      ),
-                      ...allPlants.map((p) => DropdownMenuItem(
-                            value: p.id,
-                            child: Text(p.nombre, overflow: TextOverflow.ellipsis, maxLines: 1),
-                          )),
-                    ],
-                    onChanged: (val) => setState(() {
-                      _targetPlanta = val ?? 'ALL';
-                      _targetUserId = 'ALL';
-                    }),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: validUser,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: 'Asignar a Persona o Equipo',
-                      prefixIcon: const Icon(Icons.person_pin_rounded, color: Color(0xFF007AFF)),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    items: [
-                      const DropdownMenuItem(
-                        value: 'ALL',
-                        child: Text('Todos los Operadores de la Planta / Alcance', overflow: TextOverflow.ellipsis, maxLines: 1),
-                      ),
-                      ...selectableUsers.map((u) => DropdownMenuItem(
-                            value: u.id,
-                            child: Text(
-                              '${u.nombre} (${u.isSupervisor ? 'Supervisor' : 'Operador'} · ${u.plantId})',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          )),
-                    ],
-                    onChanged: (val) => setState(() => _targetUserId = val ?? 'ALL'),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 14),
-
-          // CAMPOS BÁSICOS
-          TextField(
-            controller: _nombreCtrl,
-            decoration: InputDecoration(
-              labelText: 'Nombre de la Actividad Corporativa *',
-              hintText: 'Ej. Verificación de Seguridad y Arranque de Turno',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _descCtrl,
-            maxLines: 2,
-            decoration: InputDecoration(
-              labelText: 'Descripción / Directriz Operativa *',
-              hintText: 'Instrucción técnica obligatoria para los operadores...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // ÁREA Y CATEGORÍA DINÁMICAS (APILADAS CON + NUEVA ARRIBA PARA EVITAR CORTES EN MÓVIL)
-          Builder(
-            builder: (context) {
-              final provider = context.watch<StandardWorkProvider>();
-              final areaItems = <String>{'Todas las Áreas', ...provider.corporateAreas, _area}.toList();
-              final catItems = <String>{'General', ...provider.corporateCategories, _categoria}.toList();
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Área Destino', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-                      TextButton.icon(
-                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
-                        onPressed: () => _quickAddCatalogItem(
-                          context: context,
-                          title: 'Nueva Área',
-                          hint: 'Ej. Extrusión, Calidad...',
-                          onSave: (val) async {
-                            await provider.addCorporateArea(val);
-                            setState(() => _area = val);
-                          },
-                        ),
-                        icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: Color(0xFF007AFF)),
-                        label: const Text('Nueva Área', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
-                      ),
-                    ],
-                  ),
-                  DropdownButtonFormField<String>(
-                    initialValue: _area,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    items: areaItems.map((a) => DropdownMenuItem(value: a, child: Text(a, overflow: TextOverflow.ellipsis, maxLines: 1))).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _area = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Categoría', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
-                      TextButton.icon(
-                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
-                        onPressed: () => _quickAddCatalogItem(
-                          context: context,
-                          title: 'Nueva Categoría',
-                          hint: 'Ej. Seguridad EHS, 5S...',
-                          onSave: (val) async {
-                            await provider.addCorporateCategory(val);
-                            setState(() => _categoria = val);
-                          },
-                        ),
-                        icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: Color(0xFF007AFF)),
-                        label: const Text('Nueva Categoría', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
-                      ),
-                    ],
-                  ),
-                  DropdownButtonFormField<String>(
-                    initialValue: _categoria,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    items: catItems.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis, maxLines: 1))).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _categoria = val);
-                    },
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 14),
-
-          // PRIORIDAD / CRITICIDAD
-          const Text('Nivel de Criticidad / Prioridad:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildPriorityChoice('Alta', const Color(0xFFDC2626)),
-              const SizedBox(width: 8),
-              _buildPriorityChoice('Media', const Color(0xFFF59E0B)),
-              const SizedBox(width: 8),
-              _buildPriorityChoice('Baja', const Color(0xFF0284C7)),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // HORARIO Y TIPO
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _horaIniCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Hora Inicio',
-                    prefixIcon: const Icon(Icons.access_time_rounded, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: _horaFinCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Hora Fin',
-                    prefixIcon: const Icon(Icons.timer_off_outlined, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: SwitchListTile(
-              title: const Text('Actividad Fija Inmutable (No reprogramable)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              subtitle: const Text('El operador no podrá cambiarla de día sin autorización', style: TextStyle(fontSize: 11)),
-              value: _fija,
-              activeColor: const Color(0xFFDC2626),
-              onChanged: (val) => setState(() => _fija = val),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: _requierePlanAccion ? const Color(0xFFFFF7ED) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _requierePlanAccion ? const Color(0xFFF59E0B) : Colors.grey.shade200),
-            ),
-            child: Column(
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Incluir Plan de Acción (Reunión Diaria / Seguimiento)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  subtitle: const Text('Habilita registrar planes de acción directamente desde esta actividad', style: TextStyle(fontSize: 11)),
-                  value: _requierePlanAccion,
-                  activeThumbColor: const Color(0xFFF59E0B),
-                  onChanged: (val) => setState(() {
-                    _requierePlanAccion = val;
-                    if (!val) _planAccionObligatorio = false;
-                  }),
-                ),
-                if (_requierePlanAccion)
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    title: const Text('¿Plan de Acción Obligatorio para cerrar?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                    value: _planAccionObligatorio,
-                    activeThumbColor: const Color(0xFFDC2626),
-                    onChanged: (val) => setState(() => _planAccionObligatorio = val),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // DÍAS DE LA SEMANA
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('¿Qué días de la semana aplica?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: () => setState(() => _selectedDays.addAll([1, 2, 3, 4, 5])),
-                    child: const Text('Lun-Vie', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                  TextButton(
-                    onPressed: () => setState(() => _selectedDays.addAll([1, 2, 3, 4, 5, 6])),
-                    child: const Text('Toda Semana', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: dayNames.entries.map((e) {
-              final isSelected = _selectedDays.contains(e.key);
-              return FilterChip(
-                label: Text(e.value, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? Colors.white : const Color(0xFF0F172A))),
-                selected: isSelected,
-                selectedColor: const Color(0xFF002F6C),
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                side: BorderSide(color: isSelected ? const Color(0xFF002F6C) : Colors.grey.shade300),
-                onSelected: (val) {
-                  setState(() {
-                    if (val) {
-                      _selectedDays.add(e.key);
-                    } else {
-                      if (_selectedDays.length > 1) _selectedDays.remove(e.key);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-
-          // SUBTAREAS Y REQUISITOS DINÁMICOS (SOLO PARA ACTIVIDAD DE EJECUCIÓN)
-          if (_tipoActividad == 'ejecucion') ...[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Subtareas y Requisitos (${_subtasks.length} pasos):', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              ElevatedButton.icon(
-                onPressed: () => _showSubtaskDialog(),
-                icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                label: const Text('Agregar Paso', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF002F6C),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          if (_subtasks.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: const Center(
-                child: Text('No hay subtareas. Toca "+ Agregar Paso" para configurar requisitos.', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _subtasks.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, i) {
-                final s = _subtasks[i];
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2)),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: const Color(0xFF002F6C),
-                        child: Text('${i + 1}', style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(s.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                            if (s.descripcion.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(s.descripcion, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                            ],
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: [
-                                if (s.requiereFoto)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0284C7).withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.camera_alt_rounded, size: 12, color: Color(0xFF0284C7)),
-                                        SizedBox(width: 4),
-                                        Text('Foto Obligatoria', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF0284C7))),
-                                      ],
-                                    ),
-                                  ),
-                                if (s.requiereComentario)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.comment_rounded, size: 12, color: Color(0xFFF59E0B)),
-                                        SizedBox(width: 4),
-                                        Text('Comentario Requerido', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFF59E0B))),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
+                        child: TextField(
+                          controller: _horaFinCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Hora Fin',
+                            prefixIcon: const Icon(Icons.timer_off_outlined, size: 18),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF002F6C)),
-                        onPressed: () => _showSubtaskDialog(editIndex: i),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFDC2626)),
-                        onPressed: () => setState(() => _subtasks.removeAt(i)),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
-          const SizedBox(height: 24),
-          ],
+                  const SizedBox(height: 12),
 
-          // BOTÓN DE DESPACHO ESTILO APPLE
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _dispatch,
-              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
-              label: const Text(
-                'Crear y Asignar Actividad',
-                style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 15),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF007AFF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
-              ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Días que aplica', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      Row(
+                        children: [
+                          TextButton(onPressed: () => setState(() => _selectedDays.addAll([1, 2, 3, 4, 5])), child: const Text('Lun-Vie', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700))),
+                          TextButton(onPressed: () => setState(() => _selectedDays.addAll([1, 2, 3, 4, 5, 6])), child: const Text('Todos', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700))),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: dayNames.entries.map((e) {
+                      final isSelected = _selectedDays.contains(e.key);
+                      return FilterChip(
+                        label: Text(e.value, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? Colors.white : const Color(0xFF1D1D1F))),
+                        selected: isSelected,
+                        selectedColor: const Color(0xFF002F6C),
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        side: BorderSide(color: isSelected ? const Color(0xFF002F6C) : const Color(0xFFE5E5EA)),
+                        onSelected: (val) {
+                          setState(() {
+                            if (val) {
+                              _selectedDays.add(e.key);
+                            } else if (_selectedDays.length > 1) {
+                              _selectedDays.remove(e.key);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE5E5EA)),
+                    ),
+                    child: SwitchListTile(
+                      title: const Text('Actividad Fija Inmutable', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: const Text('No se puede reprogramar sin autorización', style: TextStyle(fontSize: 11)),
+                      value: _fija,
+                      activeThumbColor: const Color(0xFF002F6C),
+                      onChanged: (val) => setState(() => _fija = val),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // PLAN DE ACCIÓN + PLANTILLA DEL PLAN
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _requierePlanAccion ? const Color(0xFFEFF6FF) : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _requierePlanAccion ? const Color(0xFF002F6C) : const Color(0xFFE5E5EA)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Incluir Plan de Acción', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF002F6C))),
+                          subtitle: const Text('Activa la creación de planes desde esta actividad o reunión', style: TextStyle(fontSize: 11)),
+                          value: _requierePlanAccion,
+                          activeThumbColor: const Color(0xFF002F6C),
+                          onChanged: (val) => setState(() {
+                            _requierePlanAccion = val;
+                            if (!val) _planAccionObligatorio = false;
+                          }),
+                        ),
+                        if (_requierePlanAccion) ...[
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: const Text('¿Plan obligatorio para cerrar?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                            value: _planAccionObligatorio,
+                            activeThumbColor: const Color(0xFFFF3B30),
+                            onChanged: (val) => setState(() => _planAccionObligatorio = val),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('Plantilla de Plan de Acción:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1D1D1F))),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            initialValue: _planTemplate,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'Estándar 5W1H', child: Text('Estándar 5W1H (Qué, Quién, Cuándo)', overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: '5 Porqués (Causa Raíz)', child: Text('5 Porqués (Análisis Causa Raíz)', overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: 'Seguimiento Reunión Diaria', child: Text('Seguimiento Reunión Diaria (Acuerdos)', overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: 'Personalizada', child: Text('Personalizada', overflow: TextOverflow.ellipsis)),
+                            ],
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() {
+                                _planTemplate = v;
+                                if (v == 'Estándar 5W1H') {
+                                  _planGuiaCtrl.text = 'Hallazgo · Causa Raíz · Acción Correctiva · Responsable · Fecha Compromiso';
+                                } else if (v == '5 Porqués (Causa Raíz)') {
+                                  _planGuiaCtrl.text = 'Problema · 5 Porqués · Contramedida · Responsable · Verificación';
+                                } else if (v == 'Seguimiento Reunión Diaria') {
+                                  _planGuiaCtrl.text = 'Tema / Indicador · Desviación · Acuerdo · Responsable · Fecha Cierre';
+                                }
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _planGuiaCtrl,
+                            maxLines: 2,
+                            decoration: InputDecoration(
+                              labelText: 'Estructura / Campos del Plan',
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => setState(() => _wizardStep = 0),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('← Atrás', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: () => setState(() => _wizardStep = 2),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF002F6C),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Siguiente: Subtareas →', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  // PASO 3: SUBTAREAS Y REQUISITOS (DISPONIBLE PARA EJECUCIÓN Y REGISTRO/REUNIÓN)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.checklist_rounded, color: Color(0xFF002F6C), size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _tipoActividad == 'registro'
+                                ? 'Puntos de agenda, asistencia o entregables de la Reunión (${_subtasks.length} pasos)'
+                                : 'Checklist operativo paso a paso (${_subtasks.length} pasos)',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF002F6C)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Subtareas (${_subtasks.length})', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1D1D1F))),
+                      ElevatedButton.icon(
+                        onPressed: () => _showSubtaskDialog(),
+                        icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                        label: const Text('Agregar Paso', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11.5)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF002F6C),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  if (_subtasks.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE5E5EA)),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Sin subtareas aún. Toca "+ Agregar Paso" para añadir puntos de verificación o agenda.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF86868B)),
+                        ),
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _subtasks.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) {
+                        final s = _subtasks[i];
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFE5E5EA)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                radius: 12,
+                                backgroundColor: const Color(0xFF002F6C),
+                                child: Text('${i + 1}', style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(s.nombre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                    if (s.descripcion.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(s.descripcion, style: const TextStyle(fontSize: 11, color: Color(0xFF86868B))),
+                                    ],
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: [
+                                        if (s.requiereFoto)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(color: const Color(0xFF007AFF).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
+                                            child: const Text('📷 Foto', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF007AFF))),
+                                          ),
+                                        if (s.requiereComentario)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(color: const Color(0xFFFF9500).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
+                                            child: const Text('💬 Comentario', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFFFF9500))),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF002F6C)),
+                                onPressed: () => _showSubtaskDialog(editIndex: i),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFFF3B30)),
+                                onPressed: () => setState(() => _subtasks.removeAt(i)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  const SizedBox(height: 22),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => setState(() => _wizardStep = 1),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('← Atrás', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF002F6C))),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          onPressed: _dispatch,
+                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 17),
+                          label: Text(
+                            widget.editingActivity != null ? 'Guardar Cambios' : 'Crear y Asignar',
+                            style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF002F6C),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -4176,6 +4392,402 @@ class _SuperAdminAuditTab extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// TAB 5: REPORTES Y EXPORTACIÓN (EXCEL + PDF CON FILTROS Y SELECCIÓN)
+class _SuperAdminReportsTab extends StatefulWidget {
+  const _SuperAdminReportsTab();
+
+  @override
+  State<_SuperAdminReportsTab> createState() => _SuperAdminReportsTabState();
+}
+
+class _SuperAdminReportsTabState extends State<_SuperAdminReportsTab> {
+  String _plantFilter = 'ALL';
+  String _areaFilter = 'ALL';
+  String _userFilter = 'ALL';
+  String _statusFilter = 'ALL'; // ALL, DONE, PENDING, OVERDUE
+  String _priorityFilter = 'ALL'; // ALL, Alta, Media, Baja
+  int _dayFilter = 0; // 0 = Todos, 1..6 = Lun..Sáb
+
+  bool _incSummary = true;
+  bool _incRanking = true;
+  bool _incActivities = true;
+  bool _incSubtasks = true;
+  bool _incPlans = true;
+  bool _exporting = false;
+
+  static const _darnelNavy = Color(0xFF002F6C);
+  static const _border = Color(0xFFE5E5EA);
+  static const _ink = Color(0xFF1D1D1F);
+  static const _muted = Color(0xFF86868B);
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<StandardWorkProvider>();
+    final plants = provider.allPlants;
+    final users = provider.allUsers;
+    final usersById = {for (final u in users) u.id: u};
+
+    final areas = <String>{
+      ...provider.corporateAreas,
+      ...provider.instances.map((i) => i.area).where((a) => a.trim().isNotEmpty),
+    }.toList()
+      ..sort();
+
+    final filteredInstances = provider.instances.where((i) {
+      if (_plantFilter != 'ALL' && i.plantId != _plantFilter) return false;
+      if (_areaFilter != 'ALL' && i.area != _areaFilter) return false;
+      if (_userFilter != 'ALL' && i.userId != _userFilter) return false;
+      if (_priorityFilter != 'ALL' && i.prioridad.toLowerCase() != _priorityFilter.toLowerCase()) return false;
+      if (_dayFilter != 0 && i.day != _dayFilter) return false;
+      if (_statusFilter == 'DONE' && !i.done) return false;
+      if (_statusFilter == 'PENDING' && i.done) return false;
+      if (_statusFilter == 'OVERDUE' && (i.done || i.day >= provider.selectedDay)) return false;
+      return true;
+    }).toList();
+
+    final filteredPlans = provider.proPlans.where((p) {
+      if (_plantFilter != 'ALL' && p.plantId != _plantFilter) return false;
+      if (_areaFilter != 'ALL' && p.area != _areaFilter) return false;
+      return true;
+    }).toList();
+
+    final doneCount = filteredInstances.where((i) => i.done).length;
+    final pct = filteredInstances.isEmpty ? '0.0' : ((doneCount / filteredInstances.length) * 100).toStringAsFixed(1);
+
+    final filterParts = <String>[
+      if (_plantFilter != 'ALL') 'Planta: $_plantFilter',
+      if (_areaFilter != 'ALL') 'Área: $_areaFilter',
+      if (_userFilter != 'ALL') 'Persona: ${usersById[_userFilter]?.nombre ?? _userFilter}',
+      if (_statusFilter != 'ALL') 'Estado: $_statusFilter',
+      if (_priorityFilter != 'ALL') 'Criticidad: $_priorityFilter',
+      if (_dayFilter != 0) 'Día: $_dayFilter',
+    ];
+    final filterSummary = filterParts.isEmpty ? 'Todas las plantas y actividades' : filterParts.join(' · ');
+
+    Future<void> runExport({required bool isPdf}) async {
+      if (_exporting) return;
+      setState(() => _exporting = true);
+      try {
+        final targetPlants = _plantFilter == 'ALL'
+            ? plants
+            : plants.where((p) => p.id == _plantFilter).toList();
+        if (isPdf) {
+          await UltraReportService.instance.generateFilteredExecutivePdf(
+            issuerName: provider.currentUser?.nombre ?? 'Super Admin',
+            filterSummary: filterSummary,
+            plants: targetPlants,
+            instances: filteredInstances,
+            plans: filteredPlans,
+            usersById: usersById,
+            includeSummary: _incSummary,
+            includeRanking: _incRanking,
+            includeActivities: _incActivities,
+            includeSubtasks: _incSubtasks,
+            includePlans: _incPlans,
+          );
+        } else {
+          await ExcelService.instance.exportFilteredReport(
+            filterSummary: filterSummary,
+            plants: targetPlants,
+            instances: filteredInstances,
+            plans: filteredPlans,
+            usersById: usersById,
+            includeSummary: _incSummary,
+            includeRanking: _incRanking,
+            includeActivities: _incActivities,
+            includeSubtasks: _incSubtasks,
+            includePlans: _incPlans,
+          );
+        }
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF16A34A),
+              content: Text(isPdf ? 'PDF Ejecutivo generado con éxito' : 'Reporte Excel (.csv) generado con éxito'),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(backgroundColor: const Color(0xFFFF3B30), content: Text('Error al exportar: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _exporting = false);
+      }
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Centro de Reportes', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: _ink, letterSpacing: -0.3)),
+                    Text('Filtra, elige qué incluir y exporta en Excel o PDF', style: TextStyle(fontSize: 12, color: _muted)),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => setState(() {
+                  _plantFilter = 'ALL';
+                  _areaFilter = 'ALL';
+                  _userFilter = 'ALL';
+                  _statusFilter = 'ALL';
+                  _priorityFilter = 'ALL';
+                  _dayFilter = 0;
+                }),
+                icon: const Icon(Icons.refresh_rounded, size: 16, color: _darnelNavy),
+                label: const Text('Limpiar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _darnelNavy)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // TARJETA DE FILTROS
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: _border, width: 0.8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('1. Filtros de Información', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _darnelNavy)),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: (['ALL', ...plants.map((p) => p.id)].contains(_plantFilter)) ? _plantFilter : 'ALL',
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Planta',
+                    isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: 'ALL', child: Text('Todas las Plantas', overflow: TextOverflow.ellipsis)),
+                    ...plants.map((p) => DropdownMenuItem(value: p.id, child: Text(p.nombre, overflow: TextOverflow.ellipsis))),
+                  ],
+                  onChanged: (v) => setState(() => _plantFilter = v ?? 'ALL'),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: (['ALL', ...areas].contains(_areaFilter)) ? _areaFilter : 'ALL',
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Área',
+                    isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: 'ALL', child: Text('Todas las Áreas', overflow: TextOverflow.ellipsis)),
+                    ...areas.map((a) => DropdownMenuItem(value: a, child: Text(a, overflow: TextOverflow.ellipsis))),
+                  ],
+                  onChanged: (v) => setState(() => _areaFilter = v ?? 'ALL'),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: (['ALL', ...users.map((u) => u.id)].contains(_userFilter)) ? _userFilter : 'ALL',
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Persona / Responsable',
+                    isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: 'ALL', child: Text('Todos los Colaboradores', overflow: TextOverflow.ellipsis)),
+                    ...users.where((u) => u.isOperator || u.isSupervisor).map(
+                          (u) => DropdownMenuItem(value: u.id, child: Text('${u.nombre} (${u.plantId})', overflow: TextOverflow.ellipsis)),
+                        ),
+                  ],
+                  onChanged: (v) => setState(() => _userFilter = v ?? 'ALL'),
+                ),
+                const SizedBox(height: 12),
+                const Text('Estado y Criticidad', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _ink)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    ('ALL', 'Todos'),
+                    ('DONE', 'Completadas'),
+                    ('PENDING', 'Pendientes'),
+                    ('OVERDUE', 'Vencidas'),
+                  ].map((e) {
+                    final sel = _statusFilter == e.$1;
+                    return ChoiceChip(
+                      label: Text(e.$2, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: sel ? Colors.white : _ink)),
+                      selected: sel,
+                      selectedColor: _darnelNavy,
+                      backgroundColor: const Color(0xFFF5F5F7),
+                      onSelected: (_) => setState(() => _statusFilter = e.$1),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: ['ALL', 'Alta', 'Media', 'Baja'].map((c) {
+                    final sel = _priorityFilter == c;
+                    return ChoiceChip(
+                      label: Text(c == 'ALL' ? 'Toda Criticidad' : c, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: sel ? Colors.white : _ink)),
+                      selected: sel,
+                      selectedColor: const Color(0xFF007AFF),
+                      backgroundColor: const Color(0xFFF5F5F7),
+                      onSelected: (_) => setState(() => _priorityFilter = c),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // TARJETA DE CONTENIDO A EXPORTAR
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: _border, width: 0.8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('2. ¿Qué quieres incluir en el reporte?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _darnelNavy)),
+                const SizedBox(height: 6),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  activeColor: _darnelNavy,
+                  title: const Text('Resumen Ejecutivo (KPIs)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  value: _incSummary,
+                  onChanged: (v) => setState(() => _incSummary = v ?? true),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  activeColor: _darnelNavy,
+                  title: const Text('Ranking y Cumplimiento por Planta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  value: _incRanking,
+                  onChanged: (v) => setState(() => _incRanking = v ?? true),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  activeColor: _darnelNavy,
+                  title: const Text('Detalle de Actividades Filtradas', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  value: _incActivities,
+                  onChanged: (v) => setState(() => _incActivities = v ?? true),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  activeColor: _darnelNavy,
+                  title: const Text('Avance de Subtareas / Checklist', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  value: _incSubtasks,
+                  onChanged: (v) => setState(() => _incSubtasks = v ?? true),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  activeColor: _darnelNavy,
+                  title: const Text('Planes de Acción Asociados', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  value: _incPlans,
+                  onChanged: (v) => setState(() => _incPlans = v ?? true),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // VISTA PREVIA Y EXPORTACIÓN
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _darnelNavy,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('3. Vista Previa y Exportación', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _previewBox('Actividades', '${filteredInstances.length}'),
+                    const SizedBox(width: 8),
+                    _previewBox('Cumplimiento', '$pct%'),
+                    const SizedBox(width: 8),
+                    _previewBox('Planes', '${filteredPlans.length}'),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _exporting ? null : () => runExport(isPdf: false),
+                        icon: const Icon(Icons.table_chart_rounded, size: 18, color: _darnelNavy),
+                        label: const Text('Exportar Excel', style: TextStyle(color: _darnelNavy, fontWeight: FontWeight.w800, fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _exporting ? null : () => runExport(isPdf: true),
+                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 18, color: Colors.white),
+                        label: const Text('Exportar PDF', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF007AFF),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _previewBox(String label, String value) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 10.5, color: Colors.white70)),
+          ],
+        ),
+      ),
     );
   }
 }

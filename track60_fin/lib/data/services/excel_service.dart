@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../database/database_helper.dart';
+import '../models/app_models.dart';
 
 class ExcelService {
   static final ExcelService instance = ExcelService._init();
@@ -66,5 +69,91 @@ class ExcelService {
     );
 
     return file.path;
+  }
+
+  /// Exporta un reporte filtrado a la medida compatible con Excel (UTF-8 BOM) en Web y Móvil
+  Future<void> exportFilteredReport({
+    required String filterSummary,
+    required List<PlantModel> plants,
+    required List<ActivityInstance> instances,
+    required List<ProPlanModel> plans,
+    required Map<String, UserProfile> usersById,
+    bool includeSummary = true,
+    bool includeActivities = true,
+    bool includeSubtasks = true,
+    bool includePlans = true,
+    bool includeRanking = true,
+  }) async {
+    String q(String s) => '"${s.replaceAll('"', '""')}"';
+    final buf = StringBuffer('\uFEFF');
+
+    buf.writeln('GRUPO DARNEL - REPORTE EJECUTIVO TRACK60');
+    buf.writeln('Filtros,${q(filterSummary)}');
+    buf.writeln('Fecha,${q(DateTime.now().toString().substring(0, 16))}');
+    buf.writeln();
+
+    if (includeSummary) {
+      final total = instances.length;
+      final done = instances.where((i) => i.done).length;
+      final pct = total > 0 ? ((done / total) * 100).toStringAsFixed(1) : '0.0';
+      buf.writeln('=== RESUMEN EJECUTIVO ===');
+      buf.writeln('Total Actividades,Completadas,Pendientes,Cumplimiento %,Planes de Accion');
+      buf.writeln('$total,$done,${total - done},$pct%,${plans.length}');
+      buf.writeln();
+    }
+
+    if (includeRanking && plants.isNotEmpty) {
+      buf.writeln('=== RANKING POR PLANTA ===');
+      buf.writeln('Planta,Codigo,Total Tareas,Completadas,Cumplimiento %');
+      for (final p in plants) {
+        final pInst = instances.where((i) => i.plantId == p.id).toList();
+        final pDone = pInst.where((i) => i.done).length;
+        final pPct = pInst.isNotEmpty ? ((pDone / pInst.length) * 100).toStringAsFixed(1) : '0.0';
+        buf.writeln('${q(p.nombre)},${q(p.codigo)},${pInst.length},$pDone,$pPct%');
+      }
+      buf.writeln();
+    }
+
+    if (includeActivities) {
+      buf.writeln('=== DETALLE DE ACTIVIDADES ===');
+      buf.writeln(
+        includeSubtasks
+            ? 'Actividad,Planta,Area,Categoria,Responsable,Dia,Horario,Prioridad,Estado,Subtareas Completadas,Plan Obligatorio'
+            : 'Actividad,Planta,Area,Categoria,Responsable,Dia,Horario,Prioridad,Estado,Plan Obligatorio',
+      );
+      const days = {1: 'Lun', 2: 'Mar', 3: 'Mie', 4: 'Jue', 5: 'Vie', 6: 'Sab'};
+      for (final i in instances) {
+        final resp = usersById[i.userId]?.nombre ?? i.userId;
+        final status = i.done ? 'Completada' : 'Pendiente';
+        final subDone = i.subtasksReported;
+        final subTot = i.subtasksTotal;
+        final base =
+            '${q(i.nombre)},${q(i.plantId)},${q(i.area)},${q(i.category)},${q(resp)},${days[i.day] ?? i.day},${q("${i.timeStart}-${i.timeEnd}")},${q(i.prioridad)},$status';
+        if (includeSubtasks) {
+          buf.writeln('$base,"$subDone/$subTot",${i.planAccionObligatorio ? "Si" : "No"}');
+        } else {
+          buf.writeln('$base,${i.planAccionObligatorio ? "Si" : "No"}');
+        }
+      }
+      buf.writeln();
+    }
+
+    if (includePlans) {
+      buf.writeln('=== PLANES DE ACCION ===');
+      buf.writeln('Titulo,Planta,Area,Responsable,Estado,Avance %,Fecha Compromiso');
+      for (final pl in plans) {
+        buf.writeln(
+          '${q(pl.plan)},${q(pl.plantId)},${q(pl.area)},${q(pl.responsable)},${q(pl.estado)},${pl.porcentajeAvance.toStringAsFixed(0)}%,${q(pl.fechaCompromiso)}',
+        );
+      }
+    }
+
+    final bytes = Uint8List.fromList(utf8.encode(buf.toString()));
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    await Share.shareXFiles(
+      [XFile.fromData(bytes, name: 'TRACK60_Reporte_$ts.csv', mimeType: 'text/csv')],
+      subject: 'TRACK60 · Reporte Ejecutivo Excel',
+      text: 'Reporte operativo generado desde Torre de Control Super Admin.',
+    );
   }
 }

@@ -185,5 +185,183 @@ class UltraReportService {
       subject: 'Respaldo Completo TRACK60 (JSON)',
     );
   }
+
+  /// Genera y comparte un PDF Ejecutivo filtrado a la medida del Super Admin
+  Future<void> generateFilteredExecutivePdf({
+    required String issuerName,
+    required String filterSummary,
+    required List<PlantModel> plants,
+    required List<ActivityInstance> instances,
+    required List<ProPlanModel> plans,
+    required Map<String, UserProfile> usersById,
+    bool includeSummary = true,
+    bool includeActivities = true,
+    bool includeSubtasks = true,
+    bool includePlans = true,
+    bool includeRanking = true,
+  }) async {
+    final doc = pw.Document();
+    final now = DateTime.now();
+    final code = 'DARNEL-${now.millisecondsSinceEpoch.toString().substring(7)}';
+    final total = instances.length;
+    final done = instances.where((i) => i.done).length;
+    final pct = total > 0 ? ((done / total) * 100).toStringAsFixed(1) : '0.0';
+    const dayLabels = {1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb'};
+
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(26),
+        build: (ctx) => [
+          pw.Container(
+            padding: const pw.EdgeInsets.all(16),
+            decoration: pw.BoxDecoration(
+              color: PdfColor.fromHex('#002F6C'),
+              borderRadius: pw.BorderRadius.circular(10),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('GRUPO DARNEL · TRACK60', style: pw.TextStyle(color: PdfColors.white, fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                      pw.SizedBox(height: 4),
+                      pw.Text('Reporte Ejecutivo Super Admin', style: pw.TextStyle(color: PdfColors.white, fontSize: 17, fontWeight: pw.FontWeight.bold)),
+                      pw.SizedBox(height: 4),
+                      pw.Text('Filtros: $filterSummary', style: const pw.TextStyle(color: PdfColors.grey200, fontSize: 8.5)),
+                    ],
+                  ),
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(code, style: pw.TextStyle(color: PdfColors.white, fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                    pw.Text('Emitido por: $issuerName', style: const pw.TextStyle(color: PdfColors.grey200, fontSize: 8.5)),
+                    pw.Text(now.toString().substring(0, 16), style: const pw.TextStyle(color: PdfColors.grey200, fontSize: 8.5)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 14),
+          if (includeSummary) ...[
+            pw.Text('Resumen Ejecutivo', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColor.fromHex('#002F6C'))),
+            pw.SizedBox(height: 6),
+            pw.Row(
+              children: [
+                _pdfStatBox('Actividades', '$total'),
+                pw.SizedBox(width: 8),
+                _pdfStatBox('Completadas', '$done'),
+                pw.SizedBox(width: 8),
+                _pdfStatBox('Cumplimiento', '$pct%'),
+                pw.SizedBox(width: 8),
+                _pdfStatBox('Planes de Acción', '${plans.length}'),
+              ],
+            ),
+            pw.SizedBox(height: 14),
+          ],
+          if (includeRanking && plants.isNotEmpty) ...[
+            pw.Text('Cumplimiento por Planta', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColor.fromHex('#002F6C'))),
+            pw.SizedBox(height: 6),
+            pw.TableHelper.fromTextArray(
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white, fontSize: 9),
+              headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#002F6C')),
+              cellStyle: const pw.TextStyle(fontSize: 8.5),
+              headers: ['Planta', 'Código', 'Total', 'Completadas', 'Cumplimiento'],
+              data: plants.map((p) {
+                final pInst = instances.where((i) => i.plantId == p.id).toList();
+                final pDone = pInst.where((i) => i.done).length;
+                final pPct = pInst.isNotEmpty ? '${((pDone / pInst.length) * 100).toStringAsFixed(1)}%' : '0.0%';
+                return [p.nombre, p.codigo, '${pInst.length}', '$pDone', pPct];
+              }).toList(),
+            ),
+            pw.SizedBox(height: 14),
+          ],
+          if (includeActivities) ...[
+            pw.Text('Detalle de Actividades (${instances.length})', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColor.fromHex('#002F6C'))),
+            pw.SizedBox(height: 6),
+            if (instances.isEmpty)
+              pw.Text('Sin actividades para los filtros seleccionados.', style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey700))
+            else
+              pw.TableHelper.fromTextArray(
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white, fontSize: 8.5),
+                headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#002F6C')),
+                cellStyle: const pw.TextStyle(fontSize: 8),
+                headers: includeSubtasks
+                    ? ['Actividad', 'Planta', 'Responsable', 'Día / Hora', 'Estado', 'Subtareas']
+                    : ['Actividad', 'Planta', 'Responsable', 'Día / Hora', 'Estado'],
+                data: instances.take(120).map((i) {
+                  final resp = usersById[i.userId]?.nombre ?? i.userId;
+                  final subDone = i.subtasksReported;
+                  final row = [
+                    i.nombre,
+                    i.plantId,
+                    resp,
+                    '${dayLabels[i.day] ?? i.day} ${i.timeStart}',
+                    i.done ? 'Completada' : 'Pendiente',
+                  ];
+                  if (includeSubtasks) {
+                    row.add('$subDone/${i.subtasksTotal}');
+                  }
+                  return row;
+                }).toList(),
+              ),
+            pw.SizedBox(height: 14),
+          ],
+          if (includePlans) ...[
+            pw.Text('Planes de Acción (${plans.length})', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColor.fromHex('#002F6C'))),
+            pw.SizedBox(height: 6),
+            if (plans.isEmpty)
+              pw.Text('Sin planes de acción para los filtros seleccionados.', style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey700))
+            else
+              pw.TableHelper.fromTextArray(
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white, fontSize: 8.5),
+                headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#002F6C')),
+                cellStyle: const pw.TextStyle(fontSize: 8),
+                headers: ['Plan', 'Planta', 'Responsable', 'Estado', 'Avance', 'Compromiso'],
+                data: plans.take(80).map((pl) => [
+                  pl.plan,
+                  pl.plantId,
+                  pl.responsable,
+                  pl.estado,
+                  '${pl.porcentajeAvance.toStringAsFixed(0)}%',
+                  pl.fechaCompromiso,
+                ]).toList(),
+              ),
+          ],
+        ],
+      ),
+    );
+
+    final bytes = await doc.save();
+    await Share.shareXFiles(
+      [XFile.fromData(bytes, name: 'TRACK60_Reporte_${now.millisecondsSinceEpoch}.pdf', mimeType: 'application/pdf')],
+      subject: 'TRACK60 · Reporte Ejecutivo PDF',
+    );
+  }
+
+  pw.Widget _pdfStatBox(String label, String value) {
+    return pw.Expanded(
+      child: pw.Container(
+        padding: const pw.EdgeInsets.all(10),
+        decoration: pw.BoxDecoration(
+          color: PdfColor.fromHex('#F2F2F7'),
+          borderRadius: pw.BorderRadius.circular(8),
+          border: pw.Border.all(color: PdfColor.fromHex('#E5E5EA')),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(label, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+            pw.SizedBox(height: 3),
+            pw.Text(value, style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColor.fromHex('#002F6C'))),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
