@@ -184,16 +184,16 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
 
     final navItems = [
       (label: 'Mi Día', icon: Icons.today_rounded, badge: pendingToday),
-      (label: 'Mi Jornada', icon: Icons.schedule_rounded, badge: 0),
       (label: 'Planes', icon: Icons.flag_rounded, badge: pendingPlans),
       (label: 'Indicadores', icon: Icons.bar_chart_rounded, badge: 0),
     ];
 
+    final safeIndex = _currentScreenIndex.clamp(0, navItems.length - 1);
+
     final bodyContent = IndexedStack(
-      index: _currentScreenIndex,
+      index: safeIndex,
       children: [
         _buildMiDiaTab(context, provider),
-        _buildMiJornadaTab(context, provider),
         _buildPlanesTab(context, provider),
         _buildIndicadoresTab(context, provider),
       ],
@@ -208,7 +208,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                 Expanded(
                   child: Column(
                     children: [
-                      _buildTopHeader(context, provider, navItems[_currentScreenIndex].label, isWide: true),
+                      _buildTopHeader(context, provider, navItems[safeIndex].label, isWide: true),
                       Expanded(child: bodyContent),
                     ],
                   ),
@@ -217,14 +217,14 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
             )
           : Column(
               children: [
-                _buildTopHeader(context, provider, navItems[_currentScreenIndex].label, isWide: false),
+                _buildTopHeader(context, provider, navItems[safeIndex].label, isWide: false),
                 Expanded(child: bodyContent),
               ],
             ),
       bottomNavigationBar: isWide
           ? null
           : BottomNavigationBar(
-              currentIndex: _currentScreenIndex,
+              currentIndex: safeIndex,
               onTap: (idx) => setState(() => _currentScreenIndex = idx),
               selectedItemColor: _kOpBlue,
               unselectedItemColor: const Color(0xFF86868B),
@@ -519,7 +519,78 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
               Expanded(child: _buildBentoKpi('Avance', '${pct.toStringAsFixed(0)}%', _kOpNavy, Icons.insights_rounded)),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _kOpBorder),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Progreso de mi Jornada', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kOpNavy)),
+                    Text(
+                      '$doneCount de ${allMy.length} (${pct.toStringAsFixed(0)}%)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: pct >= 80 ? _kOpGreen : _kOpNavy),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: allMy.isEmpty ? 0.0 : (doneCount / allMy.length),
+                    minHeight: 8,
+                    backgroundColor: const Color(0xFFFEE2E2),
+                    valueColor: AlwaysStoppedAnimation<Color>(pct >= 80 ? _kOpGreen : (pct >= 40 ? _kOpAmber : _kOpBlue)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => showDialog(
+                    context: context,
+                    builder: (_) => IndustrialTimerModal(instance: _fallbackInstance(provider, 'Cronómetro Libre')),
+                  ),
+                  icon: const Icon(Icons.timer_rounded, size: 17, color: Colors.white),
+                  label: const Text('Cronómetro 60s', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kOpNavy,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => showDialog(
+                    context: context,
+                    builder: (_) => OplSheetModal(instance: _fallbackInstance(provider, 'Lección de Un Punto')),
+                  ),
+                  icon: const Icon(Icons.menu_book_rounded, size: 17),
+                  label: const Text('Hojas OPL', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _kOpNavy,
+                    side: const BorderSide(color: _kOpBorder),
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           TextField(
             onChanged: (v) => setState(() => _searchQuery = v.trim()),
             decoration: InputDecoration(
@@ -618,6 +689,16 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
     );
   }
 
+  ({Color bg, Color border, Color accent}) _statusStyle(ActivityInstance item) {
+    if (item.done) {
+      return (bg: const Color(0xFFF0FDF4), border: const Color(0xFF86EFAC), accent: _kOpGreen);
+    }
+    if (item.state == 'Reprogramada') {
+      return (bg: const Color(0xFFFFFBEB), border: const Color(0xFFFDE68A), accent: _kOpAmber);
+    }
+    return (bg: const Color(0xFFFEF2F2), border: const Color(0xFFFCA5A5), accent: _kOpRed);
+  }
+
   List<Widget> _buildScheduleView(BuildContext context, List<ActivityInstance> items) {
     final byHour = <String, List<ActivityInstance>>{};
     for (final i in items) {
@@ -645,37 +726,45 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            ...list.map((inst) => InkWell(
-                  onTap: () => _handleCompleteActivity(context, inst),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _kOpBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: inst.done ? _kOpGreen.withValues(alpha: 0.4) : _kOpBorder),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(inst.done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                            size: 18, color: inst.done ? _kOpGreen : _kOpBlue),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                              Text('${_kOpDayNames[inst.day] ?? ""} · ${inst.area} · ${inst.timeStart}-${inst.timeEnd}',
-                                  style: const TextStyle(fontSize: 11, color: _kOpMuted)),
-                            ],
-                          ),
-                        ),
-                        _buildStatusBadge(inst),
-                      ],
-                    ),
+            ...list.map((inst) {
+              final st = _statusStyle(inst);
+              return InkWell(
+                onTap: () => _handleCompleteActivity(context, inst),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: st.bg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: st.border, width: 1.2),
                   ),
-                )),
+                  child: Row(
+                    children: [
+                      Icon(
+                        inst.done ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+                        size: 20,
+                        color: st.accent,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kOpText)),
+                            Text(
+                              '${_kOpDayNames[inst.day] ?? ""} · ${inst.area} · ${inst.timeStart}-${inst.timeEnd}',
+                              style: const TextStyle(fontSize: 11, color: _kOpMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildStatusBadge(inst),
+                    ],
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       );
@@ -683,26 +772,50 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
   }
 
   Widget _buildActivityCard(BuildContext context, StandardWorkProvider provider, ActivityInstance item) {
-    final stripeColor = item.done ? _kOpGreen : (item.prioridad == 'Alta' ? _kOpRed : _kOpBlue);
+    final st = _statusStyle(item);
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kOpBorder)),
+      decoration: BoxDecoration(
+        color: st.bg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: st.border, width: 1.4),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(width: 4, height: 34, decoration: BoxDecoration(color: stripeColor, borderRadius: BorderRadius.circular(4))),
+              Container(width: 5, height: 38, decoration: BoxDecoration(color: st.accent, borderRadius: BorderRadius.circular(4))),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kOpText)),
-                    Text(
-                      '${_kOpDayNames[item.day] ?? ""} · ${item.timeStart}-${item.timeEnd} · ${item.area}',
-                      style: const TextStyle(fontSize: 11, color: _kOpMuted),
+                    Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: _kOpText)),
+                    const SizedBox(height: 2),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '${_kOpDayNames[item.day] ?? ""} · ${item.timeStart}-${item.timeEnd} · ${item.area}',
+                          style: const TextStyle(fontSize: 11, color: _kOpMuted, fontWeight: FontWeight.w600),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: _kOpBorder),
+                          ),
+                          child: Text(
+                            item.fija ? 'Fija' : 'Reprogramable',
+                            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: _kOpNavy),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -712,7 +825,30 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
           ),
           if (item.descripcion.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(item.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: _kOpMuted)),
+            Text(item.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: _kOpText)),
+          ],
+          if (item.subtasksTotal > 0) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: item.subtasksReported / item.subtasksTotal,
+                      minHeight: 5,
+                      backgroundColor: Colors.white,
+                      valueColor: AlwaysStoppedAnimation<Color>(st.accent),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${item.subtasksReported}/${item.subtasksTotal} pasos',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: st.accent),
+                ),
+              ],
+            ),
           ],
           const SizedBox(height: 10),
           Wrap(
@@ -723,8 +859,10 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                 ElevatedButton.icon(
                   onPressed: () => _handleCompleteActivity(context, item),
                   icon: const Icon(Icons.play_arrow_rounded, size: 16, color: Colors.white),
-                  label: Text(item.tipoActividad == 'registro' ? 'Registrar' : 'Ejecutar',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                  label: Text(
+                    item.tipoActividad == 'registro' ? 'Registrar' : 'Ejecutar',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kOpNavy,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -738,6 +876,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                   label: Text('Subtareas (${item.subtasksReported}/${item.subtasksTotal})', style: const TextStyle(fontSize: 11)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _kOpBlue,
+                    backgroundColor: Colors.white,
                     side: const BorderSide(color: _kOpBorder),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -749,6 +888,7 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                   label: const Text('Reprogramar', style: TextStyle(fontSize: 11)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _kOpMuted,
+                    backgroundColor: Colors.white,
                     side: const BorderSide(color: _kOpBorder),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -760,7 +900,8 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                   label: const Text('Plan de Acción', style: TextStyle(fontSize: 11)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _kOpAmber,
-                    side: BorderSide(color: _kOpAmber.withValues(alpha: 0.4)),
+                    backgroundColor: Colors.white,
+                    side: BorderSide(color: _kOpAmber.withValues(alpha: 0.5)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -768,65 +909,6 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  // --- TAB 1: MI JORNADA ---
-  Widget _buildMiJornadaTab(BuildContext context, StandardWorkProvider provider) {
-    final userId = provider.currentUser?.id;
-    final myAll = provider.instances.where((i) => i.userId == userId).toList()
-      ..sort((a, b) => a.timeStart.compareTo(b.timeStart));
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => showDialog(
-                  context: context,
-                  builder: (_) => IndustrialTimerModal(instance: _fallbackInstance(provider, 'Cronómetro Libre')),
-                ),
-                icon: const Icon(Icons.timer_rounded, size: 17, color: Colors.white),
-                label: const Text('Cronómetro 60s', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kOpNavy,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => showDialog(
-                  context: context,
-                  builder: (_) => OplSheetModal(instance: _fallbackInstance(provider, 'Lección de Un Punto')),
-                ),
-                icon: const Icon(Icons.menu_book_rounded, size: 17),
-                label: const Text('Hojas OPL', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _kOpNavy,
-                  side: const BorderSide(color: _kOpBorder),
-                  backgroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        if (myAll.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _kOpBorder)),
-            child: const Center(child: Text('No tienes actividades programadas en tu jornada.', style: TextStyle(color: _kOpMuted))),
-          )
-        else
-          ..._buildScheduleView(context, myAll),
-      ],
     );
   }
 
@@ -1096,12 +1178,15 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
   }
 
   Widget _buildStatusBadge(ActivityInstance item) {
-    final bg = item.done ? _kOpGreen.withValues(alpha: 0.12) : _kOpAmber.withValues(alpha: 0.12);
-    final fg = item.done ? _kOpGreen : _kOpAmber;
+    final st = _statusStyle(item);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
-      child: Text(item.state, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: fg)),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: st.border),
+      ),
+      child: Text(item.state, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: st.accent)),
     );
   }
 }
