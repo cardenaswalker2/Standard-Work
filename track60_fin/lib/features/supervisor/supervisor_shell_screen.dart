@@ -912,37 +912,45 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            ...list.map((inst) => InkWell(
-                  onTap: () => onTap(inst),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _kSupBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: inst.done ? _kSupGreen.withValues(alpha: 0.4) : _kSupBorder),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(inst.done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                            size: 18, color: inst.done ? _kSupGreen : _kSupBlue),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                              Text('${_kSupDayNames[inst.day] ?? ""} · ${inst.area} · ${inst.timeStart}-${inst.timeEnd}',
-                                  style: const TextStyle(fontSize: 11, color: _kSupMuted)),
-                            ],
-                          ),
-                        ),
-                        _buildStatusPill(inst),
-                      ],
-                    ),
+            ...list.map((inst) {
+              final st = _supStatusStyle(inst);
+              return InkWell(
+                onTap: () => onTap(inst),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: st.bg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: st.border, width: 1.2),
                   ),
-                )),
+                  child: Row(
+                    children: [
+                      Icon(
+                        inst.done ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+                        size: 20,
+                        color: st.accent,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kSupText)),
+                            Text(
+                              '${_kSupDayNames[inst.day] ?? ""} · ${inst.area} · ${inst.timeStart}-${inst.timeEnd}',
+                              style: const TextStyle(fontSize: 11, color: _kSupMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildStatusPill(inst),
+                    ],
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       );
@@ -958,31 +966,41 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
     await _refreshAll();
   }
 
+  ({Color bg, Color border, Color accent}) _supStatusStyle(ActivityInstance item) {
+    if (item.done) {
+      return (bg: const Color(0xFFF0FDF4), border: const Color(0xFF86EFAC), accent: _kSupGreen);
+    }
+    if (item.state == 'Reprogramada') {
+      return (bg: const Color(0xFFFFFBEB), border: const Color(0xFFFDE68A), accent: _kSupAmber);
+    }
+    return (bg: const Color(0xFFFEF2F2), border: const Color(0xFFFCA5A5), accent: _kSupRed);
+  }
+
   Widget _buildMyActivityCard(BuildContext context, StandardWorkProvider provider, ActivityInstance inst) {
-    final color = inst.done ? _kSupGreen : (inst.prioridad == 'Alta' ? _kSupRed : _kSupBlue);
+    final st = _supStatusStyle(inst);
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: st.bg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kSupBorder),
+        border: Border.all(color: st.border, width: 1.4),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(width: 4, height: 34, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
+              Container(width: 5, height: 38, decoration: BoxDecoration(color: st.accent, borderRadius: BorderRadius.circular(4))),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kSupText)),
+                    Text(inst.nombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: _kSupText)),
                     Text(
                       '${_kSupDayNames[inst.day] ?? ""} · ${inst.timeStart}-${inst.timeEnd} · ${inst.area}',
-                      style: const TextStyle(fontSize: 11, color: _kSupMuted),
+                      style: const TextStyle(fontSize: 11, color: _kSupMuted, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -992,7 +1010,27 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
           ),
           if (inst.descripcion.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(inst.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: _kSupMuted)),
+            Text(inst.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: _kSupText)),
+          ],
+          if (inst.subtasksTotal > 0) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: inst.subtasksReported / inst.subtasksTotal,
+                      minHeight: 5,
+                      backgroundColor: Colors.white,
+                      valueColor: AlwaysStoppedAnimation<Color>(st.accent),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text('${inst.subtasksReported}/${inst.subtasksTotal} pasos', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: st.accent)),
+              ],
+            ),
           ],
           const SizedBox(height: 10),
           Wrap(
