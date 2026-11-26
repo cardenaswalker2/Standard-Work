@@ -6,10 +6,8 @@ import '../../core/widgets/action_plan_dialog.dart';
 import '../../core/widgets/activity_execution_modal.dart';
 import '../../core/widgets/activity_subtasks_modal.dart';
 import '../../core/widgets/help_guide_modal.dart';
-import '../../core/widgets/industrial_timer_modal.dart';
 import '../../core/widgets/meeting_record_dialog.dart';
 import '../../core/widgets/notifications_sheet.dart';
-import '../../core/widgets/opl_sheet_modal.dart';
 import '../../core/widgets/reprogramming_dialog.dart';
 import '../../data/models/app_models.dart';
 import '../../data/services/excel_service.dart';
@@ -393,22 +391,6 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
             onPressed: () => _showNotifications(context),
           ),
           _headerIconButton(
-            tooltip: 'Cronómetro 60s',
-            icon: Icons.timer_rounded,
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => IndustrialTimerModal(instance: _fallbackInstance(provider, 'Cronómetro Libre')),
-            ),
-          ),
-          _headerIconButton(
-            tooltip: 'Hoja OPL',
-            icon: Icons.menu_book_rounded,
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => OplSheetModal(instance: _fallbackInstance(provider, 'Lección de Un Punto')),
-            ),
-          ),
-          _headerIconButton(
             tooltip: 'Guía',
             icon: Icons.help_outline_rounded,
             onPressed: () => HelpGuideModal.show(context),
@@ -551,44 +533,6 @@ class _OperatorDashboardScreenState extends State<OperatorDashboardScreen> {
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => showDialog(
-                    context: context,
-                    builder: (_) => IndustrialTimerModal(instance: _fallbackInstance(provider, 'Cronómetro Libre')),
-                  ),
-                  icon: const Icon(Icons.timer_rounded, size: 17, color: Colors.white),
-                  label: const Text('Cronómetro 60s', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kOpNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => showDialog(
-                    context: context,
-                    builder: (_) => OplSheetModal(instance: _fallbackInstance(provider, 'Lección de Un Punto')),
-                  ),
-                  icon: const Icon(Icons.menu_book_rounded, size: 17),
-                  label: const Text('Hojas OPL', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _kOpNavy,
-                    side: const BorderSide(color: _kOpBorder),
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-            ],
           ),
           const SizedBox(height: 12),
           TextField(

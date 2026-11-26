@@ -1957,49 +1957,19 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF5F5F7),
-                    border: Border(bottom: BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
-                  ),
-                  child: Row(
-                    children: List.generate(3, (idx) {
-                      final active = _wizardStep == idx;
-                      final done = _wizardStep > idx;
-                      return Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(right: idx < 2 ? 6 : 0),
-                          child: GestureDetector(
-                            onTap: () => setSheetState(() => _wizardStep = idx),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-                              decoration: BoxDecoration(
-                                color: active ? const Color(0xFF002F6C) : (done ? const Color(0xFF002F6C).withValues(alpha: 0.12) : Colors.white),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: active ? const Color(0xFF002F6C) : const Color(0xFFE5E5EA)),
-                              ),
-                              child: Text(
-                                stepLabels[idx],
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: active ? Colors.white : (done ? const Color(0xFF002F6C) : const Color(0xFF86868B))),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.fromLTRB(16, 14, 16, MediaQuery.of(sheetCtx).viewInsets.bottom + 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (_wizardStep == 0) ...[
+                        ..._buildPlantAccordionStep(
+                          stepIndex: 0,
+                          setSheetState: setSheetState,
+                          title: '1. Qué y Quién',
+                          summary: _nombreCtrl.text.trim().isEmpty ? 'Sin nombre' : _nombreCtrl.text.trim(),
+                          isCompleted: _wizardStep > 0 && _nombreCtrl.text.trim().isNotEmpty,
+                          children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -2111,12 +2081,28 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
                             width: double.infinity,
                             height: 48,
                             child: ElevatedButton(
-                              onPressed: () => setSheetState(() => _wizardStep = 1),
+                              onPressed: () {
+                                if (_nombreCtrl.text.trim().isEmpty) {
+                                  ScaffoldMessenger.of(sheetCtx).showSnackBar(
+                                    const SnackBar(backgroundColor: Color(0xFFDC2626), content: Text('Escribe el nombre de la actividad antes de continuar.')),
+                                  );
+                                  return;
+                                }
+                                setSheetState(() => _wizardStep = 1);
+                              },
                               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                               child: const Text('Siguiente: Horario y Plan →', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                             ),
                           ),
-                        ] else if (_wizardStep == 1) ...[
+                        ]),
+                        const SizedBox(height: 10),
+                        ..._buildPlantAccordionStep(
+                          stepIndex: 1,
+                          setSheetState: setSheetState,
+                          title: '2. Horario y Plan',
+                          summary: '${_horaIniCtrl.text}-${_horaFinCtrl.text} · ${_selectedDays.length} día(s) · $_prioridad',
+                          isCompleted: _wizardStep > 1 && _selectedDays.isNotEmpty,
+                          children: [
                           TextField(
                             controller: _areaCtrl,
                             decoration: InputDecoration(labelText: 'Área Destino', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white),
@@ -2293,14 +2279,30 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
                               Expanded(
                                 flex: 2,
                                 child: ElevatedButton(
-                                  onPressed: () => setSheetState(() => _wizardStep = 2),
+                                  onPressed: () {
+                                    if (_selectedDays.isEmpty) {
+                                      ScaffoldMessenger.of(sheetCtx).showSnackBar(
+                                        const SnackBar(backgroundColor: Color(0xFFDC2626), content: Text('Selecciona al menos un día.')),
+                                      );
+                                      return;
+                                    }
+                                    setSheetState(() => _wizardStep = 2);
+                                  },
                                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF002F6C), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                                   child: const Text('Siguiente: Subtareas →', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                                 ),
                               ),
                             ],
                           ),
-                        ] else ...[
+                        ]),
+                        const SizedBox(height: 10),
+                        ..._buildPlantAccordionStep(
+                          stepIndex: 2,
+                          setSheetState: setSheetState,
+                          title: '3. Subtareas y Envío',
+                          summary: '${_subtasks.length} paso(s) configurados',
+                          isCompleted: false,
+                          children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -2374,7 +2376,7 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
                               ),
                             ],
                           ),
-                        ],
+                        ]),
                       ],
                     ),
                   ),
@@ -2385,6 +2387,104 @@ class _PlantAdminActivityCreatorTabState extends State<_PlantAdminActivityCreato
         },
       ),
     );
+  }
+
+  List<Widget> _buildPlantAccordionStep({
+    required int stepIndex,
+    required StateSetter setSheetState,
+    required String title,
+    required String summary,
+    required bool isCompleted,
+    required List<Widget> children,
+  }) {
+    final isOpen = _wizardStep == stepIndex;
+    return [
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isOpen ? const Color(0xFF002F6C) : (isCompleted ? const Color(0xFF86EFAC) : const Color(0xFFE5E5EA)),
+            width: isOpen ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: () => setSheetState(() => _wizardStep = stepIndex),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isOpen
+                      ? const Color(0xFF002F6C)
+                      : (isCompleted ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC)),
+                  borderRadius: isOpen
+                      ? const BorderRadius.vertical(top: Radius.circular(14))
+                      : BorderRadius.circular(15),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isOpen
+                          ? Icons.expand_less_rounded
+                          : (isCompleted ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded),
+                      size: 19,
+                      color: isOpen ? Colors.white : (isCompleted ? const Color(0xFF16A34A) : const Color(0xFF64748B)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                              color: isOpen ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          if (!isOpen && summary.isNotEmpty)
+                            Text(
+                              summary,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isCompleted ? const Color(0xFF15803D) : const Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (!isOpen)
+                      Text(
+                        isCompleted ? 'Editar' : 'Abrir',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isCompleted ? const Color(0xFF16A34A) : const Color(0xFF002F6C),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (isOpen)
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: children,
+                ),
+              ),
+          ],
+        ),
+      ),
+    ];
   }
 
   @override

@@ -4475,58 +4475,9 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
   @override
   Widget build(BuildContext context) {
     const dayNames = {1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb'};
-    const stepLabels = ['1. Qué y Quién', '2. Horario y Plan', '3. Subtareas'];
 
     return Column(
       children: [
-        // BARRA DE PASOS LIMPIA ESTILO APPLE + DARNEL AZUL
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          decoration: const BoxDecoration(
-            color: Color(0xFFF5F5F7),
-            border: Border(bottom: BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
-          ),
-          child: Row(
-            children: List.generate(3, (idx) {
-              final active = _wizardStep == idx;
-              final done = _wizardStep > idx;
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: idx < 2 ? 6 : 0),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _wizardStep = idx),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-                      decoration: BoxDecoration(
-                        color: active
-                            ? const Color(0xFF002F6C)
-                            : (done ? const Color(0xFF002F6C).withValues(alpha: 0.12) : Colors.white),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: active ? const Color(0xFF002F6C) : const Color(0xFFE5E5EA),
-                        ),
-                      ),
-                      child: Text(
-                        stepLabels[idx],
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: active
-                              ? Colors.white
-                              : (done ? const Color(0xFF002F6C) : const Color(0xFF86868B)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -4560,7 +4511,14 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       ],
                     ),
                   ),
-                if (_wizardStep == 0) ...[
+                ..._buildAccordionStep(
+                  stepIndex: 0,
+                  title: '1. Qué y Quién',
+                  summary: _nombreCtrl.text.trim().isEmpty
+                      ? 'Sin nombre'
+                      : '${_nombreCtrl.text.trim()} · ${_targetPlanta == "ALL" ? "Todas las Plantas" : _targetPlanta}',
+                  isCompleted: _wizardStep > 0 && _nombreCtrl.text.trim().isNotEmpty,
+                  children: [
                   // PASO 1: PLANTILLA OPCIONAL + MODALIDAD + DESTINO + NOMBRE
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -4849,7 +4807,16 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () => setState(() => _wizardStep = 1),
+                      onPressed: () {
+                        if (_nombreCtrl.text.trim().isEmpty) {
+                          setState(() => _formError = 'Escribe el nombre de la actividad antes de continuar.');
+                          return;
+                        }
+                        setState(() {
+                          _formError = null;
+                          _wizardStep = 1;
+                        });
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF002F6C),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -4857,7 +4824,14 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       child: const Text('Siguiente: Horario y Plan de Acción →', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                     ),
                   ),
-                ] else if (_wizardStep == 1) ...[
+                ]),
+                const SizedBox(height: 10),
+                ..._buildAccordionStep(
+                  stepIndex: 1,
+                  title: '2. Horario y Plan',
+                  summary: '${_horaIniCtrl.text}-${_horaFinCtrl.text} · ${_selectedDays.length} día(s) · $_prioridad',
+                  isCompleted: _wizardStep > 1 && _selectedDays.isNotEmpty,
+                  children: [
                   // PASO 2: ÁREA, CATEGORÍA, CRITICIDAD, HORARIO, DÍAS Y PLAN DE ACCIÓN
                   Builder(
                     builder: (context) {
@@ -5205,7 +5179,16 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       Expanded(
                         flex: 2,
                         child: ElevatedButton(
-                          onPressed: () => setState(() => _wizardStep = 2),
+                          onPressed: () {
+                            if (_selectedDays.isEmpty) {
+                              setState(() => _formError = 'Selecciona al menos un día de la semana.');
+                              return;
+                            }
+                            setState(() {
+                              _formError = null;
+                              _wizardStep = 2;
+                            });
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF002F6C),
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -5216,7 +5199,14 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       ),
                     ],
                   ),
-                ] else ...[
+                ]),
+                const SizedBox(height: 10),
+                ..._buildAccordionStep(
+                  stepIndex: 2,
+                  title: '3. Subtareas y Envío',
+                  summary: '${_subtasks.length} paso(s) configurados',
+                  isCompleted: false,
+                  children: [
                   // PASO 3: SUBTAREAS Y REQUISITOS (DISPONIBLE PARA EJECUCIÓN Y REGISTRO/REUNIÓN)
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -5385,7 +5375,7 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
                       ),
                     ],
                   ),
-                ],
+                ]),
                 const SizedBox(height: 16),
               ],
             ),
@@ -5393,6 +5383,103 @@ class _SuperAdminCorporateDispatchFormState extends State<_SuperAdminCorporateDi
         ),
       ],
     );
+  }
+
+  List<Widget> _buildAccordionStep({
+    required int stepIndex,
+    required String title,
+    required String summary,
+    required bool isCompleted,
+    required List<Widget> children,
+  }) {
+    final isOpen = _wizardStep == stepIndex;
+    return [
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isOpen ? const Color(0xFF002F6C) : (isCompleted ? const Color(0xFF86EFAC) : const Color(0xFFE5E5EA)),
+            width: isOpen ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: () => setState(() => _wizardStep = stepIndex),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isOpen
+                      ? const Color(0xFF002F6C)
+                      : (isCompleted ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC)),
+                  borderRadius: isOpen
+                      ? const BorderRadius.vertical(top: Radius.circular(14))
+                      : BorderRadius.circular(15),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isOpen
+                          ? Icons.expand_less_rounded
+                          : (isCompleted ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded),
+                      size: 19,
+                      color: isOpen ? Colors.white : (isCompleted ? const Color(0xFF16A34A) : const Color(0xFF64748B)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                              color: isOpen ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          if (!isOpen && summary.isNotEmpty)
+                            Text(
+                              summary,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isCompleted ? const Color(0xFF15803D) : const Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (!isOpen)
+                      Text(
+                        isCompleted ? 'Editar' : 'Abrir',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isCompleted ? const Color(0xFF16A34A) : const Color(0xFF002F6C),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (isOpen)
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: children,
+                ),
+              ),
+          ],
+        ),
+      ),
+    ];
   }
 
   Widget _buildTemplateChip(String label, VoidCallback onTap) {
