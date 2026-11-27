@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +9,7 @@ import '../../core/widgets/activity_subtasks_modal.dart';
 import '../../core/widgets/collaborator_profile_modal.dart';
 import '../../core/widgets/help_guide_modal.dart';
 import '../../core/widgets/meeting_record_dialog.dart';
+import '../../core/widgets/role_indicadores_view.dart';
 import '../../data/models/app_models.dart';
 import '../../data/services/excel_service.dart';
 import '../../data/services/standard_work_provider.dart';
@@ -44,8 +44,6 @@ class SupervisorShellScreen extends StatefulWidget {
 
 class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
   int _currentScreenIndex = 0;
-  int _touchedPieIndex = -1;
-  int? _selectedChartDay;
 
   List<SubtaskExecutionModel> _allExecutions = [];
   bool _loadingExecutions = true;
@@ -1531,177 +1529,31 @@ class _SupervisorShellScreenState extends State<SupervisorShellScreen> {
   Widget _buildSupervisorIndicadores(BuildContext context, StandardWorkProvider provider) {
     final plantId = provider.currentUser?.plantId ?? '';
     final plantTasks = provider.instances.where((i) => i.plantId == plantId).toList();
-    final total = plantTasks.length;
-    final done = plantTasks.where((i) => i.done).length;
-    final pending = total - done;
-    final pct = total == 0 ? 0.0 : (done / total) * 100;
-
-    final dayGroups = <BarChartGroupData>[];
-    for (int d = 1; d <= 6; d++) {
-      final dayItems = plantTasks.where((i) => i.day == d).toList();
-      final dayPct = dayItems.isEmpty ? 0.0 : (dayItems.where((i) => i.done).length / dayItems.length) * 100;
-      dayGroups.add(
-        BarChartGroupData(
-          x: d,
-          barRods: [
-            BarChartRodData(
-              toY: dayPct,
-              width: 18,
-              borderRadius: BorderRadius.circular(6),
-              color: _selectedChartDay == d ? _kSupBlue : _kSupNavy,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
-          children: [
-            Expanded(child: _buildBentoKpi('Cumplimiento Planta', '${pct.toStringAsFixed(1)}%', _kSupNavy, Icons.insights_rounded)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildBentoKpi('Completadas', '$done', _kSupGreen, Icons.check_circle_rounded)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildBentoKpi('Pendientes', '$pending', _kSupRed, Icons.pending_rounded)),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final usersById = {for (final u in provider.allUsers) u.id: u};
-                  await ExcelService.instance.exportFilteredReport(
-                    filterSummary: 'Supervisor · Planta $plantId',
-                    plants: provider.allPlants.where((p) => p.id == plantId).toList(),
-                    instances: plantTasks,
-                    plans: provider.proPlans,
-                    usersById: usersById,
-                  );
-                },
-                icon: const Icon(Icons.table_chart_rounded, size: 17, color: Colors.white),
-                label: const Text('Exportar Excel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kSupGreen,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final usersById = {for (final u in provider.allUsers) u.id: u};
-                  await UltraReportService.instance.generateFilteredExecutivePdf(
-                    issuerName: provider.currentUser?.nombre ?? 'Supervisor',
-                    filterSummary: 'Supervisor · Planta $plantId',
-                    plants: provider.allPlants.where((p) => p.id == plantId).toList(),
-                    instances: plantTasks,
-                    plans: provider.proPlans,
-                    usersById: usersById,
-                  );
-                },
-                icon: const Icon(Icons.picture_as_pdf_rounded, size: 17, color: Colors.white),
-                label: const Text('Reporte PDF', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kSupNavy,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: _kSupBorder)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Cumplimiento Diario (Lun - Sáb)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kSupNavy)),
-              const SizedBox(height: 14),
-              SizedBox(
-                height: 200,
-                child: BarChart(
-                  BarChartData(
-                    maxY: 100,
-                    barTouchData: BarTouchData(
-                      touchCallback: (event, resp) {
-                        if (resp?.spot != null && event.isInterestedForInteractions) {
-                          setState(() => _selectedChartDay = resp!.spot!.touchedBarGroup.x);
-                        }
-                      },
-                    ),
-                    titlesData: FlTitlesData(
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (v, _) => Text(_kSupDayNames[v.toInt()] ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                        ),
-                      ),
-                    ),
-                    borderData: FlBorderData(show: false),
-                    barGroups: dayGroups,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: _kSupBorder)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Distribución de Ejecución', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kSupNavy)),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 180,
-                child: total == 0
-                    ? const Center(child: Text('Sin actividades registradas todavía', style: TextStyle(color: _kSupMuted)))
-                    : PieChart(
-                        PieChartData(
-                          pieTouchData: PieTouchData(
-                            touchCallback: (event, resp) {
-                              setState(() {
-                                _touchedPieIndex = resp?.touchedSection?.touchedSectionIndex ?? -1;
-                              });
-                            },
-                          ),
-                          sectionsSpace: 3,
-                          centerSpaceRadius: 40,
-                          sections: [
-                            PieChartSectionData(
-                              value: done.toDouble(),
-                              color: _kSupGreen,
-                              radius: _touchedPieIndex == 0 ? 52 : 44,
-                              title: '$done\nHechas',
-                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
-                            ),
-                            PieChartSectionData(
-                              value: pending.toDouble(),
-                              color: _kSupRed,
-                              radius: _touchedPieIndex == 1 ? 52 : 44,
-                              title: '$pending\nPend.',
-                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return RoleIndicadoresView(
+      mainKpiLabel: 'Cumplimiento Planta',
+      instances: plantTasks,
+      plans: provider.proPlans,
+      onExportExcel: () async {
+        final usersById = {for (final u in provider.allUsers) u.id: u};
+        await ExcelService.instance.exportFilteredReport(
+          filterSummary: 'Supervisor · Planta $plantId',
+          plants: provider.allPlants.where((p) => p.id == plantId).toList(),
+          instances: plantTasks,
+          plans: provider.proPlans,
+          usersById: usersById,
+        );
+      },
+      onExportPdf: () async {
+        final usersById = {for (final u in provider.allUsers) u.id: u};
+        await UltraReportService.instance.generateFilteredExecutivePdf(
+          issuerName: provider.currentUser?.nombre ?? 'Supervisor',
+          filterSummary: 'Supervisor · Planta $plantId',
+          plants: provider.allPlants.where((p) => p.id == plantId).toList(),
+          instances: plantTasks,
+          plans: provider.proPlans,
+          usersById: usersById,
+        );
+      },
     );
   }
 
