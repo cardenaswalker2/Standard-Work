@@ -467,18 +467,18 @@ class StandardWorkProvider with ChangeNotifier {
     try {
       final cleanPin = pin.trim();
 
-      if (targetUserId == null) {
-        final cloudOk = await _loginViaCloudApi(cleanPin);
-        if (cloudOk) {
-          try {
-            await _loadUserData();
-          } catch (e) {
-            debugPrint('Aviso en _loadUserData durante loginWithPin (cloud): $e');
-          }
-          _isLoading = false;
-          notifyListeners();
-          return true;
+      final cloudOk = targetUserId == null
+          ? await _loginViaCloudApi(cleanPin)
+          : await _loginViaCloudApi(targetUserId, pin: cleanPin);
+      if (cloudOk) {
+        try {
+          await _loadUserData();
+        } catch (e) {
+          debugPrint('Aviso en _loadUserData durante loginWithPin (cloud): $e');
         }
+        _isLoading = false;
+        notifyListeners();
+        return true;
       }
 
       final users = await _db.getAllUsers();

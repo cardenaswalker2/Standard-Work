@@ -7,6 +7,6 @@ class ApiConfig {
     defaultValue: 'https://track60.onrender.com/api/v1',
   );
 
-  static const Duration timeout = Duration(seconds: 20);
+  static const Duration timeout = Duration(seconds: 55);
 }
 
