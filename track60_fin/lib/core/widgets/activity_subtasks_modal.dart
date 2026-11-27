@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../data/models/app_models.dart';
 import '../../data/database/database_helper.dart';
+import '../../data/services/standard_work_provider.dart';
 
 class ActivitySubtasksModal extends StatefulWidget {
   final ActivityInstance instance;
@@ -46,7 +48,8 @@ class _ActivitySubtasksModalState extends State<ActivitySubtasksModal> {
   }
 
   Future<void> _loadSubtasks() async {
-    final list = await _db.getSubtasksForActivity(widget.instance.activityId);
+    final provider = Provider.of<StandardWorkProvider>(context, listen: false);
+    final list = await provider.getSubtasksForActivity(widget.instance.activityId);
     final previousExecs = await _db.getSubtaskExecutionsForInstance(widget.instance.id ?? 0);
 
     for (final s in list) {

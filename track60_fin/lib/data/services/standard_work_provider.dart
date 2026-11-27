@@ -2623,6 +2623,36 @@ class StandardWorkProvider with ChangeNotifier {
   Future<List<ActivitySubtaskModel>> getSubtasksForActivity(int activityId) async {
     final cloudSubs = _cloudSubtasksByActivity[activityId];
     if (cloudSubs != null && cloudSubs.isNotEmpty) return cloudSubs;
+    final rId = _remoteActivityIds[activityId];
+    if (rId != null && await _hasCloudToken()) {
+      try {
+        final res = await ApiClient.instance.get('/activities/subtasks?activityId=$rId');
+        if (res is List && res.isNotEmpty) {
+          final parsed = res.whereType<Map>().map((item) {
+            final m = Map<String, dynamic>.from(item);
+            return ActivitySubtaskModel(
+              id: _stableIntId(m['id']?.toString() ?? '${activityId}_${m['orden'] ?? 0}'),
+              activityId: activityId,
+              orden: (m['orden'] as num?)?.toInt() ?? 1,
+              nombre: m['nombre']?.toString() ?? '',
+              descripcion: m['descripcion']?.toString() ?? '',
+              instruccion: m['instruccion']?.toString() ?? '',
+              esObligatoria: m['esObligatoria'] != false,
+              requiereFoto: m['requiereFoto'] == true,
+              requiereComentario: m['requiereComentario'] == true,
+              requiereMedicion: m['requiereMedicion'] == true,
+              unidadMedida: m['unidadMedida']?.toString() ?? '',
+              valorMinimo: (m['valorMinimo'] as num?)?.toDouble(),
+              valorMaximo: (m['valorMaximo'] as num?)?.toDouble(),
+            );
+          }).toList();
+          _cloudSubtasksByActivity[activityId] = parsed;
+          return parsed;
+        }
+      } catch (e) {
+        debugPrint('Error cargando subtareas por demanda: $e');
+      }
+    }
     return _db.getSubtasksForActivity(activityId);
   }
 
