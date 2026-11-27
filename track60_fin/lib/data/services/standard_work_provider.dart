@@ -1062,8 +1062,24 @@ class StandardWorkProvider with ChangeNotifier {
         final dup = merged.any((c) => c.title == n.title && c.body == n.body);
         if (!dup) merged.add(n);
       }
-      merged.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      _notifications = merged;
+      final readKeys = (await SafePrefs.instance.getStringList('track60_read_notif_keys')) ?? [];
+      final readSet = readKeys.toSet();
+      _notifications = merged.map((n) {
+        final key = '${n.title}::${n.body}';
+        if (!n.isRead && readSet.contains(key)) {
+          return NotificationModel(
+            id: n.id,
+            userId: n.userId,
+            title: n.title,
+            body: n.body,
+            type: n.type,
+            timestamp: n.timestamp,
+            isRead: true,
+          );
+        }
+        return n;
+      }).toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
     } catch (e) {
       debugPrint('Error cargando notifications: $e');
       _notifications = [];
@@ -2092,14 +2108,45 @@ class StandardWorkProvider with ChangeNotifier {
 
   Future<void> markNotificationAsRead(int id) async {
     await _db.markNotificationAsRead(id);
-    _notifications = await _db.getNotificationsForUser(_currentUser!.id);
+    final existing = (await SafePrefs.instance.getStringList('track60_read_notif_keys')) ?? [];
+    final readSet = existing.toSet();
+    _notifications = _notifications.map((n) {
+      if (n.id == id) {
+        readSet.add('${n.title}::${n.body}');
+        return NotificationModel(
+          id: n.id,
+          userId: n.userId,
+          title: n.title,
+          body: n.body,
+          type: n.type,
+          timestamp: n.timestamp,
+          isRead: true,
+        );
+      }
+      return n;
+    }).toList();
+    await SafePrefs.instance.setStringList('track60_read_notif_keys', readSet.toList());
     notifyListeners();
   }
 
   Future<void> markAllNotificationsAsRead() async {
     if (_currentUser == null) return;
     await _db.markAllNotificationsAsRead(_currentUser!.id);
-    _notifications = await _db.getNotificationsForUser(_currentUser!.id);
+    final existing = (await SafePrefs.instance.getStringList('track60_read_notif_keys')) ?? [];
+    final readSet = existing.toSet();
+    _notifications = _notifications.map((n) {
+      readSet.add('${n.title}::${n.body}');
+      return NotificationModel(
+        id: n.id,
+        userId: n.userId,
+        title: n.title,
+        body: n.body,
+        type: n.type,
+        timestamp: n.timestamp,
+        isRead: true,
+      );
+    }).toList();
+    await SafePrefs.instance.setStringList('track60_read_notif_keys', readSet.toList());
     notifyListeners();
   }
 

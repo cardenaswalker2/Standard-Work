@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../data/models/app_models.dart';
+import '../../data/services/standard_work_provider.dart';
 import 'notification_detail_dialog.dart';
 
 class NotificationsSheet extends StatefulWidget {
@@ -24,8 +26,10 @@ class _NotificationsSheetState extends State<NotificationsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = widget.notifications.where((n) => !n.isRead).length;
-    final filtered = widget.notifications.where((n) {
+    final liveNotifications = context.watch<StandardWorkProvider>().notifications;
+    final items = liveNotifications.isNotEmpty || widget.notifications.isEmpty ? liveNotifications : widget.notifications;
+    final unreadCount = items.where((n) => !n.isRead).length;
+    final filtered = items.where((n) {
       if (_filter == 'Sin leer') return !n.isRead;
       if (_filter == 'Alertas') return n.type == 'alert';
       if (_filter == 'Asignaciones') return n.type == 'corporate_assignment' || n.type == 'assignment';
